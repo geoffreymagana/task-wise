@@ -4,8 +4,9 @@ import { Button } from '@/components/ui/button';
 import { AddTaskDialog } from '@/components/task-manager/add-task-dialog';
 import { ImportDialog } from '@/components/task-manager/import-dialog';
 import type { Task } from '@/lib/types';
-import { FileDown, GanttChartSquare, Plus, Upload } from 'lucide-react';
+import { FileDown, GanttChartSquare, Plus, Upload, User } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '../ui/dropdown-menu';
+import Link from 'next/link';
 
 interface AppHeaderProps {
   onTaskCreated: (newTask: Task) => void;
@@ -43,10 +44,12 @@ export default function AppHeader({ onTaskCreated, onTasksImported, allTasks }: 
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="container flex h-14 items-center">
+      <div className="container flex h-14 items-center px-4 md:px-8">
         <div className="mr-4 flex items-center">
-          <GanttChartSquare className="h-6 w-6 mr-2 text-primary" />
-          <h1 className="text-2xl font-bold font-headline">TaskWise</h1>
+          <Link href="/" className="flex items-center gap-2">
+            <GanttChartSquare className="h-6 w-6 mr-2 text-primary" />
+            <h1 className="text-2xl font-bold font-headline">TaskWise</h1>
+          </Link>
         </div>
         <div className="flex flex-1 items-center justify-end space-x-2">
           <AddTaskDialog onTaskCreated={onTaskCreated}>
@@ -73,6 +76,12 @@ export default function AppHeader({ onTaskCreated, onTasksImported, allTasks }: 
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
+
+          <Link href="/profile">
+            <Button variant="ghost" size="icon">
+              <User className="h-5 w-5" />
+            </Button>
+          </Link>
         </div>
       </div>
     </header>

@@ -1,3 +1,11 @@
+export type SubTask = {
+  id: string;
+  title: string;
+  description?: string;
+  status: 'not_started' | 'in_progress' | 'completed' | 'archived';
+  subtasks?: SubTask[];
+};
+
 export type Task = {
   id: string;
   title: string;
@@ -10,4 +18,5 @@ export type Task = {
   dueDate: string | null;
   createdAt: string;
   completedAt: string | null;
+  subtasks?: SubTask[];
 };
