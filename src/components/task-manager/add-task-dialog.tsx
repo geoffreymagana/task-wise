@@ -30,12 +30,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { CalendarIcon, Timer, Zap } from 'lucide-react';
 import { Calendar } from '@/components/ui/calendar';
-import { cn, generateColor } from '@/lib/utils';
+import { cn, generateColor, timeToMinutes } from '@/lib/utils';
 import { format } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
 import { IconSelect } from '../common/icon-select';
 import { ScrollArea } from '../ui/scroll-area';
-import { Icon } from '../common/icon';
 
 const FormSchema = z.object({
   title: z.string().min(3, { message: 'Title must be at least 3 characters.' }),
@@ -82,6 +81,7 @@ export function AddTaskDialog({ children, onTaskCreated, onTaskUpdated, taskToEd
   });
 
   const availableDependencies = useMemo(() => {
+    if (!allTasks) return [];
     return allTasks.filter(task => task.id !== taskToEdit?.id);
   }, [allTasks, taskToEdit]);
 
@@ -95,7 +95,7 @@ export function AddTaskDialog({ children, onTaskCreated, onTaskUpdated, taskToEd
         priority: taskToEdit.priority,
         dueDate: taskToEdit.dueDate ? new Date(taskToEdit.dueDate) : null,
         estimatedTime: taskToEdit.estimatedTime || 0,
-        estimatedTimeUnit: 'minutes',
+        estimatedTimeUnit: 'minutes', // Default to minutes for editing, user can change
         dependencies: taskToEdit.dependencies || [],
         icon: taskToEdit.icon,
         color: taskToEdit.color
@@ -119,11 +119,14 @@ export function AddTaskDialog({ children, onTaskCreated, onTaskUpdated, taskToEd
   const onSubmit = async (data: FormValues) => {
     setIsSubmitting(true);
     try {
+      const estimatedTimeInMinutes = timeToMinutes(data.estimatedTime || 0, data.estimatedTimeUnit || 'minutes');
+      
       if (taskToEdit) {
         if (onTaskUpdated) {
           const updatedTask: Task = {
             ...taskToEdit,
             ...data,
+            estimatedTime: estimatedTimeInMinutes,
             dueDate: data.dueDate ? format(data.dueDate, 'yyyy-MM-dd') : null,
           };
           onTaskUpdated(updatedTask);

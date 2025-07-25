@@ -31,3 +31,20 @@ export function formatDuration(minutes: number) {
   if (minutes < 525600) return `${(minutes / 43200).toFixed(1)}mo`;
   return `${(minutes / 525600).toFixed(1)}y`;
 };
+
+export const timeToMinutes = (time: number, unit: string) => {
+  switch (unit) {
+    case 'hours':
+      return time * 60;
+    case 'days':
+      return time * 60 * 24;
+    case 'weeks':
+      return time * 60 * 24 * 7;
+    case 'months':
+      return time * 60 * 24 * 30; // Approximation
+    case 'years':
+        return time * 60 * 24 * 365; // Approximation
+    default:
+      return time;
+  }
+};
