@@ -22,20 +22,27 @@ export async function registerServiceWorker() {
   await navigator.serviceWorker.register('/service-worker.js');
 }
 
-export async function subscribeToPush(): Promise<WebPushSubscription> {
+export async function subscribeToPush(): Promise<WebPushSubscription | null> {
   if (!('serviceWorker' in navigator)) {
-    throw new Error('No Service Worker support in this browser.');
+    console.warn('No Service Worker support in this browser.');
+    return null;
   }
   if (!VAPID_PUBLIC_KEY) {
-    throw new Error('VAPID public key not configured.');
+    console.warn('VAPID public key not configured. Push notifications are disabled.');
+    return null;
   }
 
   const registration = await navigator.serviceWorker.ready;
-  const subscription = await registration.pushManager.subscribe({
-    userVisibleOnly: true,
-    applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY),
-  });
-  return subscription.toJSON() as WebPushSubscription;
+  try {
+    const subscription = await registration.pushManager.subscribe({
+      userVisibleOnly: true,
+      applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY),
+    });
+    return subscription.toJSON() as WebPushSubscription;
+  } catch (err) {
+    console.error('Failed to subscribe to push notifications:', err);
+    return null;
+  }
 }
 
 export async function getSubscription(): Promise<WebPushSubscription | null> {

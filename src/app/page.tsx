@@ -34,15 +34,18 @@ export default function Home() {
       try {
         await registerServiceWorker();
         const sub = await subscribeToPush();
-        // You might want to send this subscription object to your server to store it
-        console.log('Push subscription:', sub);
+        if (sub) {
+          console.log('Push subscription:', sub);
+        }
       } catch (error) {
         console.error('Failed to setup push notifications', error);
-        toast({
-          variant: 'destructive',
-          title: 'Notifications Disabled',
-          description: 'Could not subscribe to push notifications. Please ensure you have granted permission.',
-        });
+        if (error instanceof Error && error.message.includes('permission')) {
+          toast({
+            variant: 'destructive',
+            title: 'Notifications Disabled',
+            description: 'Could not subscribe to push notifications. Please ensure you have granted permission.',
+          });
+        }
       }
     }
     setupNotifications();
