@@ -7,6 +7,7 @@ import type { Task } from '@/lib/types';
 import { FileDown, GanttChartSquare, Plus, Upload, User } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '../ui/dropdown-menu';
 import Link from 'next/link';
+import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 
 interface AppHeaderProps {
   onTaskCreated: (newTask: Task) => void;
@@ -78,8 +79,11 @@ export default function AppHeader({ onTaskCreated, onTasksImported, allTasks }: 
           </DropdownMenu>
 
           <Link href="/profile">
-            <Button variant="ghost" size="icon">
-              <User className="h-5 w-5" />
+             <Button variant="ghost" size="icon" className="rounded-full">
+              <Avatar className="h-8 w-8">
+                <AvatarImage src="https://placehold.co/100x100.png" alt="User Avatar" data-ai-hint="user avatar" />
+                <AvatarFallback>U</AvatarFallback>
+              </Avatar>
             </Button>
           </Link>
         </div>

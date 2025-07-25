@@ -18,5 +18,7 @@ export type Task = {
   dueDate: string | null;
   createdAt: string;
   completedAt: string | null;
+  startedAt: string | null;
   subtasks?: SubTask[];
+  color: string;
 };

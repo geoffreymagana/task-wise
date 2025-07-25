@@ -20,6 +20,12 @@ import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 import { Badge } from '../ui/badge';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip"
 
 interface CalendarViewProps {
   tasks: Task[];
@@ -42,13 +48,6 @@ export default function CalendarView({ tasks }: CalendarViewProps) {
   const getTasksForDay = (day: Date) => {
     return tasks.filter(task => task.dueDate && isSameDay(new Date(task.dueDate), day));
   };
-  
-  const priorityConfig = {
-    low: 'bg-green-200 text-green-800',
-    medium: 'bg-yellow-200 text-yellow-800',
-    high: 'bg-red-200 text-red-800',
-  };
-
 
   return (
     <Card className="shadow-lg p-4">
@@ -65,39 +64,54 @@ export default function CalendarView({ tasks }: CalendarViewProps) {
           </Button>
         </div>
       </div>
-      <div className="grid grid-cols-7 border-t border-l">
-        {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day) => (
-          <div key={day} className="text-center font-medium p-2 border-r border-b text-muted-foreground text-sm">
-            {day}
-          </div>
-        ))}
-        {daysInMonth.map((day) => (
-          <div
-            key={day.toString()}
-            className={cn(
-              'border-r border-b p-2 min-h-[120px] relative flex flex-col',
-              !isSameMonth(day, currentMonth) && 'bg-muted/50 text-muted-foreground'
-            )}
-          >
-            <time
-              dateTime={format(day, 'yyyy-MM-dd')}
+      <TooltipProvider>
+        <div className="grid grid-cols-7 border-t border-l">
+          {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day) => (
+            <div key={day} className="text-center font-medium p-2 border-r border-b text-muted-foreground text-sm">
+              {day}
+            </div>
+          ))}
+          {daysInMonth.map((day) => (
+            <div
+              key={day.toString()}
               className={cn(
-                'absolute top-2 right-2 text-xs font-semibold w-6 h-6 flex items-center justify-center rounded-full',
-                isToday(day) && 'bg-accent text-accent-foreground'
+                'border-r border-b p-2 min-h-[120px] relative flex flex-col',
+                !isSameMonth(day, currentMonth) && 'bg-muted/50 text-muted-foreground'
               )}
             >
-              {format(day, 'd')}
-            </time>
-            <div className="mt-8 space-y-1 overflow-y-auto">
-              {getTasksForDay(day).map(task => (
-                <div key={task.id} className={cn('text-xs p-1 rounded-sm', priorityConfig[task.priority])}>
-                  {task.title}
-                </div>
-              ))}
+              <time
+                dateTime={format(day, 'yyyy-MM-dd')}
+                className={cn(
+                  'font-semibold w-6 h-6 flex items-center justify-center rounded-full',
+                   'absolute top-2 right-2 text-xs',
+                  isToday(day) && 'bg-accent text-accent-foreground'
+                )}
+              >
+                {format(day, 'd')}
+              </time>
+              <div className="mt-8 space-y-1 overflow-y-auto">
+                {getTasksForDay(day).map(task => (
+                  <Tooltip key={task.id}>
+                    <TooltipTrigger asChild>
+                       <div 
+                        className="text-xs p-1 rounded-sm w-full text-left truncate"
+                        style={{ backgroundColor: task.color }}
+                      >
+                        {task.title}
+                      </div>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p className="font-bold">{task.title}</p>
+                      <p className="text-sm text-muted-foreground">{task.description}</p>
+                       <Badge variant={task.priority === 'high' ? 'destructive' : 'secondary'} className="mt-2">{task.priority}</Badge>
+                    </TooltipContent>
+                  </Tooltip>
+                ))}
+              </div>
             </div>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      </TooltipProvider>
     </Card>
   );
 }

@@ -40,6 +40,7 @@ const FormSchema = z.object({
   complexity: z.enum(['low', 'medium', 'high']),
   priority: z.enum(['low', 'medium', 'high']),
   dueDate: z.date().nullable(),
+  estimatedTime: z.coerce.number().min(0).optional(),
 });
 
 type FormValues = z.infer<typeof FormSchema>;
@@ -64,6 +65,7 @@ export function AddTaskDialog({ children, onTaskCreated, onTaskUpdated, taskToEd
       complexity: 'medium',
       priority: 'medium',
       dueDate: null,
+      estimatedTime: 0,
     },
   });
 
@@ -75,6 +77,7 @@ export function AddTaskDialog({ children, onTaskCreated, onTaskUpdated, taskToEd
         complexity: taskToEdit.complexity,
         priority: taskToEdit.priority,
         dueDate: taskToEdit.dueDate ? new Date(taskToEdit.dueDate) : null,
+        estimatedTime: taskToEdit.estimatedTime || 0,
       });
     } else if (!taskToEdit) {
       form.reset();
@@ -85,18 +88,17 @@ export function AddTaskDialog({ children, onTaskCreated, onTaskUpdated, taskToEd
     setIsSubmitting(true);
     try {
       if (taskToEdit) {
-        // Logic for updating a task
         if (onTaskUpdated) {
           const updatedTask: Task = {
             ...taskToEdit,
             ...data,
             dueDate: data.dueDate ? format(data.dueDate, 'yyyy-MM-dd') : null,
+            estimatedTime: data.estimatedTime || taskToEdit.estimatedTime,
           };
           onTaskUpdated(updatedTask);
           toast({ title: 'Task Updated', description: `"${data.title}" has been updated.` });
         }
       } else {
-        // Logic for creating a new task
         const actionData = { ...data, dueDate: data.dueDate ? format(data.dueDate, 'yyyy-MM-dd') : null };
         const newTask = await createTaskAction(actionData);
         onTaskCreated(newTask);
@@ -114,6 +116,8 @@ export function AddTaskDialog({ children, onTaskCreated, onTaskUpdated, taskToEd
       setIsSubmitting(false);
     }
   };
+
+  const shouldShowEstimation = !taskToEdit || !taskToEdit.estimatedTime;
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -206,13 +210,26 @@ export function AddTaskDialog({ children, onTaskCreated, onTaskUpdated, taskToEd
                 )}
               />
             </div>
-            {!taskToEdit && (
+             <FormField
+                control={form.control}
+                name="estimatedTime"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Estimated Time (minutes)</FormLabel>
+                    <FormControl>
+                      <Input type="number" placeholder="e.g., 60" {...field} onChange={e => field.onChange(parseInt(e.target.value, 10) || 0)} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            {shouldShowEstimation && (
               <FormField
                 control={form.control}
                 name="complexity"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Task Complexity</FormLabel>
+                    <FormLabel>Task Complexity (for AI estimate)</FormLabel>
                     <Select onValueChange={field.onChange} defaultValue={field.value}>
                       <FormControl>
                         <SelectTrigger>
@@ -238,10 +255,12 @@ export function AddTaskDialog({ children, onTaskCreated, onTaskUpdated, taskToEd
               <Button type="submit" disabled={isSubmitting}>
                 {isSubmitting && <Timer className="mr-2 h-4 w-4 animate-spin" />}
                 {taskToEdit ? 'Save Changes' : 
-                  <>
-                    <Zap className="mr-2 h-4 w-4" />
-                    Create & Estimate
-                  </>
+                  (shouldShowEstimation ?
+                    <>
+                      <Zap className="mr-2 h-4 w-4" />
+                      Create & Estimate
+                    </> : 'Create Task'
+                  )
                 }
               </Button>
             </DialogFooter>

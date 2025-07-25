@@ -19,10 +19,6 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-  DropdownMenuSub,
-  DropdownMenuSubTrigger,
-  DropdownMenuSubContent,
-  DropdownMenuPortal,
 } from '@/components/ui/dropdown-menu';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
@@ -35,8 +31,8 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { CheckCircle, Circle, Edit, MoreHorizontal, Trash, XCircle, ChevronDown } from 'lucide-react';
-import { format } from 'date-fns';
+import { CheckCircle, Circle, Edit, MoreHorizontal, Trash, XCircle, ChevronDown, Clock, Play } from 'lucide-react';
+import { format, formatDistanceToNow } from 'date-fns';
 import { Card } from '../ui/card';
 import { AddTaskDialog } from '../task-manager/add-task-dialog';
 
@@ -50,7 +46,7 @@ interface TableViewProps {
 
 const statusConfig = {
   not_started: { label: 'Not Started', icon: <Circle className="w-3 h-3 text-muted-foreground" /> },
-  in_progress: { label: 'In Progress', icon: <Circle className="w-3 h-3 text-blue-500" /> },
+  in_progress: { label: 'In Progress', icon: <Play className="w-3 h-3 text-blue-500" /> },
   completed: { label: 'Completed', icon: <CheckCircle className="w-3 h-3 text-green-500" /> },
   archived: { label: 'Archived', icon: <XCircle className="w-3 h-3 text-red-500" /> },
 };
@@ -91,7 +87,9 @@ export default function TableView({
   };
 
   const handleStatusChange = (task: Task, status: Task['status']) => {
-    onUpdateTask({ ...task, status, completedAt: status === 'completed' ? new Date().toISOString() : task.completedAt });
+    const completedAt = status === 'completed' ? new Date().toISOString() : task.completedAt;
+    const startedAt = status === 'in_progress' && !task.startedAt ? new Date().toISOString() : task.startedAt;
+    onUpdateTask({ ...task, status, completedAt, startedAt });
   };
   
   const handleBulkStatusChange = (status: Task['status']) => {
@@ -104,6 +102,10 @@ export default function TableView({
     setSelectedTaskIds([]);
     setIsDeleteDialogOpen(false);
   };
+  
+  const handleTaskCreated = () => {
+    // This function is passed to AddTaskDialog but might not be used if tasks are updated through onUpdateTask
+  }
 
   const isAllSelected = selectedTaskIds.length > 0 && selectedTaskIds.length === visibleTaskIds.length;
   const isSomeSelected = selectedTaskIds.length > 0 && selectedTaskIds.length < visibleTaskIds.length;
@@ -172,8 +174,11 @@ export default function TableView({
                 />
               </TableCell>
               <TableCell>
-                <div className="font-medium">{task.title}</div>
-                <div className="text-sm text-muted-foreground truncate max-w-sm">
+                 <div className="flex items-center gap-2">
+                  <span className="w-2 h-2 rounded-full" style={{ backgroundColor: task.color }} />
+                  <div className="font-medium">{task.title}</div>
+                </div>
+                <div className="text-sm text-muted-foreground truncate max-w-sm pl-4">
                   {task.description || 'No description'}
                 </div>
               </TableCell>
@@ -213,7 +218,7 @@ export default function TableView({
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
-                    <AddTaskDialog onTaskUpdated={onUpdateTask} onTaskCreated={()=>{}} taskToEdit={task}>
+                    <AddTaskDialog onTaskUpdated={onUpdateTask} onTaskCreated={handleTaskCreated} taskToEdit={task}>
                       <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
                         <Edit className="mr-2 h-4 w-4" />
                         Edit

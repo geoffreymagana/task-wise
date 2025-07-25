@@ -7,6 +7,7 @@ import AppHeader from '@/components/common/header';
 import TableView from '@/components/task-views/table-view';
 import CalendarView from '@/components/task-views/calendar-view';
 import TimelineView from '@/components/task-views/timeline-view';
+import KanbanView from '@/components/task-views/kanban-view';
 import type { Task } from '@/lib/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ListTodo } from 'lucide-react';
@@ -27,6 +28,10 @@ export default function Home() {
     addTask(newTask);
   };
 
+  const handleTaskUpdated = (updatedTask: Task) => {
+    updateTask(updatedTask);
+  };
+
   const handleTasksImported = (newTasks: Task[]) => {
     setTasks([...tasks, ...newTasks]);
   };
@@ -38,10 +43,11 @@ export default function Home() {
       <AppHeader onTaskCreated={handleTaskCreated} onTasksImported={handleTasksImported} allTasks={tasks} />
       <main className="flex-grow p-4 md:p-8">
         <Tabs value={activeView} onValueChange={setActiveView} className="w-full">
-          <TabsList className="grid w-full grid-cols-3 md:w-fit">
+          <TabsList className="grid w-full grid-cols-4 md:w-fit">
             <TabsTrigger value="table">Table</TabsTrigger>
             <TabsTrigger value="timeline">Timeline</TabsTrigger>
             <TabsTrigger value="calendar">Calendar</TabsTrigger>
+            <TabsTrigger value="kanban">Kanban</TabsTrigger>
           </TabsList>
           {tasks.length === 0 ? (
             <Card className="mt-4 w-full text-center shadow-lg">
@@ -69,10 +75,13 @@ export default function Home() {
                 />
               </TabsContent>
               <TabsContent value="timeline">
-                <TimelineView tasks={sortedTasks} />
+                <TimelineView tasks={sortedTasks} onUpdateTask={handleTaskUpdated} />
               </TabsContent>
               <TabsContent value="calendar">
                 <CalendarView tasks={sortedTasks} />
+              </TabsContent>
+              <TabsContent value="kanban">
+                <KanbanView tasks={sortedTasks} onUpdateTask={handleTaskUpdated} />
               </TabsContent>
             </>
           )}

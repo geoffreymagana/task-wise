@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import type { Task } from '@/lib/types';
+import { generateColor } from '@/lib/utils';
 
 const STORAGE_KEY = 'taskwise-tasks';
 
@@ -13,7 +14,12 @@ export function useTaskManager() {
     try {
       const items = window.localStorage.getItem(STORAGE_KEY);
       if (items) {
-        setTasks(JSON.parse(items));
+        // Add color to tasks that don't have one
+        const parsedTasks = JSON.parse(items).map((task: Task) => ({
+          ...task,
+          color: task.color || generateColor(),
+        }));
+        setTasks(parsedTasks);
       }
     } catch (error) {
       console.error('Failed to load tasks from localStorage', error);
@@ -32,7 +38,8 @@ export function useTaskManager() {
   }, [tasks, isLoaded]);
 
   const addTask = useCallback((task: Task) => {
-    setTasks((prevTasks) => [...prevTasks, task]);
+    const taskWithColor = { ...task, color: task.color || generateColor() };
+    setTasks((prevTasks) => [...prevTasks, taskWithColor]);
   }, []);
 
   const updateTask = useCallback((updatedTask: Task) => {
@@ -46,7 +53,11 @@ export function useTaskManager() {
   }, []);
   
   const customSetTasks = useCallback((newTasks: Task[]) => {
-    setTasks(newTasks);
+     const tasksWithColors = newTasks.map((task) => ({
+      ...task,
+      color: task.color || generateColor(),
+    }));
+    setTasks(tasksWithColors);
   }, []);
 
   const deleteTasks = useCallback((taskIds: string[]) => {
@@ -60,7 +71,8 @@ export function useTaskManager() {
           return { 
             ...task, 
             status, 
-            completedAt: status === 'completed' ? new Date().toISOString() : task.completedAt 
+            completedAt: status === 'completed' ? new Date().toISOString() : task.completedAt,
+            startedAt: status === 'in_progress' && !task.startedAt ? new Date().toISOString() : task.startedAt,
           };
         }
         return task;
