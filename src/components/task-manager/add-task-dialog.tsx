@@ -50,6 +50,23 @@ const FormSchema = z.object({
   dependencies: z.array(z.string()).optional(),
   icon: z.string().optional(),
   color: z.string().optional(),
+}).refine(data => {
+  if (data.startTime && data.endTime) {
+    return data.endTime > data.startTime;
+  }
+  return true;
+}, {
+  message: 'End time must be after start time.',
+  path: ['endTime'],
+}).refine(data => {
+  if (data.startTime) {
+    // Allow a small buffer for instantaneous actions
+    return new Date(data.startTime).getTime() >= new Date().getTime() - 60000;
+  }
+  return true;
+}, {
+  message: 'Start time cannot be in the past.',
+  path: ['startTime'],
 });
 
 type FormValues = z.infer<typeof FormSchema>;
@@ -312,6 +329,7 @@ export function AddTaskDialog({ children, onTaskCreated, onTaskUpdated, taskToEd
                               onChange={(e) => field.onChange(e.target.value ? new Date(e.target.value) : null)}
                             />
                           </FormControl>
+                          <FormMessage />
                         </FormItem>
                       )}
                     />
@@ -328,6 +346,7 @@ export function AddTaskDialog({ children, onTaskCreated, onTaskUpdated, taskToEd
                                 onChange={(e) => field.onChange(e.target.value ? new Date(e.target.value) : null)}
                               />
                             </FormControl>
+                            <FormMessage />
                         </FormItem>
                       )}
                     />
@@ -496,3 +515,5 @@ export function AddTaskDialog({ children, onTaskCreated, onTaskUpdated, taskToEd
     </Dialog>
   );
 }
+
+    

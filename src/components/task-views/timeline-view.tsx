@@ -39,8 +39,8 @@ const DependencyLines = ({ tasks, taskLayouts, viewMode, currentDate }) => {
                 const fromRect = fromEl.getBoundingClientRect();
 
                 task.dependencies.forEach(depId => {
-                    const toLayout = taskLayouts[depId];
-                    if (!toLayout) return;
+                    const depTask = tasks.find(t => t.id === depId);
+                    if (!depTask) return;
 
                     const toEl = document.querySelector(`[data-task-id="${depId}"]`);
                     if (!toEl) return;
@@ -60,7 +60,7 @@ const DependencyLines = ({ tasks, taskLayouts, viewMode, currentDate }) => {
                         <path
                             key={`${task.id}-${depId}`}
                             d={`M ${startX} ${startY} C ${controlX1} ${controlY1}, ${controlX2} ${controlY2}, ${endX} ${endY}`}
-                            stroke="hsl(var(--primary))"
+                            stroke={depTask.color}
                             strokeWidth="1.5"
                             fill="none"
                             markerEnd="url(#arrow)"
@@ -357,3 +357,5 @@ export default function TimelineView({ tasks, allTasks, onUpdateTask }: { tasks:
         </Card>
     );
 }
+
+    

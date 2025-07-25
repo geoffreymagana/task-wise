@@ -109,11 +109,17 @@ export function useTaskManager() {
 
       return prevTasks.map((task) => {
         if (taskIds.includes(task.id)) {
+          const now = new Date().toISOString();
+          const startedAt = (status === 'in_progress' || status === 'completed') && !task.startedAt ? now : task.startedAt;
+          const completedAt = status === 'completed' ? now : task.completedAt;
+          const endTime = status === 'completed' && !task.endTime ? now : task.endTime;
+
           return { 
             ...task, 
             status, 
-            completedAt: status === 'completed' ? new Date().toISOString() : task.completedAt,
-            startedAt: status === 'in_progress' && !task.startedAt ? new Date().toISOString() : task.startedAt,
+            startedAt,
+            completedAt,
+            endTime,
           };
         }
         return task;
@@ -142,3 +148,5 @@ export function useTaskManager() {
     reinstateTask,
   };
 }
+
+    
