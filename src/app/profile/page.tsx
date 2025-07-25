@@ -5,7 +5,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { useTaskManager } from '@/hooks/use-task-manager';
-import { CheckCircle, Clock, ListTodo, UserCheck, Check, Edit, Loader2 } from 'lucide-react';
+import { CheckCircle, Clock, ListTodo, UserCheck, Check, Edit, Loader2, Verified } from 'lucide-react';
 import { useMemo, useState, useEffect } from 'react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -84,7 +84,7 @@ export default function ProfilePage() {
           <CardHeader className="flex flex-col items-center text-center">
             <Avatar className="w-24 h-24 mb-4">
               <div className="w-full h-full rounded-full bg-primary/10 flex items-center justify-center">
-                <UserCheck className="w-12 h-12 text-primary" />
+                <Verified className="w-12 h-12 text-primary" />
               </div>
             </Avatar>
             {isEditingName ? (
