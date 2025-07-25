@@ -12,7 +12,15 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ListTodo } from 'lucide-react';
 
 export default function Home() {
-  const { tasks, addTask, updateTask, deleteTask, setTasks } = useTaskManager();
+  const { 
+    tasks, 
+    addTask, 
+    updateTask, 
+    deleteTask, 
+    setTasks,
+    deleteTasks,
+    updateTasksStatus,
+  } = useTaskManager();
   const [activeView, setActiveView] = useState('table');
 
   const handleTaskCreated = (newTask: Task) => {
@@ -52,7 +60,13 @@ export default function Home() {
           ) : (
             <>
               <TabsContent value="table">
-                <TableView tasks={sortedTasks} onUpdateTask={updateTask} onDeleteTask={deleteTask} />
+                <TableView 
+                  tasks={sortedTasks} 
+                  onUpdateTask={updateTask} 
+                  onDeleteTask={deleteTask}
+                  onDeleteTasks={deleteTasks}
+                  onUpdateTasksStatus={updateTasksStatus}
+                />
               </TabsContent>
               <TabsContent value="timeline">
                 <TimelineView tasks={sortedTasks} />

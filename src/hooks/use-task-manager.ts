@@ -49,5 +49,34 @@ export function useTaskManager() {
     setTasks(newTasks);
   }, []);
 
-  return { tasks, addTask, updateTask, deleteTask, setTasks: customSetTasks, isLoaded };
+  const deleteTasks = useCallback((taskIds: string[]) => {
+    setTasks((prevTasks) => prevTasks.filter((task) => !taskIds.includes(task.id)));
+  }, []);
+
+  const updateTasksStatus = useCallback((taskIds: string[], status: Task['status']) => {
+    setTasks((prevTasks) =>
+      prevTasks.map((task) => {
+        if (taskIds.includes(task.id)) {
+          return { 
+            ...task, 
+            status, 
+            completedAt: status === 'completed' ? new Date().toISOString() : task.completedAt 
+          };
+        }
+        return task;
+      })
+    );
+  }, []);
+
+
+  return { 
+    tasks, 
+    addTask, 
+    updateTask, 
+    deleteTask, 
+    setTasks: customSetTasks, 
+    isLoaded,
+    deleteTasks,
+    updateTasksStatus,
+  };
 }

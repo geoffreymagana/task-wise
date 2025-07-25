@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import type { Task } from '@/lib/types';
 import {
   Table,
@@ -18,16 +19,33 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
+  DropdownMenuSub,
+  DropdownMenuSubTrigger,
+  DropdownMenuSubContent,
+  DropdownMenuPortal,
 } from '@/components/ui/dropdown-menu';
-import { CheckCircle, Circle, Edit, MoreHorizontal, Trash, XCircle } from 'lucide-react';
-import { format, formatDistanceToNow } from 'date-fns';
+import { Checkbox } from '@/components/ui/checkbox';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import { CheckCircle, Circle, Edit, MoreHorizontal, Trash, XCircle, ChevronDown } from 'lucide-react';
+import { format } from 'date-fns';
 import { Card } from '../ui/card';
 import { AddTaskDialog } from '../task-manager/add-task-dialog';
 
 interface TableViewProps {
   tasks: Task[];
   onUpdateTask: (task: Task) => void;
+  onUpdateTasksStatus: (taskIds: string[], status: Task['status']) => void;
   onDeleteTask: (taskId: string) => void;
+  onDeleteTasks: (taskIds: string[]) => void;
 }
 
 const statusConfig = {
@@ -43,16 +61,98 @@ const priorityConfig = {
   high: 'destructive',
 };
 
-export default function TableView({ tasks, onUpdateTask, onDeleteTask }: TableViewProps) {
+export default function TableView({
+  tasks,
+  onUpdateTask,
+  onUpdateTasksStatus,
+  onDeleteTask,
+  onDeleteTasks,
+}: TableViewProps) {
+  const [selectedTaskIds, setSelectedTaskIds] = useState<string[]>([]);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+
+  const visibleTasks = tasks.filter((task) => task.status !== 'archived');
+  const visibleTaskIds = visibleTasks.map((task) => task.id);
+
+  const handleSelectAll = (checked: boolean | 'indeterminate') => {
+    if (checked === true) {
+      setSelectedTaskIds(visibleTaskIds);
+    } else {
+      setSelectedTaskIds([]);
+    }
+  };
+
+  const handleRowSelect = (taskId: string, checked: boolean) => {
+    if (checked) {
+      setSelectedTaskIds((prev) => [...prev, taskId]);
+    } else {
+      setSelectedTaskIds((prev) => prev.filter((id) => id !== taskId));
+    }
+  };
+
   const handleStatusChange = (task: Task, status: Task['status']) => {
     onUpdateTask({ ...task, status, completedAt: status === 'completed' ? new Date().toISOString() : task.completedAt });
   };
+  
+  const handleBulkStatusChange = (status: Task['status']) => {
+    onUpdateTasksStatus(selectedTaskIds, status);
+    setSelectedTaskIds([]);
+  }
+
+  const handleBulkDelete = () => {
+    onDeleteTasks(selectedTaskIds);
+    setSelectedTaskIds([]);
+    setIsDeleteDialogOpen(false);
+  };
+
+  const isAllSelected = selectedTaskIds.length > 0 && selectedTaskIds.length === visibleTaskIds.length;
+  const isSomeSelected = selectedTaskIds.length > 0 && selectedTaskIds.length < visibleTaskIds.length;
 
   return (
     <Card className="shadow-lg">
+      {selectedTaskIds.length > 0 && (
+        <div className="p-2 border-b bg-muted/50 flex items-center justify-between">
+          <span className="text-sm font-medium">
+            {selectedTaskIds.length} task(s) selected
+          </span>
+          <div className="space-x-2">
+             <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="sm">
+                  Change Status <ChevronDown className="ml-2 h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent>
+                <DropdownMenuLabel>Set Status</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                 {Object.entries(statusConfig).map(([statusKey, {label}]) => (
+                  <DropdownMenuItem key={statusKey} onClick={() => handleBulkStatusChange(statusKey as Task['status'])}>
+                    {label}
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+            <Button
+              variant="destructive"
+              size="sm"
+              onClick={() => setIsDeleteDialogOpen(true)}
+            >
+              <Trash className="mr-2 h-4 w-4" />
+              Delete Selected
+            </Button>
+          </div>
+        </div>
+      )}
       <Table>
         <TableHeader>
           <TableRow>
+            <TableHead className="w-12">
+              <Checkbox
+                checked={isAllSelected ? true : (isSomeSelected ? 'indeterminate' : false)}
+                onCheckedChange={handleSelectAll}
+                aria-label="Select all rows"
+              />
+            </TableHead>
             <TableHead className="w-[40%]">Task</TableHead>
             <TableHead>Status</TableHead>
             <TableHead>Priority</TableHead>
@@ -62,10 +162,15 @@ export default function TableView({ tasks, onUpdateTask, onDeleteTask }: TableVi
           </TableRow>
         </TableHeader>
         <TableBody>
-          {tasks
-            .filter(task => task.status !== 'archived')
-            .map((task) => (
-            <TableRow key={task.id}>
+          {visibleTasks.map((task) => (
+            <TableRow key={task.id} data-state={selectedTaskIds.includes(task.id) && 'selected'}>
+              <TableCell>
+                <Checkbox
+                  checked={selectedTaskIds.includes(task.id)}
+                  onCheckedChange={(checked) => handleRowSelect(task.id, !!checked)}
+                  aria-label={`Select row for task "${task.title}"`}
+                />
+              </TableCell>
               <TableCell>
                 <div className="font-medium">{task.title}</div>
                 <div className="text-sm text-muted-foreground truncate max-w-sm">
@@ -128,6 +233,22 @@ export default function TableView({ tasks, onUpdateTask, onDeleteTask }: TableVi
           ))}
         </TableBody>
       </Table>
+       <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete the selected {selectedTaskIds.length} task(s).
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleBulkDelete}>
+              Continue
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Card>
   );
 }
