@@ -133,7 +133,7 @@ export function AddTaskDialog({ children, onTaskCreated, onTaskUpdated, taskToEd
           toast({ title: 'Task Updated', description: `"${data.title}" has been updated.` });
         }
       } else {
-        const actionData = { ...data, dueDate: data.dueDate ? format(data.dueDate, 'yyyy-MM-dd') : null };
+        const actionData = { ...data, dueDate: data.dueDate ? format(data.dueDate, 'yyyy-MM-dd') : null, estimatedTime: estimatedTimeInMinutes };
         const newTask = await createTaskAction(actionData);
         onTaskCreated(newTask);
         toast({ title: 'Task Created', description: `"${newTask.title}" has been added.` });

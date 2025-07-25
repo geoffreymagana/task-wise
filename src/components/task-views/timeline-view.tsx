@@ -1,167 +1,222 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useRef, useEffect } from 'react';
 import type { Task } from '@/lib/types';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { addMinutes, format, startOfDay, eachHourOfInterval, startOfHour, endOfHour, isWithinInterval } from 'date-fns';
+import { addDays, subDays, startOfWeek, endOfWeek, eachDayOfInterval, format, isSameDay, addMinutes, isWithinInterval } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { Button } from '../ui/button';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
+import { Badge } from '../ui/badge';
 
 interface TimelineViewProps {
   tasks: Task[];
   onUpdateTask: (task: Task) => void;
 }
 
-const getHourLabel = (date: Date) => format(date, 'h a');
+const getWeekDays = (date: Date) => {
+    const start = startOfWeek(date, { weekStartsOn: 1 });
+    const end = endOfWeek(date, { weekStartsOn: 1 });
+    return eachDayOfInterval({ start, end });
+};
+
+const DependencyLines = ({ tasks, week, taskPositions }) => {
+    const lines = [];
+
+    tasks.forEach(task => {
+        if (task.dependencies?.length > 0) {
+            const fromPosition = taskPositions[task.id];
+            if (!fromPosition) return;
+
+            task.dependencies.forEach(depId => {
+                const toPosition = taskPositions[depId];
+                if (!toPosition) return;
+
+                const fromRect = fromPosition.el.getBoundingClientRect();
+                const toRect = toPosition.el.getBoundingClientRect();
+                const containerRect = fromPosition.el.closest('.timeline-container').getBoundingClientRect();
+
+                const startX = fromRect.left - containerRect.left;
+                const startY = fromRect.top - containerRect.top + fromRect.height / 2;
+                const endX = toRect.right - containerRect.left;
+                const endY = toRect.top - containerRect.top + toRect.height / 2;
+
+                const controlX1 = startX - 50;
+                const controlY1 = startY;
+                const controlX2 = endX + 50;
+                const controlY2 = endY;
+
+                lines.push(
+                    <path
+                        key={`${task.id}-${depId}`}
+                        d={`M ${startX} ${startY} C ${controlX1} ${controlY1}, ${controlX2} ${controlY2}, ${endX} ${endY}`}
+                        stroke="hsl(var(--primary))"
+                        strokeWidth="2"
+                        fill="none"
+                        markerEnd="url(#arrow)"
+                    />
+                );
+            });
+        }
+    });
+
+    return (
+        <svg className="absolute top-0 left-0 w-full h-full pointer-events-none z-0">
+            <defs>
+                <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                    <path d="M 0 0 L 10 5 L 0 10 z" fill="hsl(var(--primary))" />
+                </marker>
+            </defs>
+            {lines}
+        </svg>
+    );
+};
+
 
 export default function TimelineView({ tasks, onUpdateTask }: TimelineViewProps) {
-  const [currentDate, setCurrentDate] = useState(new Date());
+    const [currentDate, setCurrentDate] = useState(new Date());
+    const weekDays = getWeekDays(currentDate);
+    const containerRef = useRef<HTMLDivElement>(null);
+    const [taskPositions, setTaskPositions] = useState({});
 
-  const { tasksWithTime, minHour, maxHour } = useMemo(() => {
-    const validTasks = tasks.filter(
-      (task) =>
-        (task.dueDate || task.startedAt) && task.estimatedTime && task.estimatedTime > 0
-    );
+    const scheduledTasks = useMemo(() => {
+        return tasks.map(task => {
+            const startDate = task.startedAt ? new Date(task.startedAt) : (task.dueDate ? new Date(task.dueDate) : null);
+            if (!startDate) return null;
 
-    if (validTasks.length === 0) {
-      return { tasksWithTime: [], minHour: 8, maxHour: 17 };
-    }
-    
-    let earliest = 24;
-    let latest = 0;
+            const isAllDay = !task.startedAt && !!task.dueDate;
+            const endDate = task.estimatedTime > 0 ? addMinutes(startDate, task.estimatedTime) : (isAllDay ? startDate : null);
 
-    const processed = validTasks.map((task) => {
-      const startDate = startOfDay(new Date(task.startedAt || task.dueDate!));
-      const endDate = addMinutes(startDate, task.estimatedTime!);
-      const startHour = startDate.getHours() + startDate.getMinutes() / 60;
-      const endHour = endDate.getHours() + endDate.getMinutes() / 60;
-      
-      earliest = Math.min(earliest, Math.floor(startHour));
-      latest = Math.max(latest, Math.ceil(endHour));
-      
-      return {
-        ...task,
-        startDate,
-        endDate,
-        startHour,
-        endHour,
-      };
-    });
+            return { ...task, startDate, endDate, isAllDay };
+        }).filter(Boolean);
+    }, [tasks]);
 
-    return {
-      tasksWithTime: processed,
-      minHour: Math.max(0, earliest - 1),
-      maxHour: Math.min(23, latest + 1),
+    const layoutTasks = (tasksToLayout, week) => {
+        const lanes = [];
+        const taskLayouts = {};
+
+        tasksToLayout.sort((a, b) => a.startDate - b.startDate);
+
+        tasksToLayout.forEach(task => {
+            let placed = false;
+            for (let i = 0; i < lanes.length; i++) {
+                const lastTaskInLane = lanes[i][lanes[i].length - 1];
+                if (task.startDate >= lastTaskInLane.endDate) {
+                    lanes[i].push(task);
+                    taskLayouts[task.id] = { ...task, lane: i };
+                    placed = true;
+                    break;
+                }
+            }
+            if (!placed) {
+                lanes.push([task]);
+                taskLayouts[task.id] = { ...task, lane: lanes.length - 1 };
+            }
+        });
+
+        return { taskLayouts, totalLanes: lanes.length };
     };
-  }, [tasks]);
 
-  const hours = useMemo(() => {
-    const start = startOfDay(currentDate);
-    return eachHourOfInterval({
-      start: start.setHours(minHour),
-      end: start.setHours(maxHour),
-    });
-  }, [minHour, maxHour, currentDate]);
-  
-  const tasksForCurrentDay = useMemo(() => {
-    return tasksWithTime.filter(task => isWithinInterval(task.startDate, { start: startOfDay(currentDate), end: addMinutes(startOfDay(currentDate), 1439) }));
-  }, [tasksWithTime, currentDate]);
+    const { taskLayouts, totalLanes } = layoutTasks(scheduledTasks, weekDays);
 
+    useEffect(() => {
+        const positions = {};
+        if (containerRef.current) {
+            Object.keys(taskLayouts).forEach(taskId => {
+                const el = containerRef.current.querySelector(`[data-task-id="${taskId}"]`);
+                if (el) {
+                    positions[taskId] = { el };
+                }
+            });
+        }
+        setTaskPositions(positions);
+    }, [tasks, currentDate, taskLayouts]);
 
-  const nextDay = () => setCurrentDate(prev => addMinutes(prev, 1440));
-  const prevDay = () => setCurrentDate(prev => addMinutes(prev, -1440));
+    const nextWeek = () => setCurrentDate(addDays(currentDate, 7));
+    const prevWeek = () => setCurrentDate(subDays(currentDate, 7));
 
-  const getGridPosition = (hour: number) => {
-    const totalHours = maxHour - minHour;
-    const position = ((hour - minHour) / totalHours) * 100;
-    return `${position}%`;
-  };
-
-  const getTaskStyle = (task: typeof tasksWithTime[0]) => {
-    const totalHours = maxHour - minHour;
-    const left = ((task.startHour - minHour) / totalHours) * 100;
-    const width = ((task.endHour - task.startHour) / totalHours) * 100;
-    return {
-      left: `${left}%`,
-      width: `${width}%`,
-    };
-  };
-
-  return (
-    <Card className="shadow-lg">
-      <CardHeader>
-        <div className="flex justify-between items-center">
-            <div>
-                <CardTitle className="font-headline">Project Timeline</CardTitle>
-                <CardDescription>Visualize your project schedule in a chronological view.</CardDescription>
-            </div>
-            <div className='flex items-center gap-2'>
-                <Button variant="outline" size="icon" onClick={prevDay}><ChevronLeft/></Button>
-                 <span className='font-semibold'>{format(currentDate, 'do MMMM yyyy')}</span>
-                <Button variant="outline" size="icon" onClick={nextDay}><ChevronRight/></Button>
-            </div>
-        </div>
-      </CardHeader>
-      <CardContent className="pt-6">
-        {tasksForCurrentDay.length === 0 ? (
-          <div className="h-[400px] flex items-center justify-center">
-            <p className="text-muted-foreground">No tasks scheduled for this day.</p>
-          </div>
-        ) : (
-          <div className="relative">
-            {/* Hour Labels */}
-            <div className="flex justify-between border-b pb-2">
-              {hours.map((hour, index) => (
-                <div key={index} className="text-xs text-muted-foreground" style={{ flexBasis: `${100 / hours.length}%` }}>
-                  {getHourLabel(hour)}
-                </div>
-              ))}
-            </div>
-
-            {/* Grid Lines */}
-            <div className="absolute top-8 bottom-0 left-0 right-0">
-               {hours.slice(1).map((hour, index) => (
-                <div
-                  key={index}
-                  className="absolute h-full border-l border-dashed"
-                  style={{ left: `${(index + 1) * (100 / hours.length)}%` }}
-                />
-              ))}
-            </div>
-
-            {/* Task Rows */}
-            <div className="mt-4 space-y-2 relative z-10">
-              {tasksForCurrentDay.map((task, rowIndex) => (
-                <Popover key={task.id}>
-                  <PopoverTrigger asChild>
-                    <div
-                      className="h-10 rounded-lg flex items-center px-2 relative cursor-pointer"
-                      style={{
-                        ...getTaskStyle(task),
-                        backgroundColor: task.color,
-                        top: `${rowIndex * 48}px`,
-                        position: 'absolute',
-                      }}
-                    >
-                      <span className="text-white text-sm font-medium truncate">{task.title}</span>
+    return (
+        <Card className="shadow-lg">
+            <CardHeader>
+                <div className="flex justify-between items-center">
+                    <div>
+                        <CardTitle className="font-headline">Project Timeline</CardTitle>
+                        <CardDescription>Visualize your project schedule for the week.</CardDescription>
                     </div>
-                  </PopoverTrigger>
-                   <PopoverContent>
-                     <p className="font-bold">{task.title}</p>
-                     <p className="text-sm text-muted-foreground">{task.description}</p>
-                     <p className="text-xs mt-2">
-                       {format(task.startDate, 'p')} - {format(task.endDate, 'p')} ({task.estimatedTime} min)
-                     </p>
-                  </PopoverContent>
-                </Popover>
-              ))}
-            </div>
-             <div style={{ height: `${tasksForCurrentDay.length * 48}px` }} />
-          </div>
-        )}
-      </CardContent>
-    </Card>
-  );
+                    <div className='flex items-center gap-2'>
+                        <Button variant="outline" size="icon" onClick={prevWeek}><ChevronLeft /></Button>
+                        <span className='font-semibold'>{format(weekDays[0], 'do MMM')} - {format(weekDays[6], 'do MMM yyyy')}</span>
+                        <Button variant="outline" size="icon" onClick={nextWeek}><ChevronRight /></Button>
+                    </div>
+                </div>
+            </CardHeader>
+            <CardContent className="pt-6 overflow-x-auto">
+                <div ref={containerRef} className="relative timeline-container" style={{ minWidth: `${weekDays.length * 150}px`, minHeight: `${(totalLanes + 1) * 60}px` }}>
+                    <div className="grid" style={{ gridTemplateColumns: `repeat(${weekDays.length}, minmax(150px, 1fr))` }}>
+                        {weekDays.map(day => (
+                            <div key={day.toString()} className="border-r border-b p-2">
+                                <p className={cn("text-center font-semibold", isSameDay(day, new Date()) && "text-primary")}>{format(day, 'EEE')}</p>
+                                <p className="text-center text-xs text-muted-foreground">{format(day, 'd')}</p>
+                            </div>
+                        ))}
+                    </div>
+                    <div className="absolute top-16 left-0 right-0">
+                        {Object.values(taskLayouts).map((task) => {
+                             const startDayIndex = weekDays.findIndex(day => isSameDay(day, task.startDate));
+                             const endDayIndex = task.endDate ? weekDays.findIndex(day => isSameDay(day, task.endDate)) : startDayIndex;
+
+                             if (startDayIndex === -1 && !isWithinInterval(task.startDate, { start: weekDays[0], end: weekDays[6]})) return null;
+
+                             const clampedStart = Math.max(startDayIndex, 0);
+                             const clampedEnd = endDayIndex === -1 ? weekDays.length -1 : Math.min(endDayIndex, weekDays.length - 1);
+                             
+                             const startOffset = (task.startDate.getHours() * 60 + task.startDate.getMinutes()) / 1440;
+                             const endOffset = task.endDate ? (task.endDate.getHours() * 60 + task.endDate.getMinutes()) / 1440 : startOffset;
+
+                             const left = (clampedStart + (task.isAllDay ? 0 : startOffset)) * (100 / weekDays.length);
+                             
+                             let width;
+                             if(task.isAllDay){
+                                width = (100 / weekDays.length);
+                             } else {
+                                const durationInDays = (task.endDate - task.startDate) / (1000 * 60 * 60 * 24);
+                                width = durationInDays * (100 / weekDays.length);
+                             }
+
+                            return (
+                                <Popover key={task.id}>
+                                    <PopoverTrigger asChild>
+                                        <div
+                                            data-task-id={task.id}
+                                            className="h-10 rounded-lg flex items-center px-2 absolute cursor-pointer z-10"
+                                            style={{
+                                                left: `${left}%`,
+                                                width: `${width}%`,
+                                                top: `${task.lane * 48}px`,
+                                                backgroundColor: task.color,
+                                            }}
+                                        >
+                                            <span className="text-white text-sm font-medium truncate">{task.title}</span>
+                                        </div>
+                                    </PopoverTrigger>
+                                    <PopoverContent>
+                                        <p className="font-bold">{task.title}</p>
+                                        <p className="text-sm text-muted-foreground">{task.description}</p>
+                                        <p className="text-xs mt-2">
+                                            {format(task.startDate, 'p')} - {task.endDate ? format(task.endDate, 'p') : ''}
+                                        </p>
+                                        <Badge>{task.priority}</Badge>
+                                    </PopoverContent>
+                                </Popover>
+                            )
+                        })}
+                    </div>
+                    {Object.keys(taskPositions).length > 0 && (
+                        <DependencyLines tasks={Object.values(taskLayouts)} week={weekDays} taskPositions={taskPositions} />
+                    )}
+                </div>
+            </CardContent>
+        </Card>
+    );
 }
