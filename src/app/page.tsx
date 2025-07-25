@@ -12,7 +12,11 @@ import type { Task } from '@/lib/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ListTodo } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { registerServiceWorker, subscribeToPush } from '@/lib/notification-utils';
+import { registerServiceWorker, subscribeToPush, getSubscription } from '@/lib/notification-utils';
+import { sendReminders } from '@/ai/flows/send-reminders';
+import FilterControls from '@/components/task-manager/filter-controls';
+import { isSameDay } from 'date-fns';
+
 
 export default function Home() {
   const { 
@@ -27,6 +31,17 @@ export default function Home() {
   } = useTaskManager();
   const [activeView, setActiveView] = useState('table');
   const [activeTab, setActiveTab] = useState('active');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [filters, setFilters] = useState<{
+    priority: string[];
+    status: string[];
+    dueDate: Date | null;
+  }>({
+    priority: [],
+    status: [],
+    dueDate: null,
+  });
+
   const { toast } = useToast();
 
    useEffect(() => {
@@ -50,6 +65,16 @@ export default function Home() {
     }
     setupNotifications();
   }, [toast]);
+
+  useEffect(() => {
+    const interval = setInterval(async () => {
+        const sub = await getSubscription();
+        if (tasks.length > 0 && sub) {
+            await sendReminders({tasks, subscriptions: [sub]});
+        }
+    }, 60 * 1000); // Check every minute
+    return () => clearInterval(interval);
+  }, [tasks]);
 
 
   const handleTaskCreated = (newTask: Task) => {
@@ -80,7 +105,24 @@ export default function Home() {
     };
   }, [tasks]);
   
-  const tasksToShow = activeTab === 'active' ? activeTasks : archivedTasks;
+  const filteredTasks = useMemo(() => {
+    const sourceTasks = activeTab === 'active' ? activeTasks : archivedTasks;
+    
+    return sourceTasks.filter(task => {
+        const searchMatch = !searchQuery || 
+                            task.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                            task.description.toLowerCase().includes(searchQuery.toLowerCase());
+
+        const priorityMatch = filters.priority.length === 0 || filters.priority.includes(task.priority);
+        const statusMatch = filters.status.length === 0 || filters.status.includes(task.status);
+        const dueDateMatch = !filters.dueDate || (task.dueDate && isSameDay(new Date(task.dueDate), filters.dueDate));
+
+        return searchMatch && priorityMatch && statusMatch && dueDateMatch;
+    });
+
+}, [activeTasks, archivedTasks, activeTab, searchQuery, filters]);
+
+  const tasksToShow = filteredTasks;
   const hasTasks = tasks.length > 0;
   const hasActiveTasks = activeTasks.length > 0;
   const hasArchivedTasks = archivedTasks.length > 0;
@@ -100,12 +142,20 @@ export default function Home() {
         )}
         {activeTab === 'active' && (
            <Tabs value={activeView} onValueChange={setActiveView} className="w-full mt-4">
-              <TabsList className="grid w-full grid-cols-4 md:w-fit">
-                <TabsTrigger value="table">Table</TabsTrigger>
-                <TabsTrigger value="timeline">Timeline</TabsTrigger>
-                <TabsTrigger value="calendar">Calendar</TabsTrigger>
-                <TabsTrigger value="kanban">Kanban</TabsTrigger>
-              </TabsList>
+              <div className="flex flex-wrap items-center justify-between gap-4">
+                <TabsList className="grid w-full grid-cols-4 md:w-fit">
+                  <TabsTrigger value="table">Table</TabsTrigger>
+                  <TabsTrigger value="timeline">Timeline</TabsTrigger>
+                  <TabsTrigger value="calendar">Calendar</TabsTrigger>
+                  <TabsTrigger value="kanban">Kanban</TabsTrigger>
+                </TabsList>
+                <FilterControls 
+                    searchQuery={searchQuery}
+                    setSearchQuery={setSearchQuery}
+                    filters={filters}
+                    setFilters={setFilters}
+                />
+              </div>
               
               {!hasActiveTasks ? (
                  <Card className="mt-4 w-full text-center shadow-lg">
@@ -130,6 +180,7 @@ export default function Home() {
                       onDeleteTask={deleteTask}
                       onDeleteTasks={deleteTasks}
                       onUpdateTasksStatus={updateTasksStatus}
+                      allTasks={tasks}
                     />
                   </TabsContent>
                   <TabsContent value="timeline">
@@ -147,15 +198,22 @@ export default function Home() {
         )}
          {activeTab === 'archived' && (
           <div className="mt-4">
+             <FilterControls 
+                searchQuery={searchQuery}
+                setSearchQuery={setSearchQuery}
+                filters={filters}
+                setFilters={setFilters}
+              />
             {hasArchivedTasks ? (
                <TableView
-                tasks={archivedTasks}
+                tasks={tasksToShow}
                 onUpdateTask={updateTask}
                 onDeleteTask={deleteTask}
                 onDeleteTasks={deleteTasks}
                 onUpdateTasksStatus={updateTasksStatus}
                 reinstateTask={reinstateTask}
                 isArchivedView={true}
+                allTasks={tasks}
               />
             ) : (
               <Card className="mt-4 w-full text-center shadow-lg">

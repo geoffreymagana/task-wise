@@ -43,6 +43,7 @@ import { Icon } from '../common/icon';
 
 interface TableViewProps {
   tasks: Task[];
+  allTasks: Task[];
   onUpdateTask: (task: Task) => void;
   onUpdateTasksStatus: (taskIds: string[], status: Task['status']) => void;
   onDeleteTask: (taskId: string) => void;
@@ -66,6 +67,7 @@ const priorityConfig = {
 
 export default function TableView({
   tasks,
+  allTasks,
   onUpdateTask,
   onUpdateTasksStatus,
   onDeleteTask,
@@ -97,7 +99,7 @@ export default function TableView({
   const handleStatusChange = (task: Task, status: Task['status']) => {
      if (status === 'completed' && task.dependencies?.length > 0) {
       const allDependenciesMet = task.dependencies.every(depId => {
-        const depTask = tasks.find(t => t.id === depId);
+        const depTask = allTasks.find(t => t.id === depId);
         return depTask && depTask.status === 'completed';
       });
 
@@ -142,7 +144,7 @@ export default function TableView({
   const isSomeSelected = selectedTaskIds.length > 0 && selectedTaskIds.length < tasks.length;
 
   return (
-    <Card className="shadow-lg">
+    <Card className="shadow-lg mt-4">
       {selectedTaskIds.length > 0 && (
         <div className="p-2 border-b bg-muted/50 flex items-center justify-between">
           <span className="text-sm font-medium">
@@ -183,7 +185,7 @@ export default function TableView({
           <TableRow>
             <TableHead className="w-12">
               <Checkbox
-                checked={isAllSelected ? true : (isSomeSelected ? 'indeterminate' : false)}
+                checked={tasks.length > 0 && isAllSelected ? true : (isSomeSelected ? 'indeterminate' : false)}
                 onCheckedChange={handleSelectAll}
                 aria-label="Select all rows"
               />
@@ -267,7 +269,7 @@ export default function TableView({
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
-                      <AddTaskDialog onTaskUpdated={onUpdateTask} onTaskCreated={handleTaskCreated} taskToEdit={task} allTasks={tasks}>
+                      <AddTaskDialog onTaskUpdated={onUpdateTask} onTaskCreated={handleTaskCreated} taskToEdit={task} allTasks={allTasks}>
                         <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
                           <Edit className="mr-2 h-4 w-4" />
                           Edit
@@ -307,7 +309,7 @@ export default function TableView({
        {taskToView && (
         <TaskDetailsDialog
           task={taskToView}
-          allTasks={tasks}
+          allTasks={allTasks}
           onOpenChange={() => setTaskToView(null)}
         />
       )}
