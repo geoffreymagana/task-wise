@@ -34,7 +34,18 @@ export default function KanbanView({ tasks, allTasks, onUpdateTask }: KanbanView
       in_progress: [],
       completed: [],
     };
-    tasks.forEach((task) => {
+    
+    // Sort tasks by due date: tasks with due dates first, sorted chronologically, then tasks without due dates.
+    const sortedTasks = [...tasks].sort((a, b) => {
+      if (a.dueDate && b.dueDate) {
+        return new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime();
+      }
+      if (a.dueDate) return -1; // a has due date, b doesn't
+      if (b.dueDate) return 1;  // b has due date, a doesn't
+      return 0; // neither has a due date
+    });
+    
+    sortedTasks.forEach((task) => {
       if (task.status in statusColumns) {
         cols[task.status as StatusKey].push(task);
       }

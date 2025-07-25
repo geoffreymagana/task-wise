@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import type { Task } from '@/lib/types';
 import {
   Table,
@@ -80,9 +80,20 @@ export default function TableView({
   const [taskToView, setTaskToView] = useState<Task | null>(null);
   const { toast } = useToast();
 
+  const sortedTasks = useMemo(() => {
+    return [...tasks].sort((a, b) => {
+      if (a.dueDate && b.dueDate) {
+        return new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime();
+      }
+      if (a.dueDate) return -1;
+      if (b.dueDate) return 1;
+      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+    });
+  }, [tasks]);
+
   const handleSelectAll = (checked: boolean | 'indeterminate') => {
     if (checked === true) {
-      setSelectedTaskIds(tasks.map(t => t.id));
+      setSelectedTaskIds(sortedTasks.map(t => t.id));
     } else {
       setSelectedTaskIds([]);
     }
@@ -140,8 +151,8 @@ export default function TableView({
   };
 
 
-  const isAllSelected = selectedTaskIds.length > 0 && selectedTaskIds.length === tasks.length;
-  const isSomeSelected = selectedTaskIds.length > 0 && selectedTaskIds.length < tasks.length;
+  const isAllSelected = selectedTaskIds.length > 0 && selectedTaskIds.length === sortedTasks.length;
+  const isSomeSelected = selectedTaskIds.length > 0 && selectedTaskIds.length < sortedTasks.length;
 
   return (
     <Card className="shadow-lg mt-4">
@@ -185,7 +196,7 @@ export default function TableView({
           <TableRow>
             <TableHead className="w-12">
               <Checkbox
-                checked={tasks.length > 0 && isAllSelected ? true : (isSomeSelected ? 'indeterminate' : false)}
+                checked={sortedTasks.length > 0 && isAllSelected ? true : (isSomeSelected ? 'indeterminate' : false)}
                 onCheckedChange={handleSelectAll}
                 aria-label="Select all rows"
               />
@@ -199,7 +210,7 @@ export default function TableView({
           </TableRow>
         </TableHeader>
         <TableBody>
-          {tasks.map((task) => (
+          {sortedTasks.map((task) => (
             <TableRow key={task.id} data-state={selectedTaskIds.includes(task.id) && 'selected'}>
               <TableCell>
                 <Checkbox

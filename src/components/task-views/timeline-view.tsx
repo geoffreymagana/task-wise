@@ -219,7 +219,7 @@ export default function TimelineView({ tasks, allTasks, onUpdateTask }: { tasks:
     const { taskLayouts, totalLanes } = useMemo(() => {
         const layouts: { [key: string]: { task: Task & {lane: number}; lane: number } } = {};
         if (!scheduledTasks.length) return { taskLayouts: {}, totalLanes: 1 };
-    
+
         const sortedTasks = [...scheduledTasks].sort((a, b) => a.startDate.getTime() - b.startDate.getTime());
         
         const lanes: { tasks: (Task & { startDate: Date, endDate: Date})[] }[] = [];
@@ -229,7 +229,7 @@ export default function TimelineView({ tasks, allTasks, onUpdateTask }: { tasks:
             // Find the first available lane
             for (let i = 0; i < lanes.length; i++) {
                 const lastTaskInLane = lanes[i].tasks[lanes[i].tasks.length - 1];
-                if (task.startDate >= lastTaskInLane.endDate) {
+                if (!lastTaskInLane || task.startDate >= lastTaskInLane.endDate) {
                     layouts[task.id] = { task: { ...task, lane: i }, lane: i };
                     lanes[i].tasks.push(task);
                     placed = true;
@@ -244,7 +244,7 @@ export default function TimelineView({ tasks, allTasks, onUpdateTask }: { tasks:
                 lanes.push({ tasks: [task] });
             }
         });
-    
+
         return { taskLayouts: layouts, totalLanes: lanes.length };
     }, [scheduledTasks]);
 
