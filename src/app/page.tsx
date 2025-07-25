@@ -132,69 +132,78 @@ export default function Home() {
     <div className="flex flex-col min-h-screen bg-background">
       <AppHeader onTaskCreated={handleTaskCreated} onTasksImported={handleTasksImported} allTasks={tasks} />
       <main className="flex-grow p-4 md:p-8">
-        {hasTasks && (
-           <Tabs value={activeTab} onValueChange={setActiveTab}>
-            <TabsList>
-              <TabsTrigger value="active">Active Tasks</TabsTrigger>
-              <TabsTrigger value="archived">Archived</TabsTrigger>
-            </TabsList>
-          </Tabs>
-        )}
-        {activeTab === 'active' && (
-           <Tabs value={activeView} onValueChange={setActiveView} className="w-full mt-4">
-              <div className="flex flex-wrap items-center justify-between gap-4">
-                <TabsList className="grid w-full grid-cols-4 md:w-fit">
-                  <TabsTrigger value="table">Table</TabsTrigger>
-                  <TabsTrigger value="timeline">Timeline</TabsTrigger>
-                  <TabsTrigger value="calendar">Calendar</TabsTrigger>
-                  <TabsTrigger value="kanban">Kanban</TabsTrigger>
-                </TabsList>
+        <div className="flex flex-wrap items-center justify-between gap-4 mb-4">
+          {/* Left side: View Switcher and Filters */}
+          <div className="flex items-center gap-4 flex-wrap">
+            <Tabs value={activeView} onValueChange={setActiveView}>
+              <TabsList className="grid w-full grid-cols-4 md:w-fit">
+                <TabsTrigger value="table">Table</TabsTrigger>
+                <TabsTrigger value="timeline">Timeline</TabsTrigger>
+                <TabsTrigger value="calendar">Calendar</TabsTrigger>
+                <TabsTrigger value="kanban">Kanban</TabsTrigger>
+              </TabsList>
+            </Tabs>
+             {activeTab === 'active' && (
                 <FilterControls 
                     searchQuery={searchQuery}
                     setSearchQuery={setSearchQuery}
                     filters={filters}
                     setFilters={setFilters}
                 />
-              </div>
-              
-              {!hasActiveTasks ? (
-                 <Card className="mt-4 w-full text-center shadow-lg">
-                  <CardHeader>
-                    <CardTitle className="flex items-center justify-center gap-2 font-headline text-2xl">
-                      <ListTodo className="w-8 h-8 text-primary" />
-                      Welcome to TaskWise!
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-muted-foreground">
-                      You have no active tasks. Get started by adding a new task or importing a list.
-                    </p>
-                  </CardContent>
-                </Card>
-              ) : (
-                <>
-                  <TabsContent value="table">
-                    <TableView 
-                      tasks={tasksToShow} 
-                      onUpdateTask={updateTask} 
-                      onDeleteTask={deleteTask}
-                      onDeleteTasks={deleteTasks}
-                      onUpdateTasksStatus={updateTasksStatus}
-                      allTasks={tasks}
-                    />
-                  </TabsContent>
-                  <TabsContent value="timeline">
-                    <TimelineView tasks={tasksToShow} allTasks={tasks} onUpdateTask={handleTaskUpdated} />
-                  </TabsContent>
-                  <TabsContent value="calendar">
-                    <CalendarView tasks={tasksToShow} allTasks={tasks}/>
-                  </TabsContent>
-                  <TabsContent value="kanban">
-                    <KanbanView tasks={tasksToShow} onUpdateTask={handleTaskUpdated} allTasks={tasks} />
-                  </TabsContent>
-                </>
-              )}
-           </Tabs>
+            )}
+          </div>
+
+          {/* Right side: Active/Archived Toggle */}
+          {hasTasks && (
+            <Tabs value={activeTab} onValueChange={setActiveTab}>
+              <TabsList>
+                <TabsTrigger value="active">Active Tasks</TabsTrigger>
+                <TabsTrigger value="archived">Archived</TabsTrigger>
+              </TabsList>
+            </Tabs>
+          )}
+        </div>
+        
+        {activeTab === 'active' && (
+          <div>
+            {!hasActiveTasks ? (
+              <Card className="mt-4 w-full text-center shadow-lg">
+                <CardHeader>
+                  <CardTitle className="flex items-center justify-center gap-2 font-headline text-2xl">
+                    <ListTodo className="w-8 h-8 text-primary" />
+                    Welcome to TaskWise!
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-muted-foreground">
+                    You have no active tasks. Get started by adding a new task or importing a list.
+                  </p>
+                </CardContent>
+              </Card>
+            ) : (
+              <Tabs value={activeView} onValueChange={setActiveView} className="w-full">
+                <TabsContent value="table" className="m-0">
+                  <TableView 
+                    tasks={tasksToShow} 
+                    onUpdateTask={updateTask} 
+                    onDeleteTask={deleteTask}
+                    onDeleteTasks={deleteTasks}
+                    onUpdateTasksStatus={updateTasksStatus}
+                    allTasks={tasks}
+                  />
+                </TabsContent>
+                <TabsContent value="timeline" className="m-0">
+                  <TimelineView tasks={tasksToShow} allTasks={tasks} onUpdateTask={handleTaskUpdated} />
+                </TabsContent>
+                <TabsContent value="calendar" className="m-0">
+                  <CalendarView tasks={tasksToShow} allTasks={tasks}/>
+                </TabsContent>
+                <TabsContent value="kanban" className="m-0">
+                  <KanbanView tasks={tasksToShow} onUpdateTask={handleTaskUpdated} allTasks={tasks} />
+                </TabsContent>
+              </Tabs>
+            )}
+          </div>
         )}
          {activeTab === 'archived' && (
           <div className="mt-4">

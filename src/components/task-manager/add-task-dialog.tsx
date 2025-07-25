@@ -28,7 +28,8 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { CalendarIcon, Timer, Zap } from 'lucide-react';
+import { CalendarIcon, Timer, Zap, Check, ChevronsUpDown } from 'lucide-react';
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { Calendar } from '@/components/ui/calendar';
 import { cn, generateColor, timeToMinutes } from '@/lib/utils';
 import { format } from 'date-fns';
@@ -88,14 +89,31 @@ export function AddTaskDialog({ children, onTaskCreated, onTaskUpdated, taskToEd
 
   useEffect(() => {
     if (taskToEdit && open) {
+      const estTime = taskToEdit.estimatedTime || 0;
+      let unit = 'minutes';
+      let displayTime = estTime;
+
+      if (estTime > 0) {
+        if (estTime % (60*24*7) === 0) {
+          unit = 'weeks';
+          displayTime = estTime / (60*24*7);
+        } else if (estTime % (60*24) === 0) {
+          unit = 'days';
+          displayTime = estTime / (60*24);
+        } else if (estTime % 60 === 0) {
+          unit = 'hours';
+          displayTime = estTime / 60;
+        }
+      }
+
       form.reset({
         title: taskToEdit.title,
         description: taskToEdit.description,
         complexity: taskToEdit.complexity,
         priority: taskToEdit.priority,
         dueDate: taskToEdit.dueDate ? new Date(taskToEdit.dueDate) : null,
-        estimatedTime: taskToEdit.estimatedTime || 0,
-        estimatedTimeUnit: 'minutes', // Default to minutes for editing, user can change
+        estimatedTime: displayTime,
+        estimatedTimeUnit: unit,
         dependencies: taskToEdit.dependencies || [],
         icon: taskToEdit.icon,
         color: taskToEdit.color
@@ -121,20 +139,23 @@ export function AddTaskDialog({ children, onTaskCreated, onTaskUpdated, taskToEd
     try {
       const estimatedTimeInMinutes = timeToMinutes(data.estimatedTime || 0, data.estimatedTimeUnit || 'minutes');
       
+      const taskData = {
+          ...data,
+          estimatedTime: estimatedTimeInMinutes,
+          dueDate: data.dueDate ? format(data.dueDate, 'yyyy-MM-dd') : null,
+      };
+
       if (taskToEdit) {
         if (onTaskUpdated) {
           const updatedTask: Task = {
             ...taskToEdit,
-            ...data,
-            estimatedTime: estimatedTimeInMinutes,
-            dueDate: data.dueDate ? format(data.dueDate, 'yyyy-MM-dd') : null,
+            ...taskData,
           };
           onTaskUpdated(updatedTask);
           toast({ title: 'Task Updated', description: `"${data.title}" has been updated.` });
         }
       } else {
-        const actionData = { ...data, dueDate: data.dueDate ? format(data.dueDate, 'yyyy-MM-dd') : null, estimatedTime: estimatedTimeInMinutes };
-        const newTask = await createTaskAction(actionData);
+        const newTask = await createTaskAction(taskData);
         onTaskCreated(newTask);
         toast({ title: 'Task Created', description: `"${newTask.title}" has been added.` });
       }
@@ -328,46 +349,81 @@ export function AddTaskDialog({ children, onTaskCreated, onTaskUpdated, taskToEd
                   />
                 )}
                  <FormField
-                  control={form.control}
-                  name="dependencies"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Dependencies</FormLabel>
-                       <Select onValueChange={(value) => field.onChange([...(field.value || []), value])} >
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select task dependencies" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                           {availableDependencies.map(task => (
-                             <SelectItem key={task.id} value={task.id} disabled={field.value?.includes(task.id)}>
-                               {task.title}
-                             </SelectItem>
-                           ))}
-                        </SelectContent>
-                      </Select>
-                       <div className="flex flex-wrap gap-2 mt-2">
-                        {field.value?.map(depId => {
-                          const depTask = allTasks.find(t => t.id === depId);
-                          return depTask ? (
-                            <div key={depId} className="bg-muted text-muted-foreground text-xs p-1 rounded-md flex items-center gap-1">
-                              {depTask.title}
-                               <Button
-                                type="button"
-                                variant="ghost"
-                                size="icon"
-                                className="h-4 w-4"
-                                onClick={() => field.onChange(field.value?.filter(id => id !== depId))}
-                              >
-                                &times;
-                              </Button>
-                            </div>
-                          ) : null
-                        })}
-                      </div>
+                    control={form.control}
+                    name="dependencies"
+                    render={({ field }) => (
+                      <FormItem className="flex flex-col">
+                        <FormLabel>Dependencies</FormLabel>
+                        <Popover>
+                            <PopoverTrigger asChild>
+                                <FormControl>
+                                <Button
+                                    variant="outline"
+                                    role="combobox"
+                                    className={cn(
+                                    "w-full justify-between",
+                                    !field.value && "text-muted-foreground"
+                                    )}
+                                >
+                                    Select dependencies
+                                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                                </Button>
+                                </FormControl>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
+                                <Command>
+                                    <CommandInput placeholder="Search dependencies..." />
+                                    <CommandList>
+                                        <CommandEmpty>No tasks found.</CommandEmpty>
+                                        <CommandGroup>
+                                            {availableDependencies.map((task) => (
+                                            <CommandItem
+                                                value={task.title}
+                                                key={task.id}
+                                                onSelect={() => {
+                                                    const currentDeps = field.value || [];
+                                                    const newDeps = currentDeps.includes(task.id)
+                                                        ? currentDeps.filter(id => id !== task.id)
+                                                        : [...currentDeps, task.id];
+                                                    field.onChange(newDeps);
+                                                }}
+                                            >
+                                                <Check
+                                                className={cn(
+                                                    "mr-2 h-4 w-4",
+                                                    (field.value || []).includes(task.id) ? "opacity-100" : "opacity-0"
+                                                )}
+                                                />
+                                                {task.title}
+                                            </CommandItem>
+                                            ))}
+                                        </CommandGroup>
+                                    </CommandList>
+                                </Command>
+                            </PopoverContent>
+                        </Popover>
+                        <div className="flex flex-wrap gap-1 mt-2">
+                            {field.value?.map(depId => {
+                                const depTask = allTasks.find(t => t.id === depId);
+                                return depTask ? (
+                                <div key={depId} className="bg-muted text-muted-foreground text-xs p-1 rounded-md flex items-center gap-1">
+                                    {depTask.title}
+                                    <Button
+                                        type="button"
+                                        variant="ghost"
+                                        size="icon"
+                                        className="h-4 w-4"
+                                        onClick={() => field.onChange(field.value?.filter(id => id !== depId))}
+                                    >
+                                    &times;
+                                    </Button>
+                                </div>
+                                ) : null
+                            })}
+                        </div>
+                        <FormMessage />
                     </FormItem>
-                  )}
+                    )}
                 />
               </div>
             </ScrollArea>
