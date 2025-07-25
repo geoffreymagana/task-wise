@@ -26,10 +26,14 @@ export async function subscribeToPush(): Promise<WebPushSubscription> {
   if (!('serviceWorker' in navigator)) {
     throw new Error('No Service Worker support in this browser.');
   }
+  if (!VAPID_PUBLIC_KEY) {
+    throw new Error('VAPID public key not configured.');
+  }
+
   const registration = await navigator.serviceWorker.ready;
   const subscription = await registration.pushManager.subscribe({
     userVisibleOnly: true,
-    applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY!),
+    applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY),
   });
   return subscription.toJSON() as WebPushSubscription;
 }
