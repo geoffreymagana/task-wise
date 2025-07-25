@@ -10,7 +10,7 @@
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
 import { v4 as uuidv4 } from 'uuid';
-import { format } from 'date-fns';
+import { format, isValid } from 'date-fns';
 
 const SubTaskSchema = z.object({
   id: z.string(),
@@ -54,7 +54,15 @@ export async function parseMarkdownTasks(input: ParseMarkdownTasksInput): Promis
   const now = new Date().toISOString();
   
   const addDefaultFields = (task: any): any => {
-    const dueDate = task.dueDate ? format(new Date(task.dueDate), 'yyyy-MM-dd') : null;
+    const parsedDueDate = task.dueDate ? new Date(task.dueDate) : null;
+    const dueDate = parsedDueDate && isValid(parsedDueDate) ? format(parsedDueDate, 'yyyy-MM-dd') : null;
+
+    const parsedStartTime = task.startTime ? new Date(task.startTime) : null;
+    const startTime = parsedStartTime && isValid(parsedStartTime) ? parsedStartTime.toISOString() : null;
+
+    const parsedEndTime = task.endTime ? new Date(task.endTime) : null;
+    const endTime = parsedEndTime && isValid(parsedEndTime) ? parsedEndTime.toISOString() : null;
+    
     return {
       id: uuidv4(),
       title: task.title,
@@ -65,8 +73,8 @@ export async function parseMarkdownTasks(input: ParseMarkdownTasksInput): Promis
       estimatedTime: task.estimatedTime || 0,
       actualTime: 0,
       dueDate: dueDate,
-      startTime: task.startTime ? new Date(task.startTime).toISOString() : null,
-      endTime: task.endTime ? new Date(task.endTime).toISOString() : null,
+      startTime: startTime,
+      endTime: endTime,
       createdAt: now,
       completedAt: null,
       subtasks: task.subtasks ? task.subtasks.map(addDefaultFields) : [],
