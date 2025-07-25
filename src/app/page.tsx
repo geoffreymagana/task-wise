@@ -111,7 +111,7 @@ export default function Home() {
     return sourceTasks.filter(task => {
         const searchMatch = !searchQuery || 
                             task.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                            task.description.toLowerCase().includes(searchQuery.toLowerCase());
+                            (task.description && task.description.toLowerCase().includes(searchQuery.toLowerCase()));
 
         const priorityMatch = filters.priority.length === 0 || filters.priority.includes(task.priority);
         const statusMatch = filters.status.length === 0 || filters.status.includes(task.status);
@@ -184,10 +184,10 @@ export default function Home() {
                     />
                   </TabsContent>
                   <TabsContent value="timeline">
-                    <TimelineView tasks={tasksToShow} onUpdateTask={handleTaskUpdated} />
+                    <TimelineView tasks={tasksToShow} allTasks={tasks} onUpdateTask={handleTaskUpdated} />
                   </TabsContent>
                   <TabsContent value="calendar">
-                    <CalendarView tasks={tasksToShow} />
+                    <CalendarView tasks={tasksToShow} allTasks={tasks}/>
                   </TabsContent>
                   <TabsContent value="kanban">
                     <KanbanView tasks={tasksToShow} onUpdateTask={handleTaskUpdated} allTasks={tasks} />

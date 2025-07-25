@@ -11,8 +11,7 @@ import {
 import { cn } from '@/lib/utils';
 import { Button } from '../ui/button';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
-import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
-import { Badge } from '../ui/badge';
+import { TaskDetailsDialog } from '../task-manager/task-details-dialog';
 
 type ViewMode = 'day' | 'week';
 
@@ -130,10 +129,12 @@ const TimeIndicator = ({ viewMode, currentDate }) => {
     );
 };
 
-export default function TimelineView({ tasks }: TimelineViewProps) {
+export default function TimelineView({ tasks, allTasks, onUpdateTask }: { tasks: Task[], allTasks: Task[], onUpdateTask: (task: Task) => void }) {
     const [currentDate, setCurrentDate] = useState(new Date());
     const [viewMode, setViewMode] = useState<ViewMode>('week');
     const containerRef = useRef<HTMLDivElement>(null);
+    const [taskToView, setTaskToView] = useState<Task | null>(null);
+
     
     const weekDays = useMemo(() => {
         const start = startOfWeek(currentDate, { weekStartsOn: 1 });
@@ -148,18 +149,61 @@ export default function TimelineView({ tasks }: TimelineViewProps) {
     }, [currentDate]);
 
     const scheduledTasks = useMemo(() => {
-        return tasks.map(task => {
-            const startDate = task.startedAt ? new Date(task.startedAt) : (task.dueDate ? startOfDay(new Date(task.dueDate)) : null);
-            if (!startDate) return null;
+      const taskMap = new Map(allTasks.map(t => [t.id, t]));
+      const processedTasks = new Map();
 
-            const isAllDay = !task.startedAt && !!task.dueDate;
-            let endDate = task.estimatedTime > 0 ? addMinutes(startDate, task.estimatedTime) : (isAllDay ? endOfDay(startDate) : null);
-            if(isAllDay && !endDate) endDate = endOfDay(startDate);
-            if(!isAllDay && !endDate) endDate = addMinutes(startDate, 60); // Default to 1 hr if no estimate
+      function getLatestDepEndDate(task: Task, processingStack: Set<string>): Date | null {
+        if (processingStack.has(task.id)) {
+          console.warn("Circular dependency detected involving task:", task.title);
+          return null; 
+        }
+        processingStack.add(task.id);
 
-            return { ...task, startDate, endDate, isAllDay, dependencies: task.dependencies || [] };
-        }).filter(Boolean);
-    }, [tasks]);
+        let latestEndDate = null;
+        for (const depId of task.dependencies || []) {
+          const depTask = taskMap.get(depId);
+          if (depTask) {
+             const depEndDate = getTaskEndDate(depTask, processingStack);
+             if (depEndDate && (!latestEndDate || depEndDate > latestEndDate)) {
+               latestEndDate = depEndDate;
+             }
+          }
+        }
+        
+        processingStack.delete(task.id);
+        return latestEndDate;
+      }
+
+      function getTaskEndDate(task: Task, processingStack: Set<string>): Date {
+        if(processedTasks.has(task.id)) return processedTasks.get(task.id).endDate;
+        
+        const latestDepEndDate = getLatestDepEndDate(task, processingStack);
+        
+        let startDate = task.startedAt ? new Date(task.startedAt) : null;
+
+        if (latestDepEndDate) {
+            startDate = !startDate || startDate < latestDepEndDate ? latestDepEndDate : startDate;
+        }
+
+        if (!startDate) {
+            startDate = task.dueDate ? startOfDay(new Date(task.dueDate)) : startOfDay(new Date());
+        }
+
+        const isAllDay = !task.startedAt && !!task.dueDate;
+        let endDate = task.estimatedTime > 0 ? addMinutes(startDate, task.estimatedTime) : (isAllDay ? endOfDay(startDate) : null);
+        if(isAllDay && !endDate) endDate = endOfDay(startDate);
+        if(!isAllDay && !endDate) endDate = addMinutes(startDate, 60);
+
+        const result = { ...task, startDate, endDate, isAllDay, dependencies: task.dependencies || [] };
+        processedTasks.set(task.id, result);
+        return endDate;
+      }
+
+      tasks.forEach(task => getTaskEndDate(task, new Set()));
+      return Array.from(processedTasks.values()).filter(t => tasks.some(orig => orig.id === t.id));
+
+    }, [tasks, allTasks]);
+
 
     const taskLayouts = useMemo(() => {
         const layouts: {[key: string]: { task: Task & {lane: number}, lane: number }} = {};
@@ -210,32 +254,25 @@ export default function TimelineView({ tasks }: TimelineViewProps) {
         const totalViewDuration = viewBounds.end.getTime() - viewBounds.start.getTime();
         const left = (start.getTime() - viewBounds.start.getTime()) / totalViewDuration * 100;
         const width = (end.getTime() - start.getTime()) / totalViewDuration * 100;
+        
+        const layoutInfo = taskLayouts.taskLayouts[task.id];
+        if (!layoutInfo) return null;
 
         return (
-            <Popover key={`${task.id}-${viewBounds.start}`}>
-                <PopoverTrigger asChild>
-                    <div
-                        data-task-id={task.id}
-                        className="h-8 rounded-md flex items-center px-2 absolute cursor-pointer z-10"
-                        style={{
-                            left: `${left}%`,
-                            width: `${width}%`,
-                            top: `${taskLayouts.taskLayouts[task.id]?.lane * ROW_HEIGHT}px`,
-                            backgroundColor: task.color,
-                        }}
-                    >
-                        <span className="text-white text-xs font-medium truncate">{task.title}</span>
-                    </div>
-                </PopoverTrigger>
-                <PopoverContent>
-                    <p className="font-bold">{task.title}</p>
-                    <p className="text-sm text-muted-foreground">{task.description}</p>
-                    <p className="text-xs mt-2">
-                        {format(task.startDate, 'p')} - {task.endDate ? format(task.endDate, 'p') : ''}
-                    </p>
-                    <Badge>{task.priority}</Badge>
-                </PopoverContent>
-            </Popover>
+            <div
+                key={`${task.id}-${viewBounds.start}`}
+                data-task-id={task.id}
+                className="h-8 rounded-md flex items-center px-2 absolute cursor-pointer z-10"
+                style={{
+                    left: `${left}%`,
+                    width: `${width}%`,
+                    top: `${layoutInfo.lane * ROW_HEIGHT}px`,
+                    backgroundColor: task.color,
+                }}
+                onClick={() => setTaskToView(task)}
+            >
+                <span className="text-white text-xs font-medium truncate">{task.title}</span>
+            </div>
         )
     };
     
@@ -244,7 +281,7 @@ export default function TimelineView({ tasks }: TimelineViewProps) {
             <CardHeader>
                 <div className="flex justify-between items-center">
                     <div>
-                        <CardTitle className="font-headline">Project Timeline</CardTitle>
+                        <CardTitle className="font-headline">Task Timeline</CardTitle>
                         <CardDescription>
                             {viewMode === 'day' && format(currentDate, 'eeee, do MMMM yyyy')}
                             {viewMode === 'week' && `${format(weekDays[0], 'do MMM')} - ${format(weekDays[6], 'do MMM yyyy')}`}
@@ -295,6 +332,13 @@ export default function TimelineView({ tasks }: TimelineViewProps) {
                         <DependencyLines tasks={scheduledTasks} taskLayouts={taskLayouts.taskLayouts} viewMode={viewMode} currentDate={currentDate}/>
                     )}
                 </div>
+                 {taskToView && (
+                    <TaskDetailsDialog
+                        task={taskToView}
+                        allTasks={allTasks}
+                        onOpenChange={() => setTaskToView(null)}
+                    />
+                )}
             </CardContent>
         </Card>
     );
