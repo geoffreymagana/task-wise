@@ -164,12 +164,22 @@ export function AddTaskDialog({ children, onTaskCreated, onTaskUpdated, taskToEd
             <ScrollArea className="max-h-[70vh] p-1">
               <div className="space-y-4 p-3">
                 <div className="flex items-center gap-4">
-                  <div 
-                    className="w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0"
-                    style={{ backgroundColor: watchColor }}
-                  >
-                    <Icon name={watchIcon || 'Package'} className="w-6 h-6 text-white" />
-                  </div>
+                  <FormField
+                    control={form.control}
+                    name="icon"
+                    render={({ field }) => (
+                      <FormItem>
+                         <FormControl>
+                          <IconSelect 
+                            value={field.value} 
+                            onChange={field.onChange}
+                            color={watchColor}
+                            onColorChange={(color) => form.setValue('color', color)}
+                          />
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  />
                   <FormField
                     control={form.control}
                     name="title"
@@ -180,33 +190,6 @@ export function AddTaskDialog({ children, onTaskCreated, onTaskUpdated, taskToEd
                           <Input placeholder="e.g., Design the new homepage" {...field} />
                         </FormControl>
                         <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <FormField
-                    control={form.control}
-                    name="icon"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Icon</FormLabel>
-                        <FormControl>
-                          <IconSelect value={field.value} onChange={field.onChange} />
-                        </FormControl>
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="color"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Color</FormLabel>
-                        <FormControl>
-                          <Input type="color" {...field} className="p-1 h-10" />
-                        </FormControl>
                       </FormItem>
                     )}
                   />
