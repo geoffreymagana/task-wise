@@ -28,7 +28,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { CalendarIcon, Timer, Zap, Check, ChevronsUpDown } from 'lucide-react';
+import { CalendarIcon, Timer, Zap, Check, ChevronsUpDown, Plus } from 'lucide-react';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { Calendar } from '@/components/ui/calendar';
 import { cn, generateColor, timeToMinutes } from '@/lib/utils';
@@ -43,6 +43,8 @@ const FormSchema = z.object({
   complexity: z.enum(['low', 'medium', 'high']),
   priority: z.enum(['low', 'medium', 'high']),
   dueDate: z.date().nullable(),
+  startTime: z.date().nullable(),
+  endTime: z.date().nullable(),
   estimatedTime: z.coerce.number().min(0).optional(),
   estimatedTimeUnit: z.string().optional(),
   dependencies: z.array(z.string()).optional(),
@@ -73,6 +75,8 @@ export function AddTaskDialog({ children, onTaskCreated, onTaskUpdated, taskToEd
       complexity: 'medium',
       priority: 'medium',
       dueDate: null,
+      startTime: null,
+      endTime: null,
       estimatedTime: 0,
       estimatedTimeUnit: 'minutes',
       dependencies: [],
@@ -112,6 +116,8 @@ export function AddTaskDialog({ children, onTaskCreated, onTaskUpdated, taskToEd
         complexity: taskToEdit.complexity,
         priority: taskToEdit.priority,
         dueDate: taskToEdit.dueDate ? new Date(taskToEdit.dueDate) : null,
+        startTime: taskToEdit.startTime ? new Date(taskToEdit.startTime) : null,
+        endTime: taskToEdit.endTime ? new Date(taskToEdit.endTime) : null,
         estimatedTime: displayTime,
         estimatedTimeUnit: unit,
         dependencies: taskToEdit.dependencies || [],
@@ -125,6 +131,8 @@ export function AddTaskDialog({ children, onTaskCreated, onTaskUpdated, taskToEd
         complexity: 'medium',
         priority: 'medium',
         dueDate: null,
+        startTime: null,
+        endTime: null,
         estimatedTime: 0,
         estimatedTimeUnit: 'minutes',
         dependencies: [],
@@ -143,6 +151,8 @@ export function AddTaskDialog({ children, onTaskCreated, onTaskUpdated, taskToEd
           ...data,
           estimatedTime: estimatedTimeInMinutes,
           dueDate: data.dueDate ? format(data.dueDate, 'yyyy-MM-dd') : null,
+          startTime: data.startTime ? data.startTime.toISOString() : null,
+          endTime: data.endTime ? data.endTime.toISOString() : null,
       };
 
       if (taskToEdit) {
@@ -173,7 +183,6 @@ export function AddTaskDialog({ children, onTaskCreated, onTaskUpdated, taskToEd
   };
 
   const shouldShowEstimation = !taskToEdit || !taskToEdit.estimatedTime;
-  const watchIcon = form.watch('icon');
   const watchColor = form.watch('color');
 
   return (
@@ -187,23 +196,23 @@ export function AddTaskDialog({ children, onTaskCreated, onTaskUpdated, taskToEd
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             <ScrollArea className="max-h-[70vh] p-1">
               <div className="space-y-4 p-3">
-                <div className="flex items-center gap-4">
-                  <FormField
-                    control={form.control}
-                    name="icon"
-                    render={({ field }) => (
-                      <FormItem>
-                         <FormControl>
-                          <IconSelect 
-                            value={field.value} 
-                            onChange={field.onChange}
-                            color={watchColor}
-                            onColorChange={(color) => form.setValue('color', color)}
-                          />
-                        </FormControl>
-                      </FormItem>
-                    )}
-                  />
+                <div className="flex items-start gap-4">
+                   <FormField
+                      control={form.control}
+                      name="icon"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormControl>
+                            <IconSelect
+                              value={field.value}
+                              onChange={field.onChange}
+                              color={watchColor}
+                              onColorChange={(color) => form.setValue('color', color)}
+                            />
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
                   <FormField
                     control={form.control}
                     name="title"
@@ -288,6 +297,42 @@ export function AddTaskDialog({ children, onTaskCreated, onTaskUpdated, taskToEd
                     )}
                   />
                 </div>
+
+                 <div className="grid grid-cols-2 gap-4">
+                    <FormField
+                      control={form.control}
+                      name="startTime"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Start Time</FormLabel>
+                          <FormControl>
+                            <Input 
+                              type="datetime-local" 
+                              value={field.value ? format(new Date(field.value), "yyyy-MM-dd'T'HH:mm") : ''}
+                              onChange={(e) => field.onChange(e.target.value ? new Date(e.target.value) : null)}
+                            />
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="endTime"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>End Time</FormLabel>
+                           <FormControl>
+                              <Input 
+                                type="datetime-local" 
+                                value={field.value ? format(new Date(field.value), "yyyy-MM-dd'T'HH:mm") : ''}
+                                onChange={(e) => field.onChange(e.target.value ? new Date(e.target.value) : null)}
+                              />
+                            </FormControl>
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+
                 <FormLabel>Estimated Time</FormLabel>
                  <div className="grid grid-cols-2 gap-4">
                     <FormField
@@ -362,10 +407,10 @@ export function AddTaskDialog({ children, onTaskCreated, onTaskUpdated, taskToEd
                                     role="combobox"
                                     className={cn(
                                     "w-full justify-between",
-                                    !field.value && "text-muted-foreground"
+                                    !field.value?.length && "text-muted-foreground"
                                     )}
                                 >
-                                    Select dependencies
+                                    {field.value?.length ? `${field.value.length} selected` : "Select dependencies"}
                                     <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                                 </Button>
                                 </FormControl>

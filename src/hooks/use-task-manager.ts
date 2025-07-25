@@ -22,6 +22,8 @@ export function useTaskManager() {
           color: task.color || generateColor(),
           icon: task.icon || getRandomIcon(),
           dependencies: task.dependencies || [],
+          startTime: task.startTime || null,
+          endTime: task.endTime || null,
         }));
         setTasks(parsedTasks);
       }
@@ -46,7 +48,9 @@ export function useTaskManager() {
       ...task, 
       color: task.color || generateColor(), 
       icon: task.icon || getRandomIcon(),
-      dependencies: task.dependencies || []
+      dependencies: task.dependencies || [],
+      startTime: task.startTime || null,
+      endTime: task.endTime || null,
     };
     setTasks((prevTasks) => [...prevTasks, taskWithColor]);
   }, []);
@@ -67,6 +71,8 @@ export function useTaskManager() {
       color: task.color || generateColor(),
       icon: task.icon || getRandomIcon(),
       dependencies: task.dependencies || [],
+      startTime: task.startTime || null,
+      endTime: task.endTime || null,
     }));
     setTasks(tasksWithDefaults);
   }, []);

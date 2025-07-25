@@ -69,7 +69,7 @@ const DependencyLines = ({ tasks, taskLayouts, viewMode, currentDate }) => {
                 });
             }
         });
-        setLines(newLines);
+        setLines(newLines as any);
     }, [tasks, taskLayouts, viewMode, currentDate]);
 
 
@@ -179,22 +179,36 @@ export default function TimelineView({ tasks, allTasks, onUpdateTask }: { tasks:
         
         const latestDepEndDate = getLatestDepEndDate(task, processingStack);
         
-        let startDate = task.startedAt ? new Date(task.startedAt) : null;
-
-        if (latestDepEndDate) {
-            startDate = !startDate || startDate < latestDepEndDate ? latestDepEndDate : startDate;
+        let startDate: Date;
+        if (task.startTime) {
+            startDate = new Date(task.startTime);
+        } else {
+            let potentialStartDate = latestDepEndDate;
+            if (task.startedAt) {
+                const startedAtDate = new Date(task.startedAt);
+                if (!potentialStartDate || startedAtDate > potentialStartDate) {
+                    potentialStartDate = startedAtDate;
+                }
+            }
+             if (!potentialStartDate) {
+                potentialStartDate = task.dueDate ? startOfDay(new Date(task.dueDate)) : startOfDay(new Date());
+            }
+            startDate = potentialStartDate!;
         }
 
-        if (!startDate) {
-            startDate = task.dueDate ? startOfDay(new Date(task.dueDate)) : startOfDay(new Date());
+        let endDate: Date;
+        if (task.endTime) {
+            endDate = new Date(task.endTime);
+        } else {
+            const isAllDay = !task.startedAt && !!task.dueDate && !task.startTime && !task.endTime;
+            let potentialEndDate = task.estimatedTime > 0 ? addMinutes(startDate, task.estimatedTime) : (isAllDay ? endOfDay(startDate) : null);
+            if (isAllDay && !potentialEndDate) potentialEndDate = endOfDay(startDate);
+            if (!isAllDay && !potentialEndDate) potentialEndDate = addMinutes(startDate, 60);
+            endDate = potentialEndDate!;
         }
 
-        const isAllDay = !task.startedAt && !!task.dueDate;
-        let endDate = task.estimatedTime > 0 ? addMinutes(startDate, task.estimatedTime) : (isAllDay ? endOfDay(startDate) : null);
-        if(isAllDay && !endDate) endDate = endOfDay(startDate);
-        if(!isAllDay && !endDate) endDate = addMinutes(startDate, 60);
 
-        const result = { ...task, startDate, endDate, isAllDay, dependencies: task.dependencies || [] };
+        const result = { ...task, startDate, endDate, dependencies: task.dependencies || [] };
         processedTasks.set(task.id, result);
         return endDate;
       }

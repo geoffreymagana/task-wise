@@ -75,6 +75,18 @@ export function TaskDetailsDialog({ task, allTasks, onOpenChange }: TaskDetailsD
                     <h4 className="font-semibold mb-1 text-sm">Est. Time</h4>
                     <p className="text-sm">{formatDuration(task.estimatedTime)}</p>
                 </div>
+                 {task.startTime && (
+                    <div>
+                        <h4 className="font-semibold mb-1 text-sm">Start Time</h4>
+                        <p className="text-sm">{format(new Date(task.startTime), 'Pp')}</p>
+                    </div>
+                 )}
+                 {task.endTime && (
+                    <div>
+                        <h4 className="font-semibold mb-1 text-sm">End Time</h4>
+                        <p className="text-sm">{format(new Date(task.endTime), 'Pp')}</p>
+                    </div>
+                 )}
                 <div>
                     <h4 className="font-semibold mb-1 text-sm">Created</h4>
                     <p className="text-sm">{formatDistanceToNow(new Date(task.createdAt), { addSuffix: true })}</p>

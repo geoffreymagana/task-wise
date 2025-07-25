@@ -30,6 +30,8 @@ const TaskSchema = z.object({
   complexity: z.enum(['low', 'medium', 'high']),
   priority: z.enum(['low', 'medium', 'high']),
   dueDate: z.string().nullable(),
+  startTime: z.string().nullable().optional(),
+  endTime: z.string().nullable().optional(),
   estimatedTime: z.number().optional(),
   dependencies: z.array(z.string()).optional(),
   icon: z.string().optional(),
@@ -44,7 +46,7 @@ export async function createTaskAction(values: z.infer<typeof TaskSchema>): Prom
     throw new Error('Invalid input data.');
   }
 
-  const { title, description, complexity, priority, dueDate, estimatedTime, dependencies, icon, color, estimatedTimeUnit } = validatedFields.data;
+  const { title, description, complexity, priority, dueDate, estimatedTime, dependencies, icon, color, estimatedTimeUnit, startTime, endTime } = validatedFields.data;
   
   let finalEstimatedTime = estimatedTime ? timeToMinutes(estimatedTime, estimatedTimeUnit || 'minutes') : 0;
 
@@ -69,6 +71,8 @@ export async function createTaskAction(values: z.infer<typeof TaskSchema>): Prom
     estimatedTime: finalEstimatedTime,
     actualTime: 0,
     dueDate,
+    startTime: startTime || null,
+    endTime: endTime || null,
     createdAt: new Date().toISOString(),
     completedAt: null,
     startedAt: null,

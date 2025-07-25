@@ -19,6 +19,8 @@ export type Task = {
   createdAt: string;
   completedAt: string | null;
   startedAt: string | null;
+  startTime: string | null;
+  endTime: string | null;
   subtasks?: SubTask[];
   dependencies: string[]; // list of task ids
   color: string;
