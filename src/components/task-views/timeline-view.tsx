@@ -45,7 +45,7 @@ const DependencyLines = ({ tasks, taskLayouts, viewMode, currentDate }) => {
                     if (!toEl) return;
                     const toRect = toEl.getBoundingClientRect();
 
-                    const startX = fromRect.left - containerRect.left + fromRect.width;
+                    const startX = fromRect.left - containerRect.left;
                     const startY = fromRect.top - containerRect.top + fromRect.height / 2;
                     const endX = toRect.left - containerRect.left; 
                     const endY = toRect.top - containerRect.top + toRect.height / 2;
@@ -220,28 +220,12 @@ export default function TimelineView({ tasks, allTasks, onUpdateTask }: { tasks:
         if (!scheduledTasks.length) return { taskLayouts: {}, totalLanes: 1 };
     
         const sortedTasks = [...scheduledTasks].sort((a, b) => a.startDate.getTime() - b.startDate.getTime());
-        const lanes: (Task & {endDate: Date})[][] = [];
-    
-        sortedTasks.forEach(task => {
-            let placed = false;
-            for (let i = 0; i < lanes.length; i++) {
-                const lastTaskInLane = lanes[i][lanes[i].length - 1];
-                if (!lastTaskInLane || task.startDate.getTime() >= lastTaskInLane.endDate.getTime()) {
-                    lanes[i].push(task);
-                    layouts[task.id] = { task: { ...task, lane: i }, lane: i };
-                    placed = true;
-                    break;
-                }
-            }
-    
-            if (!placed) {
-                lanes.push([task]);
-                const newLaneIndex = lanes.length - 1;
-                layouts[task.id] = { task: { ...task, lane: newLaneIndex }, lane: newLaneIndex };
-            }
+        
+        sortedTasks.forEach((task, index) => {
+            layouts[task.id] = { task: { ...task, lane: index }, lane: index };
         });
     
-        return { taskLayouts: layouts, totalLanes: lanes.length || 1 };
+        return { taskLayouts: layouts, totalLanes: sortedTasks.length };
     }, [scheduledTasks]);
 
     const changeDate = (direction: 'next' | 'prev') => {
@@ -357,5 +341,3 @@ export default function TimelineView({ tasks, allTasks, onUpdateTask }: { tasks:
         </Card>
     );
 }
-
-    
