@@ -145,22 +145,28 @@ export function ImportDialog({ children, onTasksImported }: ImportDialogProps) {
               </Button>
             </DialogFooter>
           </TabsContent>
-          <TabsContent value="json" className="mt-4 flex flex-col items-center justify-center h-48 border-2 border-dashed rounded-lg">
-             <label htmlFor="json-upload" className="cursor-pointer flex flex-col items-center gap-2 text-muted-foreground">
-                <Upload className="w-8 h-8"/>
-                <span>Click to upload JSON file</span>
-             </label>
-             <Input id="json-upload" type="file" accept=".json,application/json" className="hidden" onChange={handleFileImport} />
+          <TabsContent value="json">
+            <div className="mt-4 flex flex-col items-center justify-center h-48 border-2 border-dashed rounded-lg">
+                <label htmlFor="json-upload" className="cursor-pointer flex flex-col items-center gap-2 text-muted-foreground">
+                    <Upload className="w-8 h-8"/>
+                    <span>Click to upload JSON file</span>
+                </label>
+                <Input id="json-upload" type="file" accept=".json,application/json" className="hidden" onChange={handleFileImport} />
+            </div>
           </TabsContent>
-           <TabsContent value="md" className="mt-4 flex flex-col items-center justify-center h-48 border-2 border-dashed rounded-lg">
-             <label htmlFor="md-upload" className="cursor-pointer flex flex-col items-center gap-2 text-muted-foreground">
-                <Upload className="w-8 h-8"/>
-                <span>Click to upload Markdown file</span>
-             </label>
-             <Input id="md-upload" type="file" accept=".md,text/markdown" className="hidden" onChange={handleFileImport} />
+           <TabsContent value="md">
+            <div className="mt-4 flex flex-col items-center justify-center h-48 border-2 border-dashed rounded-lg">
+                <label htmlFor="md-upload" className="cursor-pointer flex flex-col items-center gap-2 text-muted-foreground">
+                    <Upload className="w-8 h-8"/>
+                    <span>Click to upload Markdown file</span>
+                </label>
+                <Input id="md-upload" type="file" accept=".md,text/markdown" className="hidden" onChange={handleFileImport} />
+            </div>
           </TabsContent>
         </Tabs>
       </DialogContent>
     </Dialog>
   );
 }
+
+    

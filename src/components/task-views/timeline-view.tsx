@@ -263,23 +263,27 @@ export default function TimelineView({ tasks, allTasks, onUpdateTask }: { tasks:
 
         const totalViewDuration = viewBounds.end.getTime() - viewBounds.start.getTime();
         const left = (start.getTime() - viewBounds.start.getTime()) / totalViewDuration * 100;
-        const width = (end.getTime() - start.getTime()) / totalViewDuration * 100;
+        const widthPercent = (end.getTime() - start.getTime()) / totalViewDuration * 100;
         
         const layoutInfo = taskLayouts[task.id];
         if (!layoutInfo) return null;
+
+        const minWidth = viewMode === 'week' ? '120px' : '60px';
 
         return (
             <div
                 key={`${task.id}-${viewBounds.start}`}
                 data-task-id={task.id}
-                className="h-10 rounded-lg flex items-center px-2 absolute cursor-pointer z-10"
+                className="h-10 rounded-lg flex items-center px-2 absolute cursor-pointer z-10 overflow-hidden"
                 style={{
                     left: `${left}%`,
-                    width: `${width}%`,
+                    width: `${widthPercent}%`,
                     top: `${layoutInfo.lane * ROW_HEIGHT}px`,
                     backgroundColor: task.color,
+                    minWidth,
                 }}
                 onClick={() => setTaskToView(task)}
+                title={task.title}
             >
                 <span className="text-white text-xs font-medium truncate">{task.title}</span>
             </div>
@@ -353,3 +357,5 @@ export default function TimelineView({ tasks, allTasks, onUpdateTask }: { tasks:
         </Card>
     );
 }
+
+    
