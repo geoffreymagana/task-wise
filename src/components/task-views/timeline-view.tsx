@@ -93,6 +93,7 @@ const TimeIndicator = ({ viewMode, currentDate }) => {
     }, []);
 
     const calculatePosition = useCallback(() => {
+        if (typeof window === 'undefined') return -1;
         const now = new Date();
         if (viewMode === 'day' && isSameDay(now, currentDate)) {
             const startOfHour = startOfDay(now);
@@ -221,15 +222,16 @@ export default function TimelineView({ tasks, allTasks, onUpdateTask }: { tasks:
     
         const sortedTasks = [...scheduledTasks].sort((a, b) => a.startDate.getTime() - b.startDate.getTime());
         
-        const lanes: Date[] = []; // Stores the end time of the last task in each lane
+        const lanes: { tasks: (Task & { startDate: Date, endDate: Date})[] }[] = [];
 
         sortedTasks.forEach(task => {
             let placed = false;
             // Find the first available lane
             for (let i = 0; i < lanes.length; i++) {
-                if (task.startDate >= lanes[i]) {
+                const lastTaskInLane = lanes[i].tasks[lanes[i].tasks.length - 1];
+                if (task.startDate >= lastTaskInLane.endDate) {
                     layouts[task.id] = { task: { ...task, lane: i }, lane: i };
-                    lanes[i] = task.endDate;
+                    lanes[i].tasks.push(task);
                     placed = true;
                     break;
                 }
@@ -239,7 +241,7 @@ export default function TimelineView({ tasks, allTasks, onUpdateTask }: { tasks:
             if (!placed) {
                 const newLaneIndex = lanes.length;
                 layouts[task.id] = { task: { ...task, lane: newLaneIndex }, lane: newLaneIndex };
-                lanes.push(task.endDate);
+                lanes.push({ tasks: [task] });
             }
         });
     
