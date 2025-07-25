@@ -133,10 +133,9 @@ export default function Home() {
       <AppHeader onTaskCreated={handleTaskCreated} onTasksImported={handleTasksImported} allTasks={tasks} />
       <main className="flex-grow p-4 md:p-8">
         <div className="flex flex-wrap items-center justify-between gap-4 mb-4">
-          {/* Left side: View Switcher and Filters */}
-          <div className="flex items-center gap-4 flex-wrap">
-            <Tabs value={activeView} onValueChange={setActiveView}>
-              <TabsList className="grid w-full grid-cols-4 md:w-fit">
+          <div className="flex items-center gap-4 flex-wrap flex-1">
+            <Tabs value={activeView} onValueChange={setActiveView} className="w-full md:w-auto">
+              <TabsList className="grid w-full grid-cols-2 md:grid-cols-4">
                 <TabsTrigger value="table">Table</TabsTrigger>
                 <TabsTrigger value="timeline">Timeline</TabsTrigger>
                 <TabsTrigger value="calendar">Calendar</TabsTrigger>
@@ -153,14 +152,15 @@ export default function Home() {
             )}
           </div>
 
-          {/* Right side: Active/Archived Toggle */}
           {hasTasks && (
-            <Tabs value={activeTab} onValueChange={setActiveTab}>
-              <TabsList>
-                <TabsTrigger value="active">Active Tasks</TabsTrigger>
-                <TabsTrigger value="archived">Archived</TabsTrigger>
-              </TabsList>
-            </Tabs>
+            <div className="flex-shrink-0">
+                <Tabs value={activeTab} onValueChange={setActiveTab}>
+                  <TabsList>
+                    <TabsTrigger value="active">Active</TabsTrigger>
+                    <TabsTrigger value="archived">Archived</TabsTrigger>
+                  </TabsList>
+                </Tabs>
+            </div>
           )}
         </div>
         

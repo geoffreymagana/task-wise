@@ -81,11 +81,11 @@ export default function KanbanView({ tasks, allTasks, onUpdateTask }: KanbanView
   const handleTaskCreated = () => {}
 
   return (
-    <div className="flex gap-4 p-4 overflow-x-auto">
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-1 md:p-4">
       {Object.entries(statusColumns).map(([status, title]) => (
         <div
           key={status}
-          className="flex-shrink-0 w-80 bg-muted/50 rounded-lg"
+          className="flex-shrink-0 w-full bg-muted/50 rounded-lg"
           onDragOver={handleDragOver}
           onDrop={(e) => handleDrop(e, status as StatusKey)}
         >

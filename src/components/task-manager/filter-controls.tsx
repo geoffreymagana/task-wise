@@ -73,18 +73,18 @@ export default function FilterControls({
 
   return (
     <div className="flex items-center gap-2 flex-wrap">
-      <div className="relative">
+      <div className="relative flex-grow sm:flex-grow-0">
         <Input
           placeholder="Search tasks..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          className="pl-8 w-48"
+          className="pl-8 w-full sm:w-48"
         />
         <Filter className="absolute left-2 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
       </div>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button variant="outline">Priority</Button>
+          <Button variant="outline" size="sm">Priority</Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent>
           <DropdownMenuLabel>Filter by Priority</DropdownMenuLabel>
@@ -104,7 +104,7 @@ export default function FilterControls({
 
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button variant="outline">Status</Button>
+          <Button variant="outline" size="sm">Status</Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent>
           <DropdownMenuLabel>Filter by Status</DropdownMenuLabel>
@@ -126,8 +126,9 @@ export default function FilterControls({
         <PopoverTrigger asChild>
           <Button
             variant={'outline'}
+            size="sm"
             className={cn(
-              'w-[200px] justify-start text-left font-normal',
+              'w-full sm:w-[200px] justify-start text-left font-normal',
               !filters.dueDate && 'text-muted-foreground'
             )}
           >
@@ -146,7 +147,7 @@ export default function FilterControls({
       </Popover>
       
       {hasActiveFilters && (
-        <Button variant="ghost" onClick={clearFilters}>
+        <Button variant="ghost" size="sm" onClick={clearFilters}>
           <X className="mr-2 h-4 w-4" />
           Clear
         </Button>

@@ -44,29 +44,29 @@ export default function AppHeader({ onTaskCreated, onTasksImported, allTasks }: 
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="container flex h-14 items-center px-4 md:px-8">
+      <div className="container flex h-14 items-center px-4 md:px-8 mx-auto">
         <div className="mr-4 flex items-center">
           <Link href="/" className="flex items-center gap-2">
             <GanttChartSquare className="h-6 w-6 mr-2 text-primary" />
-            <h1 className="text-2xl font-bold font-headline">TaskWise</h1>
+            <h1 className="text-2xl font-bold font-headline hidden md:block">TaskWise</h1>
           </Link>
         </div>
         <div className="flex flex-1 items-center justify-end space-x-2">
           <AddTaskDialog onTaskCreated={onTaskCreated} allTasks={allTasks}>
-            <Button>
+            <Button size="sm">
               <Plus className="mr-2 h-4 w-4" /> Add Task
             </Button>
           </AddTaskDialog>
           
           <ImportDialog onTasksImported={onTasksImported}>
-            <Button variant="outline">
+            <Button variant="outline" size="sm">
               <Upload className="mr-2 h-4 w-4" /> Import
             </Button>
           </ImportDialog>
 
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline">
+              <Button variant="outline" size="sm">
                 <Download className="mr-2 h-4 w-4" /> Export
               </Button>
             </DropdownMenuTrigger>
