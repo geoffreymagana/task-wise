@@ -31,7 +31,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { CheckCircle, Circle, Edit, MoreHorizontal, Trash, XCircle, ChevronDown, Clock, Play, ArchiveRestore } from 'lucide-react';
+import { CheckCircle, Circle, Edit, MoreHorizontal, Trash, XCircle, ChevronDown, Play, ArchiveRestore } from 'lucide-react';
 import { format } from 'date-fns';
 import { Card } from '../ui/card';
 import { AddTaskDialog } from '../task-manager/add-task-dialog';
@@ -110,7 +110,7 @@ export default function TableView({
         return;
       }
     }
-    const completedAt = status === 'completed' ? new Date().toISOString() : task.completedAt;
+    const completedAt = status === 'completed' ? new Date().toISOString() : null;
     const startedAt = status === 'in_progress' && !task.startedAt ? new Date().toISOString() : task.startedAt;
     onUpdateTask({ ...task, status, completedAt, startedAt });
   };
@@ -208,12 +208,14 @@ export default function TableView({
               </TableCell>
               <TableCell>
                  <div className="flex items-center gap-2">
-                    <span className="w-2 h-2 rounded-full" style={{ backgroundColor: task.color }} />
-                    <button onClick={() => setTaskToView(task)} className="font-medium text-left hover:underline">
-                      <div className="flex items-center gap-2">
-                        <Icon name={task.icon} className="w-4 h-4" />
-                        {task.title}
+                    <button onClick={() => setTaskToView(task)} className="font-medium text-left hover:underline flex items-center gap-2">
+                      <div 
+                        className="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0"
+                        style={{ backgroundColor: task.color }}
+                      >
+                        <Icon name={task.icon || 'Package'} className="w-4 h-4 text-white" />
                       </div>
+                      {task.title}
                     </button>
                   </div>
               </TableCell>

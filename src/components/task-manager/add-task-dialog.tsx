@@ -28,13 +28,14 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { CalendarIcon, Timer, Zap, Palette } from 'lucide-react';
+import { CalendarIcon, Timer, Zap } from 'lucide-react';
 import { Calendar } from '@/components/ui/calendar';
 import { cn, generateColor } from '@/lib/utils';
 import { format } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
 import { IconSelect } from '../common/icon-select';
 import { ScrollArea } from '../ui/scroll-area';
+import { Icon } from '../common/icon';
 
 const FormSchema = z.object({
   title: z.string().min(3, { message: 'Title must be at least 3 characters.' }),
@@ -148,6 +149,8 @@ export function AddTaskDialog({ children, onTaskCreated, onTaskUpdated, taskToEd
   };
 
   const shouldShowEstimation = !taskToEdit || !taskToEdit.estimatedTime;
+  const watchIcon = form.watch('icon');
+  const watchColor = form.watch('color');
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -160,51 +163,54 @@ export function AddTaskDialog({ children, onTaskCreated, onTaskUpdated, taskToEd
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             <ScrollArea className="max-h-[70vh] p-1">
               <div className="space-y-4 p-3">
-                <FormField
-                  control={form.control}
-                  name="title"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Title</FormLabel>
-                      <FormControl>
-                        <Input placeholder="e.g., Design the new homepage" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
                 <div className="flex items-center gap-4">
-                    <FormField
-                      control={form.control}
-                      name="icon"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Icon</FormLabel>
-                          <FormControl>
-                            <IconSelect value={field.value} onChange={field.onChange} />
-                          </FormControl>
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name="color"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Color</FormLabel>
-                          <FormControl>
-                             <div className="relative">
-                              <div className="absolute left-3 top-1/2 -translate-y-1/2">
-                                <Palette className="w-4 h-4 text-muted-foreground" />
-                              </div>
-                              <Input type="color" {...field} className="pl-9" />
-                            </div>
-                          </FormControl>
-                        </FormItem>
-                      )}
-                    />
+                  <div 
+                    className="w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0"
+                    style={{ backgroundColor: watchColor }}
+                  >
+                    <Icon name={watchIcon || 'Package'} className="w-6 h-6 text-white" />
                   </div>
+                  <FormField
+                    control={form.control}
+                    name="title"
+                    render={({ field }) => (
+                      <FormItem className="w-full">
+                        <FormLabel className="sr-only">Title</FormLabel>
+                        <FormControl>
+                          <Input placeholder="e.g., Design the new homepage" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="icon"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Icon</FormLabel>
+                        <FormControl>
+                          <IconSelect value={field.value} onChange={field.onChange} />
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="color"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Color</FormLabel>
+                        <FormControl>
+                          <Input type="color" {...field} className="p-1 h-10" />
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  />
+                </div>
 
                 <FormField
                   control={form.control}

@@ -32,8 +32,13 @@ export function TaskDetailsDialog({ task, allTasks, onOpenChange }: TaskDetailsD
     <Dialog open={true} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <Icon name={task.icon} className="w-6 h-6" style={{ color: task.color }}/>
+          <DialogTitle className="flex items-center gap-3">
+             <div 
+              className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0"
+              style={{ backgroundColor: task.color }}
+            >
+              <Icon name={task.icon || 'Package'} className="w-5 h-5 text-white" />
+            </div>
             {task.title}
           </DialogTitle>
         </DialogHeader>
@@ -66,7 +71,12 @@ export function TaskDetailsDialog({ task, allTasks, onOpenChange }: TaskDetailsD
                         <div className="flex flex-col gap-2">
                         {dependencies.map(dep => (
                             <div key={dep!.id} className="flex items-center gap-2 text-sm bg-muted p-2 rounded-md">
-                                <Icon name={dep!.icon} className="w-4 h-4" />
+                                <div 
+                                  className="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0"
+                                  style={{ backgroundColor: dep!.color }}
+                                >
+                                  <Icon name={dep!.icon || 'Package'} className="w-3 h-3 text-white" />
+                                </div>
                                 <span>{dep!.title}</span>
                                 <Badge variant={dep!.status === 'completed' ? 'default' : 'destructive'} className="ml-auto">
                                     {dep!.status.replace('_', ' ')}
