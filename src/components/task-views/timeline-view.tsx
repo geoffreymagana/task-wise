@@ -45,9 +45,9 @@ const DependencyLines = ({ tasks, taskLayouts, viewMode, currentDate }) => {
                     if (!toEl) return;
                     const toRect = toEl.getBoundingClientRect();
 
-                    const startX = fromRect.left - containerRect.left;
+                    const startX = fromRect.left - containerRect.left + fromRect.width;
                     const startY = fromRect.top - containerRect.top + fromRect.height / 2;
-                    const endX = toRect.left - containerRect.left; // connect to the start of the dependency
+                    const endX = toRect.left - containerRect.left; 
                     const endY = toRect.top - containerRect.top + toRect.height / 2;
                     
                     const controlX1 = startX + 60;
@@ -59,7 +59,7 @@ const DependencyLines = ({ tasks, taskLayouts, viewMode, currentDate }) => {
                         <path
                             key={`${task.id}-${depId}`}
                             d={`M ${startX} ${startY} C ${controlX1} ${controlY1}, ${controlX2} ${controlY2}, ${endX} ${endY}`}
-                            stroke={task.color} // Use parent task's color
+                            stroke={task.color} 
                             strokeWidth="1.5"
                             fill="none"
                             markerEnd="url(#arrow)"
@@ -86,6 +86,11 @@ const DependencyLines = ({ tasks, taskLayouts, viewMode, currentDate }) => {
 
 const TimeIndicator = ({ viewMode, currentDate }) => {
     const [position, setPosition] = useState(-1);
+    const [isClient, setIsClient] = useState(false);
+
+    useEffect(() => {
+      setIsClient(true);
+    }, []);
 
     const calculatePosition = useCallback(() => {
         const now = new Date();
@@ -108,6 +113,7 @@ const TimeIndicator = ({ viewMode, currentDate }) => {
     }, [viewMode, currentDate]);
 
     useEffect(() => {
+        if (!isClient) return;
         const updatePosition = () => {
             const newPos = calculatePosition();
             setPosition(newPos);
@@ -115,9 +121,9 @@ const TimeIndicator = ({ viewMode, currentDate }) => {
         updatePosition();
         const interval = setInterval(updatePosition, 60000); // Update every minute
         return () => clearInterval(interval);
-    }, [calculatePosition]);
+    }, [calculatePosition, isClient]);
 
-    if (position === -1) return null;
+    if (position === -1 || !isClient) return null;
 
     return (
         <div 
@@ -168,7 +174,7 @@ export default function TimelineView({ tasks, allTasks, onUpdateTask }: { tasks:
             for (const depId of task.dependencies) {
                 const depTask = taskMap.get(depId);
                 if (depTask) {
-                    const depEndDate = getTaskEnd(depTask, processingStack);
+                    const depEndDate = getTaskEnd(depTask, new Set(processingStack));
                     if (depEndDate > latestDepEndDate) {
                         latestDepEndDate = depEndDate;
                     }
@@ -197,7 +203,6 @@ export default function TimelineView({ tasks, allTasks, onUpdateTask }: { tasks:
         return endDate;
       }
       
-      // We need to sort tasks to process those without dependencies first
       const sortedInputTasks = [...tasks].sort((a,b) => (a.dependencies?.length || 0) - (b.dependencies?.length || 0));
       sortedInputTasks.forEach(task => {
         if (!processedTasks.has(task.id)) {
@@ -310,7 +315,7 @@ export default function TimelineView({ tasks, allTasks, onUpdateTask }: { tasks:
                                         <p className="text-center text-xs text-muted-foreground">{format(hour, 'ha')}</p>
                                     </div>
                                 ))}
-                            </div>
+                           </div>
                             <div className="absolute top-12 left-0 right-0" style={{ minWidth: `${24 * GRID_HOUR_WIDTH}px`, height: `${totalLanes * ROW_HEIGHT}px` }}>
                                 {scheduledTasks.map(task => renderTaskBlock(task, { start: startOfDay(currentDate), end: endOfDay(currentDate) }))}
                                 <TimeIndicator viewMode="day" currentDate={currentDate} />
