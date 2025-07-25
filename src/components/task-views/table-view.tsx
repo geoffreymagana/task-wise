@@ -31,10 +31,15 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { CheckCircle, Circle, Edit, MoreHorizontal, Trash, XCircle, ChevronDown, Clock, Play } from 'lucide-react';
-import { format, formatDistanceToNow } from 'date-fns';
+import { CheckCircle, Circle, Edit, MoreHorizontal, Trash, XCircle, ChevronDown, Clock, Play, ArchiveRestore } from 'lucide-react';
+import { format } from 'date-fns';
 import { Card } from '../ui/card';
 import { AddTaskDialog } from '../task-manager/add-task-dialog';
+import { formatDuration } from '@/lib/utils';
+import { useToast } from '@/hooks/use-toast';
+import { TaskDetailsDialog } from '../task-manager/task-details-dialog';
+import { Icon } from '../common/icon';
+
 
 interface TableViewProps {
   tasks: Task[];
@@ -42,6 +47,8 @@ interface TableViewProps {
   onUpdateTasksStatus: (taskIds: string[], status: Task['status']) => void;
   onDeleteTask: (taskId: string) => void;
   onDeleteTasks: (taskIds: string[]) => void;
+  reinstateTask?: (taskId: string) => void;
+  isArchivedView?: boolean;
 }
 
 const statusConfig = {
@@ -63,16 +70,17 @@ export default function TableView({
   onUpdateTasksStatus,
   onDeleteTask,
   onDeleteTasks,
+  reinstateTask,
+  isArchivedView = false,
 }: TableViewProps) {
   const [selectedTaskIds, setSelectedTaskIds] = useState<string[]>([]);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-
-  const visibleTasks = tasks.filter((task) => task.status !== 'archived');
-  const visibleTaskIds = visibleTasks.map((task) => task.id);
+  const [taskToView, setTaskToView] = useState<Task | null>(null);
+  const { toast } = useToast();
 
   const handleSelectAll = (checked: boolean | 'indeterminate') => {
     if (checked === true) {
-      setSelectedTaskIds(visibleTaskIds);
+      setSelectedTaskIds(tasks.map(t => t.id));
     } else {
       setSelectedTaskIds([]);
     }
@@ -87,6 +95,21 @@ export default function TableView({
   };
 
   const handleStatusChange = (task: Task, status: Task['status']) => {
+     if (status === 'completed' && task.dependencies?.length > 0) {
+      const allDependenciesMet = task.dependencies.every(depId => {
+        const depTask = tasks.find(t => t.id === depId);
+        return depTask && depTask.status === 'completed';
+      });
+
+      if (!allDependenciesMet) {
+        toast({
+          variant: 'destructive',
+          title: 'Dependency not completed',
+          description: `Task "${task.title}" cannot be completed because one or more dependencies are not finished.`
+        });
+        return;
+      }
+    }
     const completedAt = status === 'completed' ? new Date().toISOString() : task.completedAt;
     const startedAt = status === 'in_progress' && !task.startedAt ? new Date().toISOString() : task.startedAt;
     onUpdateTask({ ...task, status, completedAt, startedAt });
@@ -103,12 +126,20 @@ export default function TableView({
     setIsDeleteDialogOpen(false);
   };
   
-  const handleTaskCreated = () => {
-    // This function is passed to AddTaskDialog but might not be used if tasks are updated through onUpdateTask
+  const handleTaskCreated = (newTask: Task) => {
+    // This is a prop for AddTaskDialog, which calls onTaskCreated on the page level
   }
+  
+  const handleReinstate = (taskId: string) => {
+    if (reinstateTask) {
+      reinstateTask(taskId);
+      toast({title: "Task Restored", description: "The task has been moved back to the main task list."})
+    }
+  };
 
-  const isAllSelected = selectedTaskIds.length > 0 && selectedTaskIds.length === visibleTaskIds.length;
-  const isSomeSelected = selectedTaskIds.length > 0 && selectedTaskIds.length < visibleTaskIds.length;
+
+  const isAllSelected = selectedTaskIds.length > 0 && selectedTaskIds.length === tasks.length;
+  const isSomeSelected = selectedTaskIds.length > 0 && selectedTaskIds.length < tasks.length;
 
   return (
     <Card className="shadow-lg">
@@ -117,32 +148,34 @@ export default function TableView({
           <span className="text-sm font-medium">
             {selectedTaskIds.length} task(s) selected
           </span>
-          <div className="space-x-2">
-             <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="sm">
-                  Change Status <ChevronDown className="ml-2 h-4 w-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent>
-                <DropdownMenuLabel>Set Status</DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                 {Object.entries(statusConfig).map(([statusKey, {label}]) => (
-                  <DropdownMenuItem key={statusKey} onClick={() => handleBulkStatusChange(statusKey as Task['status'])}>
-                    {label}
-                  </DropdownMenuItem>
-                ))}
-              </DropdownMenuContent>
-            </DropdownMenu>
-            <Button
-              variant="destructive"
-              size="sm"
-              onClick={() => setIsDeleteDialogOpen(true)}
-            >
-              <Trash className="mr-2 h-4 w-4" />
-              Delete Selected
-            </Button>
-          </div>
+          {!isArchivedView && (
+            <div className="space-x-2">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="sm">
+                    Change Status <ChevronDown className="ml-2 h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent>
+                  <DropdownMenuLabel>Set Status</DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  {Object.entries(statusConfig).map(([statusKey, {label}]) => (
+                    <DropdownMenuItem key={statusKey} onClick={() => handleBulkStatusChange(statusKey as Task['status'])}>
+                      {label}
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
+              <Button
+                variant="destructive"
+                size="sm"
+                onClick={() => setIsDeleteDialogOpen(true)}
+              >
+                <Trash className="mr-2 h-4 w-4" />
+                Delete Selected
+              </Button>
+            </div>
+          )}
         </div>
       )}
       <Table>
@@ -164,7 +197,7 @@ export default function TableView({
           </TableRow>
         </TableHeader>
         <TableBody>
-          {visibleTasks.map((task) => (
+          {tasks.map((task) => (
             <TableRow key={task.id} data-state={selectedTaskIds.includes(task.id) && 'selected'}>
               <TableCell>
                 <Checkbox
@@ -175,64 +208,79 @@ export default function TableView({
               </TableCell>
               <TableCell>
                  <div className="flex items-center gap-2">
-                  <span className="w-2 h-2 rounded-full" style={{ backgroundColor: task.color }} />
-                  <div className="font-medium">{task.title}</div>
-                </div>
-                <div className="text-sm text-muted-foreground truncate max-w-sm pl-4">
-                  {task.description || 'No description'}
-                </div>
+                    <span className="w-2 h-2 rounded-full" style={{ backgroundColor: task.color }} />
+                    <button onClick={() => setTaskToView(task)} className="font-medium text-left hover:underline">
+                      <div className="flex items-center gap-2">
+                        <Icon name={task.icon} className="w-4 h-4" />
+                        {task.title}
+                      </div>
+                    </button>
+                  </div>
               </TableCell>
               <TableCell>
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                     <Button variant="ghost" className="flex items-center gap-2 px-2 py-1 h-auto text-sm">
-                      {statusConfig[task.status].icon}
-                      {statusConfig[task.status].label}
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent>
-                    <DropdownMenuLabel>Set Status</DropdownMenuLabel>
-                    <DropdownMenuSeparator />
-                    {Object.entries(statusConfig).map(([statusKey, {label}]) => (
-                      <DropdownMenuItem key={statusKey} onClick={() => handleStatusChange(task, statusKey as Task['status'])}>
-                        {label}
-                      </DropdownMenuItem>
-                    ))}
-                  </DropdownMenuContent>
-                </DropdownMenu>
+                {!isArchivedView ? (
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" className="flex items-center gap-2 px-2 py-1 h-auto text-sm">
+                        {statusConfig[task.status].icon}
+                        {statusConfig[task.status].label}
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent>
+                      <DropdownMenuLabel>Set Status</DropdownMenuLabel>
+                      <DropdownMenuSeparator />
+                      {Object.entries(statusConfig).map(([statusKey, {label}]) => (
+                        <DropdownMenuItem key={statusKey} onClick={() => handleStatusChange(task, statusKey as Task['status'])}>
+                          {label}
+                        </DropdownMenuItem>
+                      ))}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                ) : (
+                  <div className="flex items-center gap-2 text-sm">
+                    {statusConfig[task.status].icon}
+                    {statusConfig[task.status].label}
+                  </div>
+                )}
               </TableCell>
               <TableCell>
                 <Badge variant={priorityConfig[task.priority] as any}>{task.priority}</Badge>
               </TableCell>
               <TableCell>
-                {task.estimatedTime > 0 ? `${task.estimatedTime} min` : 'N/A'}
+                {task.estimatedTime > 0 ? formatDuration(task.estimatedTime) : 'N/A'}
               </TableCell>
               <TableCell>
                 {task.dueDate ? format(new Date(task.dueDate), 'MMM d, yyyy') : 'No due date'}
               </TableCell>
               <TableCell className="text-right">
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="icon">
-                      <MoreHorizontal className="h-4 w-4" />
+                {isArchivedView ? (
+                   <Button variant="ghost" size="icon" onClick={() => handleReinstate(task.id)}>
+                      <ArchiveRestore className="h-4 w-4" />
                     </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    <AddTaskDialog onTaskUpdated={onUpdateTask} onTaskCreated={handleTaskCreated} taskToEdit={task}>
-                      <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
-                        <Edit className="mr-2 h-4 w-4" />
-                        Edit
+                ) : (
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" size="icon">
+                        <MoreHorizontal className="h-4 w-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <AddTaskDialog onTaskUpdated={onUpdateTask} onTaskCreated={handleTaskCreated} taskToEdit={task} allTasks={tasks}>
+                        <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+                          <Edit className="mr-2 h-4 w-4" />
+                          Edit
+                        </DropdownMenuItem>
+                      </AddTaskDialog>
+                      <DropdownMenuItem
+                        className="text-red-600"
+                        onClick={() => onDeleteTask(task.id)}
+                      >
+                        <Trash className="mr-2 h-4 w-4" />
+                        Delete
                       </DropdownMenuItem>
-                    </AddTaskDialog>
-                    <DropdownMenuItem
-                      className="text-red-600"
-                      onClick={() => onDeleteTask(task.id)}
-                    >
-                      <Trash className="mr-2 h-4 w-4" />
-                      Delete
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                )}
               </TableCell>
             </TableRow>
           ))}
@@ -254,6 +302,13 @@ export default function TableView({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+       {taskToView && (
+        <TaskDetailsDialog
+          task={taskToView}
+          allTasks={tasks}
+          onOpenChange={() => setTaskToView(null)}
+        />
+      )}
     </Card>
   );
 }

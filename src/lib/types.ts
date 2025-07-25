@@ -20,5 +20,15 @@ export type Task = {
   completedAt: string | null;
   startedAt: string | null;
   subtasks?: SubTask[];
+  dependencies: string[]; // list of task ids
   color: string;
+  icon: string;
+};
+
+export type WebPushSubscription = {
+  endpoint: string;
+  keys: {
+    p256dh: string;
+    auth: string;
+  };
 };

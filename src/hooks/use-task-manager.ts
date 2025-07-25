@@ -2,13 +2,15 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import type { Task } from '@/lib/types';
-import { generateColor } from '@/lib/utils';
+import { generateColor, getRandomIcon } from '@/lib/utils';
+import { useToast } from './use-toast';
 
 const STORAGE_KEY = 'taskwise-tasks';
 
 export function useTaskManager() {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [isLoaded, setIsLoaded] = useState(false);
+  const { toast } = useToast();
 
   useEffect(() => {
     try {
@@ -18,6 +20,8 @@ export function useTaskManager() {
         const parsedTasks = JSON.parse(items).map((task: Task) => ({
           ...task,
           color: task.color || generateColor(),
+          icon: task.icon || getRandomIcon(),
+          dependencies: task.dependencies || [],
         }));
         setTasks(parsedTasks);
       }
@@ -38,13 +42,18 @@ export function useTaskManager() {
   }, [tasks, isLoaded]);
 
   const addTask = useCallback((task: Task) => {
-    const taskWithColor = { ...task, color: task.color || generateColor() };
+    const taskWithColor = { 
+      ...task, 
+      color: task.color || generateColor(), 
+      icon: task.icon || getRandomIcon(),
+      dependencies: task.dependencies || []
+    };
     setTasks((prevTasks) => [...prevTasks, taskWithColor]);
   }, []);
 
   const updateTask = useCallback((updatedTask: Task) => {
     setTasks((prevTasks) =>
-      prevTasks.map((task) => (task.id === updatedTask.id ? updatedTask : task))
+      prevTasks.map((task) => (task.id === updatedTask.id ? { ...task, ...updatedTask } : task))
     );
   }, []);
 
@@ -53,11 +62,13 @@ export function useTaskManager() {
   }, []);
   
   const customSetTasks = useCallback((newTasks: Task[]) => {
-     const tasksWithColors = newTasks.map((task) => ({
+     const tasksWithDefaults = newTasks.map((task) => ({
       ...task,
       color: task.color || generateColor(),
+      icon: task.icon || getRandomIcon(),
+      dependencies: task.dependencies || [],
     }));
-    setTasks(tasksWithColors);
+    setTasks(tasksWithDefaults);
   }, []);
 
   const deleteTasks = useCallback((taskIds: string[]) => {
@@ -65,8 +76,32 @@ export function useTaskManager() {
   }, []);
 
   const updateTasksStatus = useCallback((taskIds: string[], status: Task['status']) => {
-    setTasks((prevTasks) =>
-      prevTasks.map((task) => {
+    setTasks((prevTasks) => {
+      let canUpdate = true;
+      if (status === 'completed') {
+        for (const taskId of taskIds) {
+          const task = prevTasks.find(t => t.id === taskId);
+          if (task && task.dependencies?.length > 0) {
+            for (const depId of task.dependencies) {
+              const depTask = prevTasks.find(t => t.id === depId);
+              if (depTask && depTask.status !== 'completed') {
+                toast({
+                  variant: 'destructive',
+                  title: 'Dependency not completed',
+                  description: `Task "${task.title}" cannot be completed because its dependency "${depTask.title}" is not finished.`
+                });
+                canUpdate = false;
+                break;
+              }
+            }
+          }
+          if (!canUpdate) break;
+        }
+      }
+
+      if (!canUpdate) return prevTasks;
+
+      return prevTasks.map((task) => {
         if (taskIds.includes(task.id)) {
           return { 
             ...task, 
@@ -76,7 +111,15 @@ export function useTaskManager() {
           };
         }
         return task;
-      })
+      });
+    });
+  }, [toast]);
+
+  const reinstateTask = useCallback((taskId: string) => {
+    setTasks((prevTasks) =>
+      prevTasks.map((task) =>
+        task.id === taskId ? { ...task, status: 'not_started' } : task
+      )
     );
   }, []);
 
@@ -90,5 +133,6 @@ export function useTaskManager() {
     isLoaded,
     deleteTasks,
     updateTasksStatus,
+    reinstateTask,
   };
 }
