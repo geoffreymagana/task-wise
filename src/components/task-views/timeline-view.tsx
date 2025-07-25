@@ -21,8 +21,17 @@ const getWeekDays = (date: Date) => {
     return eachDayOfInterval({ start, end });
 };
 
-const DependencyLines = ({ tasks, week, taskPositions }) => {
+const DependencyLines = ({ tasks, taskPositions }) => {
     const lines = [];
+    const containerRef = useRef<SVGSVGElement>(null);
+
+    useEffect(() => {
+        // This useEffect is to help re-render lines when positions update
+    }, [taskPositions]);
+    
+    if (!containerRef.current) return null;
+    const containerRect = containerRef.current.closest('.timeline-container')?.getBoundingClientRect();
+    if (!containerRect) return null;
 
     tasks.forEach(task => {
         if (task.dependencies?.length > 0) {
@@ -35,8 +44,7 @@ const DependencyLines = ({ tasks, week, taskPositions }) => {
 
                 const fromRect = fromPosition.el.getBoundingClientRect();
                 const toRect = toPosition.el.getBoundingClientRect();
-                const containerRect = fromPosition.el.closest('.timeline-container').getBoundingClientRect();
-
+                
                 const startX = fromRect.left - containerRect.left;
                 const startY = fromRect.top - containerRect.top + fromRect.height / 2;
                 const endX = toRect.right - containerRect.left;
@@ -62,7 +70,7 @@ const DependencyLines = ({ tasks, week, taskPositions }) => {
     });
 
     return (
-        <svg className="absolute top-0 left-0 w-full h-full pointer-events-none z-0">
+        <svg ref={containerRef} className="absolute top-0 left-0 w-full h-full pointer-events-none z-0">
             <defs>
                 <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
                     <path d="M 0 0 L 10 5 L 0 10 z" fill="hsl(var(--primary))" />
@@ -88,37 +96,40 @@ export default function TimelineView({ tasks, onUpdateTask }: TimelineViewProps)
             const isAllDay = !task.startedAt && !!task.dueDate;
             const endDate = task.estimatedTime > 0 ? addMinutes(startDate, task.estimatedTime) : (isAllDay ? startDate : null);
 
-            return { ...task, startDate, endDate, isAllDay };
+            return { ...task, startDate, endDate, isAllDay, dependencies: task.dependencies || [] };
         }).filter(Boolean);
     }, [tasks]);
 
-    const layoutTasks = (tasksToLayout, week) => {
-        const lanes = [];
-        const taskLayouts = {};
-
-        tasksToLayout.sort((a, b) => a.startDate - b.startDate);
-
-        tasksToLayout.forEach(task => {
-            let placed = false;
-            for (let i = 0; i < lanes.length; i++) {
-                const lastTaskInLane = lanes[i][lanes[i].length - 1];
-                if (task.startDate >= lastTaskInLane.endDate) {
-                    lanes[i].push(task);
-                    taskLayouts[task.id] = { ...task, lane: i };
-                    placed = true;
-                    break;
+    const { taskLayouts, totalLanes } = useMemo(() => {
+        const layoutTasks = (tasksToLayout) => {
+            const lanes: Task[][] = [];
+            const layouts: {[key: string]: Task & {lane: number}} = {};
+    
+            const sortedTasks = [...tasksToLayout].sort((a, b) => a.startDate - b.startDate);
+    
+            sortedTasks.forEach(task => {
+                let placed = false;
+                for (let i = 0; i < lanes.length; i++) {
+                    const lastTaskInLane = lanes[i][lanes[i].length - 1];
+                    // If the new task starts after the last one in the lane ends
+                    if (!lastTaskInLane || (task.endDate && lastTaskInLane.endDate && task.startDate >= lastTaskInLane.endDate)) {
+                        lanes[i].push(task);
+                        layouts[task.id] = { ...task, lane: i };
+                        placed = true;
+                        break;
+                    }
                 }
-            }
-            if (!placed) {
-                lanes.push([task]);
-                taskLayouts[task.id] = { ...task, lane: lanes.length - 1 };
-            }
-        });
+                if (!placed) {
+                    lanes.push([task]);
+                    layouts[task.id] = { ...task, lane: lanes.length - 1 };
+                }
+            });
+    
+            return { taskLayouts: layouts, totalLanes: lanes.length };
+        };
+        return layoutTasks(scheduledTasks);
 
-        return { taskLayouts, totalLanes: lanes.length };
-    };
-
-    const { taskLayouts, totalLanes } = layoutTasks(scheduledTasks, weekDays);
+    }, [scheduledTasks]);
 
     useEffect(() => {
         const positions = {};
@@ -131,7 +142,7 @@ export default function TimelineView({ tasks, onUpdateTask }: TimelineViewProps)
             });
         }
         setTaskPositions(positions);
-    }, [tasks, currentDate, taskLayouts]);
+    }, [taskLayouts, currentDate]);
 
     const nextWeek = () => setCurrentDate(addDays(currentDate, 7));
     const prevWeek = () => setCurrentDate(subDays(currentDate, 7));
@@ -155,7 +166,7 @@ export default function TimelineView({ tasks, onUpdateTask }: TimelineViewProps)
                 <div ref={containerRef} className="relative timeline-container" style={{ minWidth: `${weekDays.length * 150}px`, minHeight: `${(totalLanes + 1) * 60}px` }}>
                     <div className="grid" style={{ gridTemplateColumns: `repeat(${weekDays.length}, minmax(150px, 1fr))` }}>
                         {weekDays.map(day => (
-                            <div key={day.toString()} className="border-r border-b p-2">
+                            <div key={day.toString()} className="border-r border-b p-2 h-16">
                                 <p className={cn("text-center font-semibold", isSameDay(day, new Date()) && "text-primary")}>{format(day, 'EEE')}</p>
                                 <p className="text-center text-xs text-muted-foreground">{format(day, 'd')}</p>
                             </div>
@@ -163,7 +174,16 @@ export default function TimelineView({ tasks, onUpdateTask }: TimelineViewProps)
                     </div>
                     <div className="absolute top-16 left-0 right-0">
                         {Object.values(taskLayouts).map((task) => {
-                             const startDayIndex = weekDays.findIndex(day => isSameDay(day, task.startDate));
+                             if (!task.startDate) return null;
+                             const weekStart = weekDays[0];
+                             const weekEnd = weekDays[6];
+
+                             const taskStartInView = task.startDate > weekStart ? task.startDate : weekStart;
+                             const taskEndInView = task.endDate && task.endDate < weekEnd ? task.endDate : weekEnd;
+
+                             if (taskStartInView > taskEndInView) return null;
+                            
+                             const startDayIndex = Math.max(0, weekDays.findIndex(day => isSameDay(day, task.startDate)));
                              const endDayIndex = task.endDate ? weekDays.findIndex(day => isSameDay(day, task.endDate)) : startDayIndex;
 
                              if (startDayIndex === -1 && !isWithinInterval(task.startDate, { start: weekDays[0], end: weekDays[6]})) return null;
@@ -172,16 +192,16 @@ export default function TimelineView({ tasks, onUpdateTask }: TimelineViewProps)
                              const clampedEnd = endDayIndex === -1 ? weekDays.length -1 : Math.min(endDayIndex, weekDays.length - 1);
                              
                              const startOffset = (task.startDate.getHours() * 60 + task.startDate.getMinutes()) / 1440;
-                             const endOffset = task.endDate ? (task.endDate.getHours() * 60 + task.endDate.getMinutes()) / 1440 : startOffset;
-
+                             
                              const left = (clampedStart + (task.isAllDay ? 0 : startOffset)) * (100 / weekDays.length);
                              
                              let width;
                              if(task.isAllDay){
                                 width = (100 / weekDays.length);
                              } else {
-                                const durationInDays = (task.endDate - task.startDate) / (1000 * 60 * 60 * 24);
-                                width = durationInDays * (100 / weekDays.length);
+                                const durationInMs = (task.endDate || task.startDate) - task.startDate;
+                                const durationInDays = durationInMs / (1000 * 60 * 60 * 24);
+                                width = Math.max(durationInDays, 0.05) * (100 / weekDays.length);
                              }
 
                             return (
@@ -213,7 +233,7 @@ export default function TimelineView({ tasks, onUpdateTask }: TimelineViewProps)
                         })}
                     </div>
                     {Object.keys(taskPositions).length > 0 && (
-                        <DependencyLines tasks={Object.values(taskLayouts)} week={weekDays} taskPositions={taskPositions} />
+                        <DependencyLines tasks={Object.values(taskLayouts)} taskPositions={taskPositions} />
                     )}
                 </div>
             </CardContent>
