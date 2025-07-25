@@ -219,33 +219,23 @@ export default function TimelineView({ tasks, allTasks, onUpdateTask }: { tasks:
     const { taskLayouts, totalLanes } = useMemo(() => {
         const layouts: { [key: string]: { task: Task & {lane: number}; lane: number } } = {};
         if (!scheduledTasks.length) return { taskLayouts: {}, totalLanes: 1 };
-
-        const sortedTasks = [...scheduledTasks].sort((a, b) => a.startDate.getTime() - b.startDate.getTime());
-        
-        const lanes: { tasks: (Task & { startDate: Date, endDate: Date})[] }[] = [];
-
-        sortedTasks.forEach(task => {
-            let placed = false;
-            // Find the first available lane
-            for (let i = 0; i < lanes.length; i++) {
-                const lastTaskInLane = lanes[i].tasks[lanes[i].tasks.length - 1];
-                if (!lastTaskInLane || task.startDate >= lastTaskInLane.endDate) {
-                    layouts[task.id] = { task: { ...task, lane: i }, lane: i };
-                    lanes[i].tasks.push(task);
-                    placed = true;
-                    break;
-                }
+    
+        const sortedTasks = [...scheduledTasks].sort((a, b) => {
+            const aTime = a.startDate.getTime();
+            const bTime = b.startDate.getTime();
+            if (aTime !== bTime) {
+                return aTime - bTime;
             }
-
-            // If no available lane is found, create a new one
-            if (!placed) {
-                const newLaneIndex = lanes.length;
-                layouts[task.id] = { task: { ...task, lane: newLaneIndex }, lane: newLaneIndex };
-                lanes.push({ tasks: [task] });
-            }
+            return a.title.localeCompare(b.title);
         });
-
-        return { taskLayouts: layouts, totalLanes: lanes.length };
+    
+        sortedTasks.forEach((task, index) => {
+            // Assign each task to its own lane, guaranteeing no overlap
+            const laneIndex = index;
+            layouts[task.id] = { task: { ...task, lane: laneIndex }, lane: laneIndex };
+        });
+    
+        return { taskLayouts: layouts, totalLanes: sortedTasks.length };
     }, [scheduledTasks]);
 
     const changeDate = (direction: 'next' | 'prev') => {
