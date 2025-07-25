@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { AddTaskDialog } from '@/components/task-manager/add-task-dialog';
 import { ImportDialog } from '@/components/task-manager/import-dialog';
 import type { Task } from '@/lib/types';
-import { FileDown, GanttChartSquare, Plus, Upload, User } from 'lucide-react';
+import { Download, GanttChartSquare, Plus, Upload, CircleUserRound } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '../ui/dropdown-menu';
 import Link from 'next/link';
 
@@ -67,7 +67,7 @@ export default function AppHeader({ onTaskCreated, onTasksImported, allTasks }: 
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="outline">
-                <FileDown className="mr-2 h-4 w-4" /> Export
+                <Download className="mr-2 h-4 w-4" /> Export
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent>
@@ -79,7 +79,7 @@ export default function AppHeader({ onTaskCreated, onTasksImported, allTasks }: 
 
           <Link href="/profile">
              <Button variant="ghost" size="icon" className="rounded-full">
-               <User />
+               <CircleUserRound />
              </Button>
           </Link>
         </div>

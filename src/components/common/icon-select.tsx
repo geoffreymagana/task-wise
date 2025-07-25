@@ -25,17 +25,34 @@ export function IconSelect({ value, onChange, color, onColorChange }: IconSelect
     key.toLowerCase().includes(search.toLowerCase())
   );
 
+  const handleIconContainerClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    // Prevent Popover from opening if the color input is clicked
+    if (e.target === colorInputRef.current) {
+        e.stopPropagation();
+        e.preventDefault();
+        colorInputRef.current?.click();
+    }
+  };
+
   return (
     <div className="relative">
       <Popover>
         <PopoverTrigger asChild>
-          <button
-            type="button"
-            className="w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0"
-            style={{ backgroundColor: color }}
-          >
-            <Icon name={value || 'Package'} className="w-6 h-6 text-white" />
-          </button>
+            <div 
+                className="w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0 cursor-pointer relative" 
+                style={{ backgroundColor: color }}
+                onClick={handleIconContainerClick}
+            >
+                <Icon name={value || 'Package'} className="w-6 h-6 text-white pointer-events-none" />
+                <input
+                    ref={colorInputRef}
+                    type="color"
+                    value={color}
+                    onChange={(e) => onColorChange(e.target.value)}
+                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                    aria-label="Change task color"
+                />
+            </div>
         </PopoverTrigger>
         <PopoverContent className="p-0 w-[200px]">
           <Input
@@ -61,14 +78,6 @@ export function IconSelect({ value, onChange, color, onColorChange }: IconSelect
           </ScrollArea>
         </PopoverContent>
       </Popover>
-      <input
-        ref={colorInputRef}
-        type="color"
-        value={color}
-        onChange={(e) => onColorChange(e.target.value)}
-        className="absolute bottom-0 right-0 w-5 h-5 opacity-0 cursor-pointer"
-        aria-label="Change task color"
-      />
     </div>
   );
 }
