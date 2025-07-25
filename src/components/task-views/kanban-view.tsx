@@ -2,14 +2,17 @@
 
 import { useMemo, useState } from 'react';
 import type { Task } from '@/lib/types';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardTitle } from '@/components/ui/card';
 import { AddTaskDialog } from '../task-manager/add-task-dialog';
 import { Badge } from '../ui/badge';
 import { MoreHorizontal } from 'lucide-react';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '../ui/dropdown-menu';
+import { useToast } from '@/hooks/use-toast';
+import { Icon } from '../common/icon';
+
 
 interface KanbanViewProps {
   tasks: Task[];
+  allTasks: Task[];
   onUpdateTask: (task: Task) => void;
 }
 
@@ -21,8 +24,9 @@ const statusColumns = {
 
 type StatusKey = keyof typeof statusColumns;
 
-export default function KanbanView({ tasks, onUpdateTask }: KanbanViewProps) {
+export default function KanbanView({ tasks, allTasks, onUpdateTask }: KanbanViewProps) {
   const [draggedTask, setDraggedTask] = useState<Task | null>(null);
+  const { toast } = useToast();
 
   const columns = useMemo(() => {
     const cols: Record<StatusKey, Task[]> = {
@@ -51,12 +55,30 @@ export default function KanbanView({ tasks, onUpdateTask }: KanbanViewProps) {
   const handleDrop = (e: React.DragEvent<HTMLDivElement>, status: StatusKey) => {
     e.preventDefault();
     if (draggedTask && draggedTask.status !== status) {
+        if (status === 'completed' && draggedTask.dependencies?.length > 0) {
+            const allDependenciesMet = draggedTask.dependencies.every(depId => {
+              const depTask = allTasks.find(t => t.id === depId);
+              return depTask && depTask.status === 'completed';
+            });
+      
+            if (!allDependenciesMet) {
+              toast({
+                variant: 'destructive',
+                title: 'Dependency not completed',
+                description: `Task "${draggedTask.title}" cannot be completed because one or more dependencies are not finished.`
+              });
+              setDraggedTask(null);
+              return;
+            }
+        }
         const startedAt = status === 'in_progress' && !draggedTask.startedAt ? new Date().toISOString() : draggedTask.startedAt;
-        const completedAt = status === 'completed' ? new Date().toISOString() : draggedTask.completedAt;
+        const completedAt = status === 'completed' ? new Date().toISOString() : null;
         onUpdateTask({ ...draggedTask, status, startedAt, completedAt });
     }
     setDraggedTask(null);
   };
+  
+  const handleTaskCreated = () => {}
 
   return (
     <div className="flex gap-4 p-4 overflow-x-auto">
@@ -80,8 +102,16 @@ export default function KanbanView({ tasks, onUpdateTask }: KanbanViewProps) {
                 style={{ borderLeft: `4px solid ${task.color}`}}
               >
                 <CardTitle className="text-base flex justify-between items-start">
-                  {task.title}
-                   <AddTaskDialog onTaskCreated={() => {}} onTaskUpdated={onUpdateTask} taskToEdit={task}>
+                  <div className="flex items-center gap-2">
+                    <div 
+                      className="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0"
+                      style={{ backgroundColor: task.color }}
+                    >
+                      <Icon name={task.icon || 'Package'} className="w-4 h-4 text-white" />
+                    </div>
+                    <span>{task.title}</span>
+                  </div>
+                   <AddTaskDialog onTaskCreated={handleTaskCreated} onTaskUpdated={onUpdateTask} taskToEdit={task} allTasks={allTasks}>
                       <button className="p-1 rounded hover:bg-muted -mt-2 -mr-2">
                         <MoreHorizontal size={16} />
                       </button>
