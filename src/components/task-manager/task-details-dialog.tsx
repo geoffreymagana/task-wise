@@ -40,7 +40,7 @@ export function TaskDetailsDialog({ task, allTasks, onOpenChange }: TaskDetailsD
 
   return (
     <Dialog open={true} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-md max-h-[90vh] flex flex-col">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-3 font-headline">
              <div 
@@ -53,7 +53,7 @@ export function TaskDetailsDialog({ task, allTasks, onOpenChange }: TaskDetailsD
           </DialogTitle>
            <DialogDescription>{task.description || 'No description provided.'}</DialogDescription>
         </DialogHeader>
-        <div className="space-y-4 py-2 max-h-[60vh] overflow-y-auto">
+        <div className="space-y-4 py-2 flex-grow overflow-y-auto -mr-6 pr-6">
             <Separator />
             <div className="grid grid-cols-2 gap-x-4 gap-y-4">
                 <div>
