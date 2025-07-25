@@ -216,16 +216,34 @@ export default function TimelineView({ tasks, allTasks, onUpdateTask }: { tasks:
 
 
     const { taskLayouts, totalLanes } = useMemo(() => {
-        const layouts: {[key: string]: { task: Task & {lane: number}, lane: number }} = {};
+        const layouts: { [key: string]: { task: Task & {lane: number}; lane: number } } = {};
         if (!scheduledTasks.length) return { taskLayouts: {}, totalLanes: 1 };
     
         const sortedTasks = [...scheduledTasks].sort((a, b) => a.startDate.getTime() - b.startDate.getTime());
         
-        sortedTasks.forEach((task, index) => {
-            layouts[task.id] = { task: { ...task, lane: index }, lane: index };
+        const lanes: Date[] = []; // Stores the end time of the last task in each lane
+
+        sortedTasks.forEach(task => {
+            let placed = false;
+            // Find the first available lane
+            for (let i = 0; i < lanes.length; i++) {
+                if (task.startDate >= lanes[i]) {
+                    layouts[task.id] = { task: { ...task, lane: i }, lane: i };
+                    lanes[i] = task.endDate;
+                    placed = true;
+                    break;
+                }
+            }
+
+            // If no available lane is found, create a new one
+            if (!placed) {
+                const newLaneIndex = lanes.length;
+                layouts[task.id] = { task: { ...task, lane: newLaneIndex }, lane: newLaneIndex };
+                lanes.push(task.endDate);
+            }
         });
     
-        return { taskLayouts: layouts, totalLanes: sortedTasks.length };
+        return { taskLayouts: layouts, totalLanes: lanes.length };
     }, [scheduledTasks]);
 
     const changeDate = (direction: 'next' | 'prev') => {
@@ -293,7 +311,7 @@ export default function TimelineView({ tasks, allTasks, onUpdateTask }: { tasks:
                     </div>
                 </div>
             </CardHeader>
-            <CardContent className="pt-2 overflow-x-auto">
+            <CardContent className="pt-2 overflow-x-auto custom-scrollbar">
                 <div ref={containerRef} className="relative timeline-container" style={{ minHeight: `${totalLanes * ROW_HEIGHT}px` }}>
                     {viewMode === 'day' && (
                         <>
