@@ -85,7 +85,7 @@ const DependencyLines = ({ tasks, taskLayouts, viewMode, currentDate }) => {
 };
 
 const TimeIndicator = ({ viewMode, currentDate }) => {
-    const [position, setPosition] = useState(0);
+    const [position, setPosition] = useState(-1);
 
     const calculatePosition = useCallback(() => {
         const now = new Date();
