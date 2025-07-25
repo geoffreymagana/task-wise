@@ -16,20 +16,23 @@ import {
   subMonths,
 } from 'date-fns';
 import { Button } from '@/components/ui/button';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { ChevronLeft, ChevronRight, CheckCircle, Circle, Play, XCircle } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Badge } from '../ui/badge';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip"
 
 interface CalendarViewProps {
   tasks: Task[];
 }
+
+const statusConfig = {
+  not_started: { label: 'Not Started', icon: <Circle className="w-4 h-4 text-muted-foreground" /> },
+  in_progress: { label: 'In Progress', icon: <Play className="w-4 h-4 text-blue-500" /> },
+  completed: { label: 'Completed', icon: <CheckCircle className="w-4 h-4 text-green-500" /> },
+  archived: { label: 'Archived', icon: <XCircle className="w-4 h-4 text-red-500" /> },
+};
+
 
 export default function CalendarView({ tasks }: CalendarViewProps) {
   const [currentMonth, setCurrentMonth] = useState(new Date());
@@ -64,7 +67,6 @@ export default function CalendarView({ tasks }: CalendarViewProps) {
           </Button>
         </div>
       </div>
-      <TooltipProvider>
         <div className="grid grid-cols-7 border-t border-l">
           {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day) => (
             <div key={day} className="text-center font-medium p-2 border-r border-b text-muted-foreground text-sm">
@@ -91,27 +93,34 @@ export default function CalendarView({ tasks }: CalendarViewProps) {
               </time>
               <div className="mt-8 space-y-1 overflow-y-auto">
                 {getTasksForDay(day).map(task => (
-                  <Tooltip key={task.id}>
-                    <TooltipTrigger asChild>
+                  <Popover key={task.id}>
+                    <PopoverTrigger asChild>
                        <div 
-                        className="text-xs p-1 rounded-sm w-full text-left truncate"
+                        className="text-xs p-1 rounded-sm w-full text-left truncate cursor-pointer"
                         style={{ backgroundColor: task.color }}
                       >
                         {task.title}
                       </div>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <p className="font-bold">{task.title}</p>
-                      <p className="text-sm text-muted-foreground">{task.description}</p>
-                       <Badge variant={task.priority === 'high' ? 'destructive' : 'secondary'} className="mt-2">{task.priority}</Badge>
-                    </TooltipContent>
-                  </Tooltip>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-80" style={{ borderLeft: `4px solid ${task.color}` }}>
+                       <div className="space-y-2">
+                         <h3 className="font-bold text-lg font-headline">{task.title}</h3>
+                         <p className="text-sm text-muted-foreground">{task.description}</p>
+                         <div className="flex items-center gap-2 text-sm">
+                           {statusConfig[task.status].icon}
+                           <span>{statusConfig[task.status].label}</span>
+                         </div>
+                         <div className="flex items-center gap-2 text-sm">
+                           <Badge variant={task.priority === 'high' ? 'destructive' : 'secondary'}>{task.priority}</Badge>
+                         </div>
+                       </div>
+                    </PopoverContent>
+                  </Popover>
                 ))}
               </div>
             </div>
           ))}
         </div>
-      </TooltipProvider>
     </Card>
   );
 }
