@@ -15,9 +15,8 @@ import { TaskDetailsDialog } from '../task-manager/task-details-dialog';
 
 type ViewMode = 'day' | 'week';
 
-const GRID_HOUR_WIDTH = 80; // px
-const ROW_HEIGHT = 48; // px, includes gap
-const ROW_GAP = 8; // px
+const GRID_HOUR_WIDTH = 100; // px
+const ROW_HEIGHT = 48; // px
 
 const DependencyLines = ({ tasks, taskLayouts, viewMode, currentDate }) => {
     const svgRef = useRef<SVGSVGElement>(null);
@@ -48,19 +47,19 @@ const DependencyLines = ({ tasks, taskLayouts, viewMode, currentDate }) => {
 
                     const startX = fromRect.left - containerRect.left;
                     const startY = fromRect.top - containerRect.top + fromRect.height / 2;
-                    const endX = toRect.right - containerRect.left;
+                    const endX = toRect.left - containerRect.left; // connect to the start of the dependency
                     const endY = toRect.top - containerRect.top + toRect.height / 2;
                     
-                    const controlX1 = startX - 60;
+                    const controlX1 = startX + 60;
                     const controlY1 = startY;
-                    const controlX2 = endX + 60;
+                    const controlX2 = endX - 60;
                     const controlY2 = endY;
 
                     newLines.push(
                         <path
                             key={`${task.id}-${depId}`}
                             d={`M ${startX} ${startY} C ${controlX1} ${controlY1}, ${controlX2} ${controlY2}, ${endX} ${endY}`}
-                            stroke={depTask.color}
+                            stroke={task.color} // Use parent task's color
                             strokeWidth="1.5"
                             fill="none"
                             markerEnd="url(#arrow)"
@@ -101,7 +100,8 @@ const TimeIndicator = ({ viewMode, currentDate }) => {
             if (isWithinInterval(now, { start, end })) {
                 const dayIndex = getDay(now) === 0 ? 6 : getDay(now) -1; // Monday is 0
                 const dayWidth = 100 / 7;
-                return dayIndex * dayWidth + (now.getHours() / 24) * dayWidth;
+                const hoursInDay = now.getHours() + now.getMinutes() / 60;
+                return dayIndex * dayWidth + (hoursInDay / 24) * dayWidth;
             }
         }
         return -1; // Hide indicator
@@ -148,78 +148,69 @@ export default function TimelineView({ tasks, allTasks, onUpdateTask }: { tasks:
         return eachHourOfInterval({ start, end });
     }, [currentDate]);
 
-    const scheduledTasks = useMemo(() => {
+     const scheduledTasks = useMemo(() => {
       const taskMap = new Map(allTasks.map(t => [t.id, t]));
-      const processedTasks = new Map();
+      const processedTasks = new Map<string, Task & { startDate: Date, endDate: Date }>();
 
-      function getLatestDepEndDate(task: Task, processingStack: Set<string>): Date | null {
+      function getTaskEnd(task: Task, processingStack: Set<string>): Date {
         if (processingStack.has(task.id)) {
           console.warn("Circular dependency detected involving task:", task.title);
-          return null; 
+          return new Date(); 
         }
+        if (processedTasks.has(task.id)) {
+            return processedTasks.get(task.id)!.endDate;
+        }
+
         processingStack.add(task.id);
-
-        let latestEndDate = null;
-        for (const depId of task.dependencies || []) {
-          const depTask = taskMap.get(depId);
-          if (depTask) {
-             const depEndDate = getTaskEndDate(depTask, processingStack);
-             if (depEndDate && (!latestEndDate || depEndDate > latestEndDate)) {
-               latestEndDate = depEndDate;
-             }
-          }
+        
+        let latestDepEndDate = new Date(0);
+        if (task.dependencies?.length > 0) {
+            for (const depId of task.dependencies) {
+                const depTask = taskMap.get(depId);
+                if (depTask) {
+                    const depEndDate = getTaskEnd(depTask, processingStack);
+                    if (depEndDate > latestDepEndDate) {
+                        latestDepEndDate = depEndDate;
+                    }
+                }
+            }
         }
-        
-        processingStack.delete(task.id);
-        return latestEndDate;
-      }
-
-      function getTaskEndDate(task: Task, processingStack: Set<string>): Date {
-        if(processedTasks.has(task.id)) return processedTasks.get(task.id).endDate;
-        
-        const latestDepEndDate = getLatestDepEndDate(task, processingStack);
         
         let startDate: Date;
         if (task.startTime) {
             startDate = new Date(task.startTime);
         } else {
-            let potentialStartDate = latestDepEndDate;
-            if (task.startedAt) {
-                const startedAtDate = new Date(task.startedAt);
-                if (!potentialStartDate || startedAtDate > potentialStartDate) {
-                    potentialStartDate = startedAtDate;
-                }
-            }
-             if (!potentialStartDate) {
-                potentialStartDate = task.dueDate ? startOfDay(new Date(task.dueDate)) : startOfDay(new Date());
-            }
-            startDate = potentialStartDate!;
+            startDate = latestDepEndDate > new Date(0) ? latestDepEndDate : (task.dueDate ? startOfDay(new Date(task.dueDate)) : startOfDay(new Date()));
         }
-
+        
         let endDate: Date;
         if (task.endTime) {
             endDate = new Date(task.endTime);
         } else {
-            const isAllDay = !task.startedAt && !!task.dueDate && !task.startTime && !task.endTime;
-            let potentialEndDate = task.estimatedTime > 0 ? addMinutes(startDate, task.estimatedTime) : (isAllDay ? endOfDay(startDate) : null);
-            if (isAllDay && !potentialEndDate) potentialEndDate = endOfDay(startDate);
-            if (!isAllDay && !potentialEndDate) potentialEndDate = addMinutes(startDate, 60);
-            endDate = potentialEndDate!;
+            const duration = task.estimatedTime || 60; // Default to 60 minutes
+            endDate = addMinutes(startDate, duration);
         }
-
-
+        
         const result = { ...task, startDate, endDate, dependencies: task.dependencies || [] };
         processedTasks.set(task.id, result);
+        processingStack.delete(task.id);
         return endDate;
       }
+      
+      // We need to sort tasks to process those without dependencies first
+      const sortedInputTasks = [...tasks].sort((a,b) => (a.dependencies?.length || 0) - (b.dependencies?.length || 0));
+      sortedInputTasks.forEach(task => {
+        if (!processedTasks.has(task.id)) {
+            getTaskEnd(task, new Set());
+        }
+      });
 
-      tasks.forEach(task => getTaskEndDate(task, new Set()));
       return Array.from(processedTasks.values()).filter(t => tasks.some(orig => orig.id === t.id));
 
     }, [tasks, allTasks]);
 
 
-    const taskLayouts = useMemo(() => {
+    const { taskLayouts, totalLanes } = useMemo(() => {
         const layouts: {[key: string]: { task: Task & {lane: number}, lane: number }} = {};
         if (!scheduledTasks.length) return { taskLayouts: {}, totalLanes: 1 };
     
@@ -245,7 +236,7 @@ export default function TimelineView({ tasks, allTasks, onUpdateTask }: { tasks:
             }
         });
     
-        return { taskLayouts: layouts, totalLanes: lanes.length };
+        return { taskLayouts: layouts, totalLanes: lanes.length || 1 };
     }, [scheduledTasks]);
 
     const changeDate = (direction: 'next' | 'prev') => {
@@ -269,14 +260,14 @@ export default function TimelineView({ tasks, allTasks, onUpdateTask }: { tasks:
         const left = (start.getTime() - viewBounds.start.getTime()) / totalViewDuration * 100;
         const width = (end.getTime() - start.getTime()) / totalViewDuration * 100;
         
-        const layoutInfo = taskLayouts.taskLayouts[task.id];
+        const layoutInfo = taskLayouts[task.id];
         if (!layoutInfo) return null;
 
         return (
             <div
                 key={`${task.id}-${viewBounds.start}`}
                 data-task-id={task.id}
-                className="h-8 rounded-md flex items-center px-2 absolute cursor-pointer z-10"
+                className="h-10 rounded-lg flex items-center px-2 absolute cursor-pointer z-10"
                 style={{
                     left: `${left}%`,
                     width: `${width}%`,
@@ -310,7 +301,7 @@ export default function TimelineView({ tasks, allTasks, onUpdateTask }: { tasks:
                 </div>
             </CardHeader>
             <CardContent className="pt-2 overflow-x-auto">
-                <div ref={containerRef} className="relative timeline-container" style={{ minHeight: `${taskLayouts.totalLanes * ROW_HEIGHT}px` }}>
+                <div ref={containerRef} className="relative timeline-container" style={{ minHeight: `${totalLanes * ROW_HEIGHT}px` }}>
                     {viewMode === 'day' && (
                         <>
                            <div className="grid" style={{ gridTemplateColumns: `repeat(24, ${GRID_HOUR_WIDTH}px)` }}>
@@ -320,7 +311,7 @@ export default function TimelineView({ tasks, allTasks, onUpdateTask }: { tasks:
                                     </div>
                                 ))}
                             </div>
-                            <div className="absolute top-12 left-0 right-0" style={{ minWidth: `${24 * GRID_HOUR_WIDTH}px`, height: `${taskLayouts.totalLanes * ROW_HEIGHT}px` }}>
+                            <div className="absolute top-12 left-0 right-0" style={{ minWidth: `${24 * GRID_HOUR_WIDTH}px`, height: `${totalLanes * ROW_HEIGHT}px` }}>
                                 {scheduledTasks.map(task => renderTaskBlock(task, { start: startOfDay(currentDate), end: endOfDay(currentDate) }))}
                                 <TimeIndicator viewMode="day" currentDate={currentDate} />
                             </div>
@@ -336,14 +327,14 @@ export default function TimelineView({ tasks, allTasks, onUpdateTask }: { tasks:
                                     </div>
                                 ))}
                             </div>
-                            <div className="absolute top-12 left-0 right-0 w-full" style={{ height: `${taskLayouts.totalLanes * ROW_HEIGHT}px` }}>
+                            <div className="absolute top-12 left-0 right-0 w-full" style={{ height: `${totalLanes * ROW_HEIGHT}px` }}>
                                 {scheduledTasks.map(task => renderTaskBlock(task, { start: startOfWeek(currentDate, {weekStartsOn: 1}), end: endOfWeek(currentDate, {weekStartsOn: 1}) }))}
                                 <TimeIndicator viewMode="week" currentDate={currentDate} />
                             </div>
                         </>
                     )}
-                    {Object.keys(taskLayouts.taskLayouts).length > 0 && (
-                        <DependencyLines tasks={scheduledTasks} taskLayouts={taskLayouts.taskLayouts} viewMode={viewMode} currentDate={currentDate}/>
+                    {Object.keys(taskLayouts).length > 0 && (
+                        <DependencyLines tasks={scheduledTasks} taskLayouts={taskLayouts} viewMode={viewMode} currentDate={currentDate}/>
                     )}
                 </div>
                  {taskToView && (
@@ -357,5 +348,3 @@ export default function TimelineView({ tasks, allTasks, onUpdateTask }: { tasks:
         </Card>
     );
 }
-
-    

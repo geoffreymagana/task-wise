@@ -29,6 +29,8 @@ const TaskSchema = z.object({
   status: z.enum(['not_started', 'in_progress', 'completed', 'archived']),
   estimatedTime: z.number().optional().describe('Estimated time in minutes.'),
   dueDate: z.string().nullable().describe('The due date of the task in YYYY-MM-DD format.'),
+  startTime: z.string().nullable().describe('The start time of the task in ISO 8601 format.'),
+  endTime: z.string().nullable().describe('The end time of the task in ISO 8601 format.'),
   createdAt: z.string(),
   completedAt: z.string().nullable(),
   subtasks: z.array(SubTaskSchema).optional(),
@@ -50,7 +52,6 @@ export async function parseMarkdownTasks(input: ParseMarkdownTasksInput): Promis
   
   // Recursively add missing fields to tasks and subtasks
   const now = new Date().toISOString();
-  const today = format(new Date(), 'yyyy-MM-dd');
   
   const addDefaultFields = (task: any): any => {
     const dueDate = task.dueDate ? format(new Date(task.dueDate), 'yyyy-MM-dd') : null;
@@ -64,6 +65,8 @@ export async function parseMarkdownTasks(input: ParseMarkdownTasksInput): Promis
       estimatedTime: task.estimatedTime || 0,
       actualTime: 0,
       dueDate: dueDate,
+      startTime: task.startTime ? new Date(task.startTime).toISOString() : null,
+      endTime: task.endTime ? new Date(task.endTime).toISOString() : null,
       createdAt: now,
       completedAt: null,
       subtasks: task.subtasks ? task.subtasks.map(addDefaultFields) : [],
@@ -79,13 +82,16 @@ const prompt = ai.definePrompt({
   name: 'parseMarkdownTasksPrompt',
   input: { schema: ParseMarkdownTasksInputSchema },
   output: { schema: ParseMarkdownTasksOutputSchema },
-  prompt: `You are an expert at parsing markdown task lists and converting them into structured JSON data. Analyze the provided markdown text, which represents a work plan. Identify all tasks and their subtasks. Do not include headings, descriptions, notes, or any other non-task text.
+  prompt: `You are an expert at parsing markdown task lists and converting them into structured JSON data. Analyze the provided markdown text, which represents a work plan. Identify all tasks and their subtasks.
 
-- The markdown uses indentation to represent subtasks.
-- The markdown may contain dates and deadlines. Infer the due date for each task. Today's date is ${new Date().toDateString()}.
-- The markdown may indicate task difficulty (e.g., 🔹 Light, 🔸 Medium, 🔺 Heavy). Use this to set the complexity and priority.
-- Set a default priority and complexity if not specified.
-- Set the status based on checkbox state (e.g., '[ ]' is not_started, '[x]' is completed). Default to 'not_started' if no checkbox.
+- The markdown uses indentation to represent subtasks, which implies a dependency on the parent task.
+- Infer start and end times from contextual clues in headings or task descriptions (e.g., "Morning routine (8am to 12pm)"). If a timeframe is provided, distribute the tasks within it.
+- If a task is dependent on another, its start time must be after the parent's end time.
+- If no time is specified, estimate a reasonable duration based on the task title and description. A simple task might take 30-60 minutes.
+- Today's date is ${new Date().toISOString()}.
+- Infer the due date for each task if mentioned.
+- Set complexity, priority, and status based on any available markers (e.g., 🔹, [x]). Use sensible defaults if not specified.
+- Set startTime and endTime in ISO 8601 format.
 
 Return a JSON object with a "tasks" array.
 

@@ -28,10 +28,10 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { CalendarIcon, Timer, Zap, Check, ChevronsUpDown, Plus } from 'lucide-react';
+import { CalendarIcon, Timer, Zap, Check, ChevronsUpDown } from 'lucide-react';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { Calendar } from '@/components/ui/calendar';
-import { cn, generateColor, timeToMinutes } from '@/lib/utils';
+import { cn, generateColor, timeToMinutes, formatToAmPm } from '@/lib/utils';
 import { format } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
 import { IconSelect } from '../common/icon-select';
@@ -172,15 +172,13 @@ export function AddTaskDialog({ children, onTaskCreated, onTaskUpdated, taskToEd
           endTime: data.endTime ? data.endTime.toISOString() : null,
       };
 
-      if (taskToEdit) {
-        if (onTaskUpdated) {
-          const updatedTask: Task = {
-            ...taskToEdit,
-            ...taskData,
-          };
-          onTaskUpdated(updatedTask);
-          toast({ title: 'Task Updated', description: `"${data.title}" has been updated.` });
-        }
+      if (taskToEdit && onTaskUpdated) {
+        const updatedTask: Task = {
+          ...taskToEdit,
+          ...taskData,
+        };
+        onTaskUpdated(updatedTask);
+        toast({ title: 'Task Updated', description: `"${data.title}" has been updated.` });
       } else {
         const newTask = await createTaskAction(taskData);
         onTaskCreated(newTask);
@@ -189,10 +187,11 @@ export function AddTaskDialog({ children, onTaskCreated, onTaskUpdated, taskToEd
       form.reset();
       setOpen(false);
     } catch (error) {
+       const errorMessage = error instanceof Error ? error.message : 'Could not save the task. Please try again.';
       toast({
         variant: 'destructive',
         title: 'An error occurred',
-        description: 'Could not save the task. Please try again.',
+        description: errorMessage,
       });
     } finally {
       setIsSubmitting(false);
@@ -201,6 +200,7 @@ export function AddTaskDialog({ children, onTaskCreated, onTaskUpdated, taskToEd
 
   const shouldShowEstimation = !taskToEdit || !taskToEdit.estimatedTime;
   const watchColor = form.watch('color');
+  const watchStartTime = form.watch('startTime');
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -327,6 +327,7 @@ export function AddTaskDialog({ children, onTaskCreated, onTaskUpdated, taskToEd
                               type="datetime-local" 
                               value={field.value ? format(new Date(field.value), "yyyy-MM-dd'T'HH:mm") : ''}
                               onChange={(e) => field.onChange(e.target.value ? new Date(e.target.value) : null)}
+                              min={format(new Date(), "yyyy-MM-dd'T'HH:mm")}
                             />
                           </FormControl>
                           <FormMessage />
@@ -344,6 +345,8 @@ export function AddTaskDialog({ children, onTaskCreated, onTaskUpdated, taskToEd
                                 type="datetime-local" 
                                 value={field.value ? format(new Date(field.value), "yyyy-MM-dd'T'HH:mm") : ''}
                                 onChange={(e) => field.onChange(e.target.value ? new Date(e.target.value) : null)}
+                                min={watchStartTime ? format(new Date(watchStartTime), "yyyy-MM-dd'T'HH:mm") : undefined}
+                                disabled={!watchStartTime}
                               />
                             </FormControl>
                             <FormMessage />
@@ -351,6 +354,12 @@ export function AddTaskDialog({ children, onTaskCreated, onTaskUpdated, taskToEd
                       )}
                     />
                   </div>
+                 <div className="text-center text-xs text-muted-foreground">
+                    {watchStartTime && `Starts: ${formatToAmPm(watchStartTime)}`}
+                    {watchStartTime && form.getValues('endTime') && ' | '}
+                    {form.getValues('endTime') && `Ends: ${formatToAmPm(form.getValues('endTime'))}`}
+                 </div>
+
 
                 <FormLabel>Estimated Time</FormLabel>
                  <div className="grid grid-cols-2 gap-4">
@@ -515,5 +524,3 @@ export function AddTaskDialog({ children, onTaskCreated, onTaskUpdated, taskToEd
     </Dialog>
   );
 }
-
-    

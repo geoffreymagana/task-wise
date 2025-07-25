@@ -1,6 +1,7 @@
 import { clsx, type ClassValue } from "clsx"
 import { twMerge } from "tailwind-merge"
 import { icons } from 'lucide-react';
+import { format } from 'date-fns';
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
@@ -24,12 +25,13 @@ export function getRandomIcon() {
 }
 
 export function formatDuration(minutes: number) {
+  if (!minutes || minutes <= 0) return 'N/A';
   if (minutes < 60) return `${minutes}m`;
-  if (minutes < 1440) return `${(minutes / 60).toFixed(1)}h`;
-  if (minutes < 10080) return `${(minutes / 1440).toFixed(1)}d`;
-  if (minutes < 43200) return `${(minutes / 10080).toFixed(1)}w`;
-  if (minutes < 525600) return `${(minutes / 43200).toFixed(1)}mo`;
-  return `${(minutes / 525600).toFixed(1)}y`;
+  if (minutes < 1440) return `${(minutes / 60).toFixed(1).replace('.0', '')}h`;
+  if (minutes < 10080) return `${(minutes / 1440).toFixed(1).replace('.0', '')}d`;
+  if (minutes < 43200) return `${(minutes / 10080).toFixed(1).replace('.0', '')}w`;
+  if (minutes < 525600) return `${(minutes / 43200).toFixed(1).replace('.0', '')}mo`;
+  return `${(minutes / 525600).toFixed(1).replace('.0', '')}y`;
 };
 
 export const timeToMinutes = (time: number, unit: string) => {
@@ -47,4 +49,9 @@ export const timeToMinutes = (time: number, unit: string) => {
     default:
       return time;
   }
+};
+
+export const formatToAmPm = (date: Date | null) => {
+  if (!date) return '';
+  return format(new Date(date), "MMM d, yyyy 'at' h:mm a");
 };
