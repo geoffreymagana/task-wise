@@ -35,75 +35,61 @@ export default function MindMapView({ tasks, allTasks }: MindMapViewProps) {
   const svgRef = useRef<SVGSVGElement>(null);
   const [taskToView, setTaskToView] = useState<Task | null>(null);
 
-  const { hierarchyData, nodes, links } = useMemo(() => {
-    const taskMap = new Map(allTasks.map(t => [t.id, { ...t, children: [] as any[] }]));
+  const { nodes, links } = useMemo(() => {
+    if (tasks.length === 0) {
+      return { nodes: [], links: [] };
+    }
 
-    const nodesData: any[] = [];
-    const linksData: any[] = [];
+    const taskMap = new Map(tasks.map(t => [t.id, { ...t, children: [] as any[] }]));
     const roots: any[] = [];
 
-    allTasks.forEach(task => {
-        if (!taskMap.has(task.id)) return;
-        
-        nodesData.push({
-            id: task.id,
-            task: task,
-        });
-
-        if (task.dependencies && task.dependencies.length > 0) {
+    tasks.forEach(task => {
+        const taskNode = taskMap.get(task.id)!;
+        if (!task.dependencies || task.dependencies.length === 0) {
+            roots.push(taskNode);
+        } else {
             task.dependencies.forEach(depId => {
-                if (taskMap.has(depId)) {
-                    linksData.push({
-                        source: depId,
-                        target: task.id,
-                    });
+                const parent = taskMap.get(depId);
+                if (parent) {
+                    parent.children.push(taskNode);
+                } else {
+                    // If parent is not in the filtered `tasks` list but exists in allTasks,
+                    // it might be a root for the purpose of layout. Check if it has no dependencies.
+                    const fullParentTask = allTasks.find(t => t.id === depId);
+                    if (fullParentTask && (!fullParentTask.dependencies || fullParentTask.dependencies.length === 0)) {
+                       roots.push(taskNode);
+                    }
                 }
             });
-        } else {
-            roots.push(taskMap.get(task.id)!);
         }
     });
-    
-    if (nodesData.length === 0) {
-      return { hierarchyData: null, nodes: [], links: [] };
-    }
 
-    const hierarchyRoot = d3.stratify()
-        .id((d: any) => d.id)
-        .parentId((d: any) => d.dependencies?.[0]) // Simplified for tree layout
-        (allTasks.filter(t => t.dependencies?.length <= 1)); // d3.tree works best with single parent
+    const uniqueRoots = roots.filter((v,i,a)=>a.findIndex(t=>(t.id === v.id))===i);
 
-    if(!hierarchyRoot) {
-      const virtualRoot = { id: 'virtual-root', children: roots };
-      const createdHierarchy = d3.hierarchy(virtualRoot);
-       return { 
-        hierarchyData: virtualRoot,
-        nodes: createdHierarchy.descendants().slice(1), 
-        links: createdHierarchy.links(),
-      };
-    }
+    const virtualRoot = { id: 'virtual-root', children: uniqueRoots };
+    const hierarchy = d3.hierarchy(virtualRoot);
     
     // Create tree layout
     const treeLayout = d3.tree<any>()
       .size([600, 800]) // height, width -> vertical tree
-      .separation((a, b) => (a.parent === b.parent ? 1 : 2) / a.depth);
+      .separation((a, b) => (a.parent === b.parent ? 1.5 : 2));
     
-    const treeData = treeLayout(hierarchyRoot);
-
-    const treeNodes = treeData.descendants().map(d => ({
+    const treeData = treeLayout(hierarchy);
+    
+    // We skip the virtual root node itself
+    const treeNodes = treeData.descendants().slice(1).map(d => ({
         ...d,
-        // Swap x and y for horizontal layout
-        x: d.y,
+        // Swap x and y for horizontal layout, and add some spacing
+        x: d.y + 50,
         y: d.x,
     }));
     
-    const treeLinks = treeData.links().map(d => ({
-      source: { ...d.source, x: d.source.y, y: d.source.x },
-      target: { ...d.target, x: d.target.y, y: d.target.x }
+    const treeLinks = treeData.links().filter(d => d.source.id !== 'virtual-root').map(d => ({
+      source: { ...d.source, x: d.source.y + 50, y: d.source.x },
+      target: { ...d.target, x: d.target.y + 50, y: d.target.x }
     }));
     
-    return { 
-      hierarchyData: hierarchyRoot, 
+    return {
       nodes: treeNodes, 
       links: treeLinks 
     };
@@ -111,7 +97,10 @@ export default function MindMapView({ tasks, allTasks }: MindMapViewProps) {
   }, [tasks, allTasks]);
 
   useEffect(() => {
-    if (!svgRef.current || nodes.length === 0) return;
+    if (!svgRef.current || nodes.length === 0) {
+      if(svgRef.current) d3.select(svgRef.current).selectAll('*').remove();
+      return;
+    };
 
     const svg = d3.select(svgRef.current);
     const width = svg.node()?.getBoundingClientRect().width || 800;
@@ -119,8 +108,7 @@ export default function MindMapView({ tasks, allTasks }: MindMapViewProps) {
 
     svg.selectAll('*').remove();
 
-    const g = svg.append('g')
-      .attr('transform', `translate(100, 0)`);
+    const g = svg.append('g');
 
     const linkGenerator = d3.linkHorizontal()
       .x((d:any) => d.x)
@@ -129,8 +117,8 @@ export default function MindMapView({ tasks, allTasks }: MindMapViewProps) {
     g.append('g')
       .attr('fill', 'none')
       .attr('stroke', '#cbd5e1')
-      .attr('stroke-opacity', 0.6)
-      .attr('stroke-width', 1.5)
+      .attr('stroke-opacity', 0.8)
+      .attr('stroke-width', 2)
       .selectAll('path')
       .data(links)
       .join('path')
@@ -143,7 +131,7 @@ export default function MindMapView({ tasks, allTasks }: MindMapViewProps) {
       .attr('transform', (d:any) => `translate(${d.x},${d.y})`)
       .style('cursor', 'pointer')
       .on('click', (event, d: any) => {
-        setTaskToView(d.data.task || d.data);
+        setTaskToView(d.data);
       });
 
     node.append('rect')
@@ -154,11 +142,11 @@ export default function MindMapView({ tasks, allTasks }: MindMapViewProps) {
       .attr('rx', 8)
       .attr('ry', 8)
       .attr('fill', (d: any) => {
-        const task = d.data.task || d.data;
+        const task = d.data;
         return statusColors[task.status] || statusColors.not_started;
        })
       .attr('stroke', (d: any) => {
-        const task = d.data.task || d.data;
+        const task = d.data;
         return statusBorders[task.status] || statusBorders.not_started;
       })
       .attr('stroke-width', 2)
@@ -171,42 +159,42 @@ export default function MindMapView({ tasks, allTasks }: MindMapViewProps) {
       .attr('y', -30)
       .attr('rx', 2)
       .attr('fill', (d: any) => {
-         const task = d.data.task || d.data;
+         const task = d.data;
          return priorityColors[task.priority] || priorityColors.low;
       });
 
-    node.append('text')
+    const text = node.append('text')
       .attr('text-anchor', 'middle')
-      .attr('dy', '-8')
       .attr('fill', '#1e293b')
+      .style('pointer-events', 'none');
+
+    text.append('tspan')
+      .attr('dy', '-0.5em')
       .attr('font-size', '13px')
       .attr('font-weight', '600')
       .text((d: any) => {
-        const task = d.data.task || d.data;
-        const title = task.title;
+        const title = d.data.title;
         return title.length > 18 ? title.substring(0, 18) + '...' : title;
       });
       
-    node.append('text')
-      .attr('text-anchor', 'middle')
-      .attr('dy', '8')
+    text.append('tspan')
+      .attr('x', 0)
+      .attr('dy', '1.2em')
       .attr('fill', '#64748b')
       .attr('font-size', '11px')
       .text((d: any) => {
-        const task = d.data.task || d.data;
-        const status = task.status.replace('_', ' ');
+        const status = d.data.status.replace('_', ' ');
         return status.charAt(0).toUpperCase() + status.slice(1);
       });
 
-    node.append('text')
-      .attr('text-anchor', 'middle')
-      .attr('dy', '22')
+    text.append('tspan')
+      .attr('x', 0)
+      .attr('dy', '1.2em')
       .attr('fill', '#94a3b8')
       .attr('font-size', '9px')
       .text((d: any) => {
-        const task = d.data.task || d.data;
-        if (task.dueDate) {
-          const dueDate = new Date(task.dueDate);
+        if (d.data.dueDate) {
+          const dueDate = new Date(d.data.dueDate);
           return format(dueDate, 'MMM dd');
         }
         return '';
@@ -214,10 +202,9 @@ export default function MindMapView({ tasks, allTasks }: MindMapViewProps) {
 
     node
       .filter((d: any) => {
-        const task = d.data.task || d.data;
-        if (!task.dueDate) return false;
-        const dueDate = new Date(task.dueDate);
-        return dueDate < new Date() && task.status !== 'completed';
+        if (!d.data.dueDate) return false;
+        const dueDate = new Date(d.data.dueDate);
+        return dueDate < new Date() && d.data.status !== 'completed';
       })
       .append('circle')
       .attr('cx', 70)
@@ -225,25 +212,11 @@ export default function MindMapView({ tasks, allTasks }: MindMapViewProps) {
       .attr('r', 6)
       .attr('fill', '#ef4444')
       .attr('stroke', 'white')
-      .attr('stroke-width', 2);
-
-    node
-      .filter((d: any) => {
-        const task = d.data.task || d.data;
-        if (!task.dueDate) return false;
-        const dueDate = new Date(task.dueDate);
-        return dueDate < new Date() && task.status !== 'completed';
-      })
-      .append('text')
-      .attr('x', 70)
-      .attr('y', -16)
-      .attr('text-anchor', 'middle')
-      .attr('fill', 'white')
-      .attr('font-size', '10px')
-      .attr('font-weight', 'bold')
-      .text('!');
+      .attr('stroke-width', 2)
+      .append('title')
+      .text('Overdue');
       
-    const zoom = d3.zoom()
+    const zoom = d3.zoom<SVGSVGElement, unknown>()
       .scaleExtent([0.2, 3])
       .on('zoom', (event) => {
         g.attr('transform', event.transform);
@@ -259,16 +232,13 @@ export default function MindMapView({ tasks, allTasks }: MindMapViewProps) {
         const fullWidth = parent.clientWidth;
         const fullHeight = parent.clientHeight;
         
-        const { x, y, width, height } = bounds;
+        const { x, y, width: boundsWidth, height: boundsHeight } = bounds;
         
-        const midX = x + width / 2;
-        const midY = y + height / 2;
+        if (boundsWidth === 0 || boundsHeight === 0) return;
 
-        if (width === 0 || height === 0) return;
-
-        const scale = Math.min(fullWidth / width, fullHeight / height) * 0.8;
-        const newX = fullWidth / 2 - scale * midX;
-        const newY = fullHeight / 2 - scale * midY;
+        const scale = Math.min(fullWidth / (boundsWidth + 100), fullHeight / (boundsHeight + 100)) * 0.9;
+        const newX = fullWidth / 2 - scale * (x + boundsWidth / 2);
+        const newY = fullHeight / 2 - scale * (y + boundsHeight / 2);
         
         svg.transition().duration(750).call(
             zoom.transform as any,
@@ -276,61 +246,69 @@ export default function MindMapView({ tasks, allTasks }: MindMapViewProps) {
         );
     }
     
-    svg.call(zoom as any);
+    svg.call(zoom);
     zoomToFit();
     
     svg.on('dblclick.zoom', () => zoomToFit());
 
-  }, [nodes, links]);
+  }, [nodes, links, tasks]);
 
   return (
     <Card className="shadow-lg mt-4 w-full h-[70vh] overflow-hidden bg-gradient-to-br from-slate-50 to-blue-50 relative">
-      <div className="absolute top-4 left-4 z-10 bg-white/90 backdrop-blur-sm rounded-lg p-3 shadow-sm border">
-        <h4 className="text-sm font-semibold text-slate-700 mb-2">Task Flow</h4>
-        <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs text-slate-600">
-          <div className="flex items-center gap-2">
-            <div className="w-3 h-3 rounded bg-slate-50 border border-slate-400"></div>
-            <span>Not Started</span>
+       {tasks.length === 0 ? (
+         <div className="flex items-center justify-center h-full">
+           <p className="text-muted-foreground">Add tasks with dependencies to see the mind map.</p>
+         </div>
+        ) : (
+        <>
+          <div className="absolute top-4 left-4 z-10 bg-white/90 backdrop-blur-sm rounded-lg p-3 shadow-sm border">
+            <h4 className="text-sm font-semibold text-slate-700 mb-2">Task Flow</h4>
+            <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs text-slate-600">
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 rounded bg-slate-50 border border-slate-400"></div>
+                <span>Not Started</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 rounded bg-blue-100 border border-blue-500"></div>
+                <span>In Progress</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 rounded bg-green-100 border border-green-500"></div>
+                <span>Completed</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 rounded bg-red-100 border border-red-500"></div>
+                <span>Archived</span>
+              </div>
+              <div className="flex items-center gap-2 col-span-2 mt-1 pt-1 border-t border-slate-200">
+                <div className="w-2 h-3 rounded bg-red-500"></div>
+                <span>High Priority</span>
+                <div className="w-2 h-3 rounded bg-amber-400 ml-2"></div>
+                <span>Medium</span>
+                <div className="w-2 h-3 rounded bg-slate-200 ml-2"></div>
+                <span>Low</span>
+              </div>
+            </div>
           </div>
-          <div className="flex items-center gap-2">
-            <div className="w-3 h-3 rounded bg-blue-100 border border-blue-500"></div>
-            <span>In Progress</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="w-3 h-3 rounded bg-green-100 border border-green-500"></div>
-            <span>Completed</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="w-3 h-3 rounded bg-red-100 border border-red-500"></div>
-            <span>Archived</span>
-          </div>
-          <div className="flex items-center gap-2 col-span-2 mt-1 pt-1 border-t border-slate-200">
-            <div className="w-2 h-3 rounded bg-red-500"></div>
-            <span>High Priority</span>
-            <div className="w-2 h-3 rounded bg-amber-400 ml-2"></div>
-            <span>Medium</span>
-            <div className="w-2 h-3 rounded bg-slate-200 ml-2"></div>
-            <span>Low</span>
-          </div>
-        </div>
-      </div>
 
-      <div className="absolute bottom-4 right-4 z-10 bg-white/90 backdrop-blur-sm rounded-lg p-2 shadow-sm border">
-        <p className="text-xs text-slate-600">Double-click to reset • Drag to pan • Scroll to zoom</p>
-      </div>
+          <div className="absolute bottom-4 right-4 z-10 bg-white/90 backdrop-blur-sm rounded-lg p-2 shadow-sm border">
+            <p className="text-xs text-slate-600">Double-click to reset • Drag to pan • Scroll to zoom</p>
+          </div>
 
-      <div className="absolute top-4 right-4 z-10 bg-white/90 backdrop-blur-sm rounded-lg p-2 shadow-sm border">
-        <p className="text-sm font-medium text-slate-700">{nodes.length} Tasks</p>
-      </div>
+          <div className="absolute top-4 right-4 z-10 bg-white/90 backdrop-blur-sm rounded-lg p-2 shadow-sm border">
+            <p className="text-sm font-medium text-slate-700">{nodes.length} Tasks</p>
+          </div>
 
-      <svg ref={svgRef} className="w-full h-full cursor-move"></svg>
-      
-      {taskToView && (
-        <TaskDetailsDialog 
-          task={taskToView}
-          allTasks={allTasks}
-          onOpenChange={() => setTaskToView(null)}
-        />
+          <svg ref={svgRef} className="w-full h-full cursor-move"></svg>
+          
+          {taskToView && (
+            <TaskDetailsDialog 
+              task={taskToView}
+              allTasks={allTasks}
+              onOpenChange={() => setTaskToView(null)}
+            />
+          )}
+        </>
       )}
     </Card>
   );
