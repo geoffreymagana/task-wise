@@ -8,9 +8,10 @@ import TableView from '@/components/task-views/table-view';
 import CalendarView from '@/components/task-views/calendar-view';
 import TimelineView from '@/components/task-views/timeline-view';
 import KanbanView from '@/components/task-views/kanban-view';
+import MindMapView from '@/components/task-views/mindmap-view';
 import type { Task } from '@/lib/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { ListTodo, Mic, Calendar, GanttChart, LayoutGrid } from 'lucide-react';
+import { ListTodo, Mic, Calendar, GanttChart, LayoutGrid, BrainCircuit } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { registerServiceWorker, subscribeToPush, getSubscription } from '@/lib/notification-utils';
 import { sendReminders } from '@/ai/flows/send-reminders';
@@ -151,18 +152,19 @@ export default function Home() {
   
   const renderDesktopViewSwitcher = () => (
     <Tabs value={activeView} onValueChange={setActiveView} className="w-full md:w-auto">
-      <TabsList className="grid w-full grid-cols-2 md:grid-cols-4">
+      <TabsList className="grid w-full grid-cols-2 md:grid-cols-5">
         <TabsTrigger value="table">Table</TabsTrigger>
         <TabsTrigger value="timeline">Timeline</TabsTrigger>
         <TabsTrigger value="calendar">Calendar</TabsTrigger>
         <TabsTrigger value="kanban">Kanban</TabsTrigger>
+        <TabsTrigger value="mindmap">Mind Map</TabsTrigger>
       </TabsList>
     </Tabs>
   );
 
   const renderMobileNav = () => (
     <div className="fixed bottom-0 left-0 right-0 bg-background border-t z-50 md:hidden">
-        <div className="grid grid-cols-4 items-center">
+        <div className="grid grid-cols-5 items-center">
             <button onClick={() => setActiveView('table')} className={`flex flex-col items-center p-2 ${activeView === 'table' ? 'text-primary' : 'text-muted-foreground'}`}>
                 <ListTodo className="h-5 w-5" />
                 <span className="text-xs">List</span>
@@ -178,6 +180,10 @@ export default function Home() {
             <button onClick={() => setActiveView('kanban')} className={`flex flex-col items-center p-2 ${activeView === 'kanban' ? 'text-primary' : 'text-muted-foreground'}`}>
                 <LayoutGrid className="h-5 w-5" />
                 <span className="text-xs">Kanban</span>
+            </button>
+            <button onClick={() => setActiveView('mindmap')} className={`flex flex-col items-center p-2 ${activeView === 'mindmap' ? 'text-primary' : 'text-muted-foreground'}`}>
+                <BrainCircuit className="h-5 w-5" />
+                <span className="text-xs">Map</span>
             </button>
         </div>
     </div>
@@ -248,6 +254,9 @@ export default function Home() {
                 </TabsContent>
                 <TabsContent value="kanban" className="m-0">
                   <KanbanView tasks={tasksToShow} onUpdateTask={handleTaskUpdated} allTasks={tasks} />
+                </TabsContent>
+                <TabsContent value="mindmap" className="m-0">
+                  <MindMapView tasks={tasksToShow} allTasks={tasks} />
                 </TabsContent>
               </Tabs>
             )}

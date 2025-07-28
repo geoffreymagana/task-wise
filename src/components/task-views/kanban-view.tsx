@@ -37,13 +37,11 @@ export default function KanbanView({ tasks, allTasks, onUpdateTask }: KanbanView
     };
     
     const sortedTasks = [...tasks].sort((a, b) => {
-        const aDueDate = a.dueDate ? new Date(a.dueDate) : null;
-        const bDueDate = b.dueDate ? new Date(b.dueDate) : null;
-        if (aDueDate && bDueDate) {
-            return aDueDate.getTime() - bDueDate.getTime();
+        const aDueDate = a.dueDate ? new Date(a.dueDate).getTime() : Infinity;
+        const bDueDate = b.dueDate ? new Date(b.dueDate).getTime() : Infinity;
+        if (aDueDate !== bDueDate) {
+            return aDueDate - bDueDate;
         }
-        if (aDueDate) return -1;
-        if (bDueDate) return 1;
         return 0;
     });
     
@@ -107,8 +105,9 @@ export default function KanbanView({ tasks, allTasks, onUpdateTask }: KanbanView
           onDragOver={handleDragOver}
           onDrop={(e) => handleDrop(e, status as StatusKey)}
         >
-          <div className="p-4 border-b">
+          <div className="p-4 border-b flex items-center gap-2">
             <h2 className="text-lg font-semibold font-headline">{title}</h2>
+            <Badge variant="secondary" className="rounded-full">{columns[status as StatusKey].length}</Badge>
           </div>
           <div className="p-4 space-y-4 min-h-[400px]">
             {columns[status as StatusKey].map((task) => (

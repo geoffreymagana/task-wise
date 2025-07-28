@@ -16,6 +16,7 @@ import {
   subMonths,
 } from 'date-fns';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
@@ -67,38 +68,49 @@ export default function CalendarView({ tasks, allTasks }: CalendarViewProps) {
               {day}
             </div>
           ))}
-          {daysInMonth.map((day) => (
-            <div
-              key={day.toString()}
-              className={cn(
-                'border-r border-b p-2 min-h-[120px] relative flex flex-col',
-                !isSameMonth(day, currentMonth) && 'bg-muted/50 text-muted-foreground'
-              )}
-            >
-              <time
-                dateTime={format(day, 'yyyy-MM-dd')}
+          {daysInMonth.map((day) => {
+            const dayTasks = getTasksForDay(day);
+            return (
+              <div
+                key={day.toString()}
                 className={cn(
-                  'font-semibold w-6 h-6 flex items-center justify-center rounded-full',
-                   'absolute top-2 right-2 text-xs',
-                  isToday(day) && 'bg-accent text-accent-foreground'
+                  'border-r border-b p-2 min-h-[120px] relative flex flex-col',
+                  !isSameMonth(day, currentMonth) && 'bg-muted/50 text-muted-foreground'
                 )}
               >
-                {format(day, 'd')}
-              </time>
-              <div className="mt-8 space-y-1 overflow-y-auto">
-                {getTasksForDay(day).map(task => (
-                  <button
-                    key={task.id}
-                    onClick={() => setTaskToView(task)}
-                    className="text-xs p-1 rounded-sm w-full text-left truncate cursor-pointer text-white"
-                    style={{ backgroundColor: task.color }}
+                <div className="flex justify-between items-start">
+                  {dayTasks.length > 0 && (
+                    <Badge variant="secondary" className="w-5 h-5 p-0 flex items-center justify-center rounded-full text-xs">
+                      {dayTasks.length}
+                    </Badge>
+                  )}
+                  <time
+                    dateTime={format(day, 'yyyy-MM-dd')}
+                    className={cn(
+                      'font-semibold w-6 h-6 flex items-center justify-center rounded-full',
+                      'text-xs ml-auto',
+                      isToday(day) && 'bg-accent text-accent-foreground'
+                    )}
                   >
-                    {task.title}
-                  </button>
-                ))}
+                    {format(day, 'd')}
+                  </time>
+                </div>
+
+                <div className="mt-2 space-y-1 overflow-y-auto">
+                  {dayTasks.map(task => (
+                    <button
+                      key={task.id}
+                      onClick={() => setTaskToView(task)}
+                      className="text-xs p-1 rounded-sm w-full text-left truncate cursor-pointer text-white"
+                      style={{ backgroundColor: task.color }}
+                    >
+                      {task.title}
+                    </button>
+                  ))}
+                </div>
               </div>
-            </div>
-          ))}
+            )
+          })}
         </div>
         {taskToView && (
             <TaskDetailsDialog 

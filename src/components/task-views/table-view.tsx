@@ -67,7 +67,7 @@ const priorityConfig = {
 
 const groupTasksByDay = (tasks: Task[]) => {
     const grouped = tasks.reduce((acc, task) => {
-        const date = format(startOfDay(new Date(task.createdAt)), 'yyyy-MM-dd');
+        const date = task.createdAt ? format(startOfDay(new Date(task.createdAt)), 'yyyy-MM-dd') : 'No Date';
         if (!acc[date]) {
             acc[date] = [];
         }
@@ -75,7 +75,11 @@ const groupTasksByDay = (tasks: Task[]) => {
         return acc;
     }, {} as Record<string, Task[]>);
     
-    return Object.entries(grouped).sort(([dateA], [dateB]) => new Date(dateB).getTime() - new Date(dateA).getTime());
+    return Object.entries(grouped).sort(([dateA], [dateB]) => {
+      if (dateA === 'No Date') return 1;
+      if (dateB === 'No Date') return -1;
+      return new Date(dateB).getTime() - new Date(dateA).getTime();
+    });
 };
 
 
@@ -102,11 +106,21 @@ export default function TableView({
 
   const sortedTasks = useMemo(() => {
     return [...tasks].sort((a, b) => {
-      const aDueDate = a.dueDate ? new Date(a.dueDate) : null;
-      const bDueDate = b.dueDate ? new Date(b.dueDate) : null;
-      if (aDueDate && bDueDate) return aDueDate.getTime() - bDueDate.getTime();
-      if (aDueDate) return -1;
-      if (bDueDate) return 1;
+      const aDueDate = a.dueDate ? new Date(a.dueDate).getTime() : Infinity;
+      const bDueDate = b.dueDate ? new Date(b.dueDate).getTime() : Infinity;
+      
+      if (aDueDate !== bDueDate) {
+          return aDueDate - bDueDate;
+      }
+      
+      const priorityOrder = { high: 3, medium: 2, low: 1 };
+      const aPriority = priorityOrder[a.priority] || 0;
+      const bPriority = priorityOrder[b.priority] || 0;
+
+      if(aPriority !== bPriority) {
+          return bPriority - aPriority;
+      }
+
       return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
     });
   }, [tasks]);
@@ -226,13 +240,16 @@ export default function TableView({
       
       {groupedTasks.map(([date, tasksInDay]) => {
          const day = new Date(date);
-         let title = format(day, 'EEEE, MMMM d');
+         let title = date === 'No Date' ? 'No Date' : format(day, 'EEEE, MMMM d');
          if (isToday(day)) title = "Today";
          if (isSameDay(day, new Date(Date.now() - 86400000))) title = "Yesterday";
 
          return (
             <div key={date}>
-                <h3 className="text-lg font-bold p-3 font-headline sticky top-0 bg-background/80 backdrop-blur-sm z-10">{title}</h3>
+                <h3 className="text-lg font-bold p-3 font-headline sticky top-0 bg-background/80 backdrop-blur-sm z-10 flex items-center gap-2">
+                  {title}
+                  <Badge variant="secondary" className="rounded-full">{tasksInDay.length}</Badge>
+                </h3>
                  <Table>
                     <TableHeader className="hidden md:table-header-group">
                       <TableRow>
