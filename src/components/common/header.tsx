@@ -4,10 +4,8 @@ import { Button } from '@/components/ui/button';
 import { AddTaskDialog } from '@/components/task-manager/add-task-dialog';
 import { ImportDialog } from '@/components/task-manager/import-dialog';
 import type { Task } from '@/lib/types';
-import { Download, GanttChartSquare, Plus, Upload, CircleUserRound, Moon, Sun } from 'lucide-react';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '../ui/dropdown-menu';
+import { Download, GanttChartSquare, Plus, Upload, CircleUserRound } from 'lucide-react';
 import Link from 'next/link';
-import { useTheme } from 'next-themes';
 import { useIsMobile } from '@/hooks/use-mobile';
 
 
@@ -18,42 +16,23 @@ interface AppHeaderProps {
 }
 
 export default function AppHeader({ onTaskCreated, onTasksImported, allTasks }: AppHeaderProps) {
-  const { setTheme, theme } = useTheme();
   const isMobile = useIsMobile();
-
-  const handleExport = (format: 'json' | 'csv' | 'md') => {
-    let data;
-    let fileType;
-    let fileName;
-
-    switch (format) {
-      case 'json':
-        data = JSON.stringify(allTasks, null, 2);
-        fileType = 'application/json';
-        fileName = 'tasks.json';
-        break;
-      // Add CSV and MD export logic here if needed
-      default:
-        return;
-    }
-
-    const blob = new Blob([data], { type: fileType });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = fileName;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-  };
 
   return (
     <header className="sticky top-0 z-40 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-14 items-center px-4 md:px-8 mx-auto">
         <div className="mr-4 flex items-center">
           <Link href="/" className="flex items-center gap-2">
-            <GanttChartSquare className="h-6 w-6 mr-2 text-primary" />
+             <svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="text-primary drop-shadow-lg">
+                <defs>
+                    <linearGradient id="grad1" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" style={{stopColor: 'hsl(var(--primary))', stopOpacity: 0.7}} />
+                    <stop offset="100%" style={{stopColor: 'hsl(var(--primary))', stopOpacity: 1}} />
+                    </linearGradient>
+                </defs>
+                <path d="M8 7H19V9H8V7ZM8 11H19V13H8V11ZM8 15H19V17H8V15ZM5 7H6V9H5V7ZM5 11H6V13H5V11ZM5 15H6V17H5V15Z" fill="url(#grad1)"/>
+                <rect x="3" y="4" width="18" height="16" rx="2" stroke="hsl(var(--primary))" strokeWidth="1.5" fill="none"/>
+             </svg>
             <h1 className="text-2xl font-bold font-headline hidden md:block">TaskWise</h1>
           </Link>
         </div>
@@ -71,26 +50,6 @@ export default function AppHeader({ onTaskCreated, onTasksImported, allTasks }: 
               {!isMobile && 'Import'}
             </Button>
           </ImportDialog>
-
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" size={isMobile ? "icon" : "sm"}>
-                <Download className={isMobile ? "h-4 w-4" : "mr-2 h-4 w-4"} /> 
-                {!isMobile && 'Export'}
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent>
-              <DropdownMenuItem onClick={() => handleExport('json')}>
-                Export as JSON
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-
-          <Button variant="ghost" size="icon" onClick={() => setTheme(theme === 'light' ? 'dark' : 'light')}>
-            <Sun className="h-[1.2rem] w-[1.2rem] rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
-            <Moon className="absolute h-[1.2rem] w-[1.2rem] rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
-            <span className="sr-only">Toggle theme</span>
-          </Button>
 
           <Link href="/profile">
              <Button variant="ghost" size="icon" className="rounded-full">

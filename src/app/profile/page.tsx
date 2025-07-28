@@ -5,12 +5,14 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { useTaskManager } from '@/hooks/use-task-manager';
-import { CheckCircle, Clock, ListTodo, UserCheck, Check, Edit, Loader2, Verified } from 'lucide-react';
+import { CheckCircle, Clock, ListTodo, UserCheck, Check, Edit, Loader2, Verified, Download, Moon, Sun } from 'lucide-react';
 import { useMemo, useState, useEffect } from 'react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { formatDuration } from '@/lib/utils';
 import { Progress } from '@/components/ui/progress';
+import { useTheme } from 'next-themes';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 
 const USER_STORAGE_KEY = 'taskwise-user';
 
@@ -20,6 +22,7 @@ export default function ProfilePage() {
   const [isEditingName, setIsEditingName] = useState(false);
   const [editedName, setEditedName] = useState('User');
   const [isLoading, setIsLoading] = useState(true);
+  const { setTheme, theme } = useTheme();
 
   useEffect(() => {
     try {
@@ -45,6 +48,33 @@ export default function ProfilePage() {
     setIsEditingName(false);
   };
   
+    const handleExport = (format: 'json' | 'csv' | 'md') => {
+    let data;
+    let fileType;
+    let fileName;
+
+    switch (format) {
+      case 'json':
+        data = JSON.stringify(tasks, null, 2);
+        fileType = 'application/json';
+        fileName = 'tasks.json';
+        break;
+      // Add CSV and MD export logic here if needed
+      default:
+        return;
+    }
+
+    const blob = new Blob([data], { type: fileType });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = fileName;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
   const stats = useMemo(() => {
     const totalTasks = tasks.length;
     const completedTasks = tasks.filter((task) => task.status === 'completed').length;
@@ -84,7 +114,15 @@ export default function ProfilePage() {
           <CardHeader className="flex flex-col items-center text-center">
             <Avatar className="w-24 h-24 mb-4">
               <div className="w-full h-full rounded-full bg-primary/10 flex items-center justify-center">
-                <Verified className="w-12 h-12 text-primary" />
+                 <svg width="60" height="60" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="text-primary drop-shadow-lg">
+                    <defs>
+                        <linearGradient id="grad1" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" style={{stopColor: 'currentColor', stopOpacity: 0.8}} />
+                        <stop offset="100%" style={{stopColor: 'currentColor', stopOpacity: 1}} />
+                        </linearGradient>
+                    </defs>
+                    <path d="M12 12C14.21 12 16 10.21 16 8C16 5.79 14.21 4 12 4C9.79 4 8 5.79 8 8C8 10.21 9.79 12 12 12ZM12 14C9.33 14 4 15.33 4 18V20H20V18C20 15.33 14.67 14 12 14Z" fill="url(#grad1)"/>
+                </svg>
               </div>
             </Avatar>
             {isEditingName ? (
@@ -105,7 +143,7 @@ export default function ProfilePage() {
                     <Button variant="ghost" size="icon" onClick={() => setIsEditingName(true)}><Edit className="w-5 h-5"/></Button>
                 </div>
             )}
-            <p className="text-muted-foreground">Welcome to your profile!</p>
+            <p className="text-muted-foreground">Welcome to your productivity dashboard!</p>
           </CardHeader>
           <CardContent>
             <Separator className="my-6" />
@@ -150,6 +188,28 @@ export default function ProfilePage() {
                         </p>
                     </div>
                 </div>
+            </div>
+             <Separator className="my-6" />
+             <div className="flex items-center justify-center gap-4 mt-6">
+                <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                    <Button variant="outline">
+                        <Download className="mr-2 h-4 w-4" /> 
+                        Export Data
+                    </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent>
+                    <DropdownMenuItem onClick={() => handleExport('json')}>
+                        Export as JSON
+                    </DropdownMenuItem>
+                    </DropdownMenuContent>
+                </DropdownMenu>
+
+                <Button variant="outline" size="icon" onClick={() => setTheme(theme === 'light' ? 'dark' : 'light')}>
+                    <Sun className="h-[1.2rem] w-[1.2rem] rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
+                    <Moon className="absolute h-[1.2rem] w-[1.2rem] rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
+                    <span className="sr-only">Toggle theme</span>
+                </Button>
             </div>
           </CardContent>
         </Card>

@@ -5,10 +5,11 @@ import type { Task } from '@/lib/types';
 import { Card, CardTitle } from '@/components/ui/card';
 import { AddTaskDialog } from '../task-manager/add-task-dialog';
 import { Badge } from '../ui/badge';
-import { MoreHorizontal } from 'lucide-react';
+import { MoreHorizontal, ChevronDown } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Icon } from '../common/icon';
-
+import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator } from '../ui/dropdown-menu';
+import { Button } from '../ui/button';
 
 interface KanbanViewProps {
   tasks: Task[];
@@ -63,29 +64,34 @@ export default function KanbanView({ tasks, allTasks, onUpdateTask }: KanbanView
     e.preventDefault();
     e.dataTransfer.dropEffect = 'move';
   };
+
+  const handleStatusChange = (task: Task, status: StatusKey) => {
+    if (task.status === status) return;
+    
+    if (status === 'completed' && task.dependencies?.length > 0) {
+      const allDependenciesMet = task.dependencies.every(depId => {
+        const depTask = allTasks.find(t => t.id === depId);
+        return depTask && depTask.status === 'completed';
+      });
+
+      if (!allDependenciesMet) {
+        toast({
+          variant: 'destructive',
+          title: 'Dependency not completed',
+          description: `Task "${task.title}" cannot be completed because one or more dependencies are not finished.`
+        });
+        return;
+      }
+    }
+    const startedAt = status === 'in_progress' && !task.startedAt ? new Date().toISOString() : task.startedAt;
+    const completedAt = status === 'completed' ? new Date().toISOString() : null;
+    onUpdateTask({ ...task, status, startedAt, completedAt });
+  };
   
   const handleDrop = (e: React.DragEvent<HTMLDivElement>, status: StatusKey) => {
     e.preventDefault();
-    if (draggedTask && draggedTask.status !== status) {
-        if (status === 'completed' && draggedTask.dependencies?.length > 0) {
-            const allDependenciesMet = draggedTask.dependencies.every(depId => {
-              const depTask = allTasks.find(t => t.id === depId);
-              return depTask && depTask.status === 'completed';
-            });
-      
-            if (!allDependenciesMet) {
-              toast({
-                variant: 'destructive',
-                title: 'Dependency not completed',
-                description: `Task "${draggedTask.title}" cannot be completed because one or more dependencies are not finished.`
-              });
-              setDraggedTask(null);
-              return;
-            }
-        }
-        const startedAt = status === 'in_progress' && !draggedTask.startedAt ? new Date().toISOString() : draggedTask.startedAt;
-        const completedAt = status === 'completed' ? new Date().toISOString() : null;
-        onUpdateTask({ ...draggedTask, status, startedAt, completedAt });
+    if (draggedTask) {
+        handleStatusChange(draggedTask, status);
     }
     setDraggedTask(null);
   };
@@ -130,8 +136,24 @@ export default function KanbanView({ tasks, allTasks, onUpdateTask }: KanbanView
                     </AddTaskDialog>
                 </CardTitle>
                 <p className="text-sm text-muted-foreground mt-1">{task.description}</p>
-                <div className="mt-2">
+                <div className="mt-2 flex items-center justify-between">
                   <Badge variant={task.priority === 'high' ? 'destructive' : 'secondary'}>{task.priority}</Badge>
+                   <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                          <Button variant="outline" size="sm" className="text-xs h-7">
+                              Change Status <ChevronDown className="ml-1 h-3 w-3"/>
+                          </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent>
+                          <DropdownMenuLabel>Move to...</DropdownMenuLabel>
+                          <DropdownMenuSeparator />
+                          {Object.entries(statusColumns).map(([s, t]) => (
+                              <DropdownMenuItem key={s} onClick={() => handleStatusChange(task, s as StatusKey)} disabled={task.status === s}>
+                                  {t}
+                              </DropdownMenuItem>
+                          ))}
+                      </DropdownMenuContent>
+                  </DropdownMenu>
                 </div>
               </Card>
             ))}
