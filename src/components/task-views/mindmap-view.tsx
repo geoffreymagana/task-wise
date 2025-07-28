@@ -25,7 +25,7 @@ import { Badge } from '../ui/badge';
 import { TaskDetailsDialog } from '../task-manager/task-details-dialog';
 import { cn } from '@/lib/utils';
 import { Button } from '../ui/button';
-import { LayoutDashboard, ZoomIn, ZoomOut, Maximize } from 'lucide-react';
+import { LayoutDashboard, ZoomIn, ZoomOut, Maximize, ArrowRightLeft } from 'lucide-react';
 import { startOfDay, format } from 'date-fns';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../ui/tooltip';
 
@@ -34,18 +34,19 @@ const elk = new ELK();
 const nodeWidth = 200;
 const nodeHeight = 80;
 
-const elkOptions = {
-  'elk.algorithm': 'layered',
-  'elk.direction': 'RIGHT',
-  'elk.layered.spacing.nodeNodeBetweenLayers': '80',
-  'elk.spacing.nodeNode': '60',
-  'elk.layered.nodePlacement.strategy': 'BRANDES_KOEPF',
-};
 
 const getLayoutedElements = (nodes: Node[], edges: Edge[], options = {}) => {
+  const elkOptions = {
+    'elk.algorithm': 'layered',
+    'elk.layered.spacing.nodeNodeBetweenLayers': '80',
+    'elk.spacing.nodeNode': '60',
+    'elk.layered.nodePlacement.strategy': 'BRANDES_KOEPF',
+    ...options,
+  };
+  
   const graph = {
     id: 'root',
-    layoutOptions: { ...elkOptions, ...options },
+    layoutOptions: elkOptions,
     children: nodes,
     edges: edges,
   };
@@ -91,7 +92,7 @@ function TaskNode({ data }: { data: Task }) {
           >
             <Icon name={data.icon || 'Package'} className="w-5 h-5 text-white" />
           </div>
-          <div className="text-sm font-semibold text-left break-words w-full" title={data.title}>
+          <div className="text-sm font-semibold text-left break-words w-full text-card-foreground" title={data.title}>
             {data.title}
           </div>
         </div>
@@ -121,15 +122,25 @@ function CustomControls() {
     const { zoomIn, zoomOut, fitView } = useReactFlow();
 
     const onLayout = () => {
-        // The layout logic is handled in the parent component now
-        // This button will trigger the layout passed via props
-        document.dispatchEvent(new Event('relayout'));
+        document.dispatchEvent(new CustomEvent('relayout', { detail: { force: true } }));
     };
+    
+    const onToggleLayout = () => {
+        document.dispatchEvent(new Event('togglelayout'));
+    }
 
     return (
         <Panel position="top-right">
              <TooltipProvider>
                 <div className="flex gap-2 p-1 bg-background border rounded-lg shadow-md">
+                    <Tooltip>
+                        <TooltipTrigger asChild>
+                            <Button variant="ghost" size="icon" onClick={() => onToggleLayout()}>
+                                <ArrowRightLeft className="h-4 w-4" />
+                            </Button>
+                        </TooltipTrigger>
+                        <TooltipContent><p>Toggle Layout</p></TooltipContent>
+                    </Tooltip>
                     <Tooltip>
                         <TooltipTrigger asChild>
                             <Button variant="ghost" size="icon" onClick={() => onLayout()}>
@@ -178,6 +189,7 @@ export default function MindMapView({ tasks, allTasks }: MindMapViewProps) {
   const [nodes, setNodes] = useState<Node[]>([]);
   const [edges, setEdges] = useState<Edge[]>([]);
   const [taskToView, setTaskToView] = useState<Task | null>(null);
+  const [layoutDirection, setLayoutDirection] = useState<'RIGHT' | 'DOWN'>('RIGHT');
 
   const onNodesChange = useCallback(
     (changes: NodeChange[]) => setNodes((nds) => applyNodeChanges(changes, nds)),
@@ -231,7 +243,6 @@ export default function MindMapView({ tasks, allTasks }: MindMapViewProps) {
                 height: nodeHeight,
             });
 
-            // If task has dependencies, connect to them
             if (task.dependencies && task.dependencies.length > 0) {
                 task.dependencies.forEach(depId => {
                     if (taskMap.has(depId)) {
@@ -241,12 +252,11 @@ export default function MindMapView({ tasks, allTasks }: MindMapViewProps) {
                             target: task.id,
                             type: 'smoothstep',
                             animated: task.status === 'in_progress',
-                             style: { stroke: task.color, strokeWidth: 2 },
+                             style: { stroke: taskMap.get(depId)?.color || '#aaa', strokeWidth: 2 },
                         });
                     }
                 });
             } else {
-                // Otherwise, connect to the date node
                 initialEdges.push({
                     id: `e-${dateNodeId}-${task.id}`,
                     source: dateNodeId,
@@ -258,20 +268,26 @@ export default function MindMapView({ tasks, allTasks }: MindMapViewProps) {
         });
     });
 
-    getLayoutedElements(initialNodes, initialEdges).then(({ nodes: layoutedNodes, edges: layoutedEdges }) => {
+    getLayoutedElements(initialNodes, initialEdges, { 'elk.direction': layoutDirection }).then(({ nodes: layoutedNodes, edges: layoutedEdges }) => {
       setNodes(layoutedNodes);
       setEdges(layoutedEdges);
     });
-  }, [tasks, allTasks]);
+  }, [tasks, allTasks, layoutDirection]);
 
   useLayoutEffect(() => {
     doLayout();
     
     const handleRelayout = () => doLayout();
+    const handleToggleLayout = () => {
+        setLayoutDirection(prev => prev === 'RIGHT' ? 'DOWN' : 'RIGHT');
+    };
+    
     document.addEventListener('relayout', handleRelayout);
+    document.addEventListener('togglelayout', handleToggleLayout);
 
     return () => {
         document.removeEventListener('relayout', handleRelayout);
+        document.removeEventListener('togglelayout', handleToggleLayout);
     };
   }, [tasks, doLayout]);
   
