@@ -86,14 +86,8 @@ const DependencyLines = ({ tasks, taskLayouts, viewMode, currentDate }) => {
 
 const TimeIndicator = ({ viewMode, currentDate }) => {
     const [position, setPosition] = useState(-1);
-    const [isClient, setIsClient] = useState(false);
-
-    useEffect(() => {
-      setIsClient(true);
-    }, []);
 
     const calculatePosition = useCallback(() => {
-        if (typeof window === 'undefined') return -1;
         const now = new Date();
         if (viewMode === 'day' && isSameDay(now, currentDate)) {
             const startOfHour = startOfDay(now);
@@ -114,7 +108,6 @@ const TimeIndicator = ({ viewMode, currentDate }) => {
     }, [viewMode, currentDate]);
 
     useEffect(() => {
-        if (!isClient) return;
         const updatePosition = () => {
             const newPos = calculatePosition();
             setPosition(newPos);
@@ -122,9 +115,9 @@ const TimeIndicator = ({ viewMode, currentDate }) => {
         updatePosition();
         const interval = setInterval(updatePosition, 60000); // Update every minute
         return () => clearInterval(interval);
-    }, [calculatePosition, isClient]);
+    }, [calculatePosition]);
 
-    if (position === -1 || !isClient) return null;
+    if (position === -1) return null;
 
     return (
         <div 
@@ -141,6 +134,11 @@ export default function TimelineView({ tasks, allTasks, onUpdateTask }: { tasks:
     const [viewMode, setViewMode] = useState<ViewMode>('week');
     const containerRef = useRef<HTMLDivElement>(null);
     const [taskToView, setTaskToView] = useState<Task | null>(null);
+    const [isClient, setIsClient] = useState(false);
+
+    useEffect(() => {
+        setIsClient(true);
+    }, []);
 
     
     const weekDays = useMemo(() => {
@@ -316,7 +314,7 @@ export default function TimelineView({ tasks, allTasks, onUpdateTask }: { tasks:
                            </div>
                             <div className="absolute top-12 left-0 right-0" style={{ minWidth: `${24 * GRID_HOUR_WIDTH}px`, height: `${totalLanes * ROW_HEIGHT}px` }}>
                                 {scheduledTasks.map(task => renderTaskBlock(task, { start: startOfDay(currentDate), end: endOfDay(currentDate) }))}
-                                <TimeIndicator viewMode="day" currentDate={currentDate} />
+                                {isClient && <TimeIndicator viewMode="day" currentDate={currentDate} />}
                             </div>
                         </>
                     )}
@@ -332,11 +330,11 @@ export default function TimelineView({ tasks, allTasks, onUpdateTask }: { tasks:
                             </div>
                             <div className="absolute top-12 left-0 right-0 w-full" style={{ height: `${totalLanes * ROW_HEIGHT}px` }}>
                                 {scheduledTasks.map(task => renderTaskBlock(task, { start: startOfWeek(currentDate, {weekStartsOn: 1}), end: endOfWeek(currentDate, {weekStartsOn: 1}) }))}
-                                <TimeIndicator viewMode="week" currentDate={currentDate} />
+                                {isClient && <TimeIndicator viewMode="week" currentDate={currentDate} />}
                             </div>
                         </>
                     )}
-                    {Object.keys(taskLayouts).length > 0 && (
+                    {isClient && Object.keys(taskLayouts).length > 0 && (
                         <DependencyLines tasks={scheduledTasks} taskLayouts={taskLayouts} viewMode={viewMode} currentDate={currentDate}/>
                     )}
                 </div>
