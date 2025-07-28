@@ -16,6 +16,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
 import { Calendar } from '../ui/calendar';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
+import { Badge } from '../ui/badge';
 
 interface FilterControlsProps {
   searchQuery: string;
@@ -30,6 +31,8 @@ interface FilterControlsProps {
     status: string[];
     dueDate: Date | null;
   }) => void;
+  filteredTasksCount: number;
+  hasActiveFilters: boolean;
 }
 
 const priorityOptions = ['low', 'medium', 'high'];
@@ -40,6 +43,8 @@ export default function FilterControls({
   setSearchQuery,
   filters,
   setFilters,
+  filteredTasksCount,
+  hasActiveFilters,
 }: FilterControlsProps) {
 
   const handlePriorityChange = (priority: string) => {
@@ -69,8 +74,6 @@ export default function FilterControls({
     setFilters({ priority: [], status: [], dueDate: null });
   }
   
-  const hasActiveFilters = searchQuery || filters.priority.length > 0 || filters.status.length > 0 || filters.dueDate;
-
   return (
     <div className="flex items-center gap-2 flex-wrap">
       <div className="relative flex-grow sm:flex-grow-0">
@@ -84,7 +87,7 @@ export default function FilterControls({
       </div>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button variant="outline" size="sm">Priority</Button>
+          <Button variant="outline" size="sm">Priority {filters.priority.length > 0 && `(${filters.priority.length})`}</Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent>
           <DropdownMenuLabel>Filter by Priority</DropdownMenuLabel>
@@ -104,7 +107,7 @@ export default function FilterControls({
 
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button variant="outline" size="sm">Status</Button>
+          <Button variant="outline" size="sm">Status {filters.status.length > 0 && `(${filters.status.length})`}</Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent>
           <DropdownMenuLabel>Filter by Status</DropdownMenuLabel>
@@ -116,7 +119,7 @@ export default function FilterControls({
               onCheckedChange={() => handleStatusChange(status)}
               onSelect={(e) => e.preventDefault()}
             >
-              {status.replace('_', ' ')}
+              {status.replace(/_/g, ' ')}
             </DropdownMenuCheckboxItem>
           ))}
         </DropdownMenuContent>
@@ -128,7 +131,7 @@ export default function FilterControls({
             variant={'outline'}
             size="sm"
             className={cn(
-              'w-full sm:w-[200px] justify-start text-left font-normal',
+              'w-full sm:w-auto justify-start text-left font-normal',
               !filters.dueDate && 'text-muted-foreground'
             )}
           >
@@ -147,10 +150,13 @@ export default function FilterControls({
       </Popover>
       
       {hasActiveFilters && (
-        <Button variant="ghost" size="sm" onClick={clearFilters}>
-          <X className="mr-2 h-4 w-4" />
-          Clear
-        </Button>
+        <div className="flex items-center gap-2">
+            <Button variant="ghost" size="sm" onClick={clearFilters}>
+              <X className="mr-2 h-4 w-4" />
+              Clear
+            </Button>
+            <Badge variant="secondary">{filteredTasksCount} found</Badge>
+        </div>
       )}
 
     </div>

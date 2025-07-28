@@ -127,11 +127,12 @@ export default function TableView({
 
   const groupedTasks = useMemo(() => groupTasksByDay(sortedTasks), [sortedTasks]);
 
-  const handleSelectAll = (checked: boolean | 'indeterminate') => {
+  const handleDaySelection = (dayTasks: Task[], checked: boolean | 'indeterminate') => {
+    const dayTaskIds = dayTasks.map(t => t.id);
     if (checked === true) {
-      setSelectedTaskIds(sortedTasks.map(t => t.id));
+      setSelectedTaskIds(prev => [...new Set([...prev, ...dayTaskIds])]);
     } else {
-      setSelectedTaskIds([]);
+      setSelectedTaskIds(prev => prev.filter(id => !dayTaskIds.includes(id)));
     }
   };
 
@@ -185,10 +186,7 @@ export default function TableView({
       toast({title: "Task Restored", description: "The task has been moved back to the main task list."})
     }
   };
-
-  const isAllSelected = selectedTaskIds.length > 0 && selectedTaskIds.length === sortedTasks.length;
-  const isSomeSelected = selectedTaskIds.length > 0 && selectedTaskIds.length < sortedTasks.length;
-
+  
   const isTaskActive = (task: Task) => {
     if (!task.startTime) return false;
     const startTime = new Date(task.startTime);
@@ -203,12 +201,11 @@ export default function TableView({
   return (
     <Card className="shadow-lg mt-4">
       {selectedTaskIds.length > 0 && (
-        <div className="p-2 border-b bg-muted/50 flex items-center justify-between">
+        <div className="p-2 border-b bg-muted/50 flex items-center justify-between sticky top-0 z-20">
           <span className="text-sm font-medium">
             {selectedTaskIds.length} task(s) selected
           </span>
-          {!isArchivedView && (
-            <div className="space-x-2">
+          <div className="space-x-2">
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="outline" size="sm">
@@ -218,11 +215,18 @@ export default function TableView({
                 <DropdownMenuContent>
                   <DropdownMenuLabel>Set Status</DropdownMenuLabel>
                   <DropdownMenuSeparator />
-                  {Object.entries(statusConfig).map(([statusKey, {label}]) => (
-                    <DropdownMenuItem key={statusKey} onClick={() => handleBulkStatusChange(statusKey as Task['status'])}>
-                      {label}
-                    </DropdownMenuItem>
+                  {Object.entries(statusConfig)
+                    .filter(([key]) => !isArchivedView || key === 'archived')
+                    .map(([statusKey, {label}]) => (
+                      <DropdownMenuItem key={statusKey} onClick={() => handleBulkStatusChange(statusKey as Task['status'])}>
+                        {label}
+                      </DropdownMenuItem>
                   ))}
+                  {isArchivedView && (
+                     <DropdownMenuItem onClick={() => { selectedTaskIds.forEach(id => handleReinstate(id)); setSelectedTaskIds([])}}>
+                        Reinstate
+                      </DropdownMenuItem>
+                  )}
                 </DropdownMenuContent>
               </DropdownMenu>
               <Button
@@ -231,10 +235,9 @@ export default function TableView({
                 onClick={() => setIsDeleteDialogOpen(true)}
               >
                 <Trash className="mr-2 h-4 w-4" />
-                Delete Selected
+                Delete
               </Button>
             </div>
-          )}
         </div>
       )}
       
@@ -244,9 +247,19 @@ export default function TableView({
          if (isToday(day)) title = "Today";
          if (isSameDay(day, new Date(Date.now() - 86400000))) title = "Yesterday";
 
+         const dayTaskIds = tasksInDay.map(t => t.id);
+         const selectedCountInDay = selectedTaskIds.filter(id => dayTaskIds.includes(id)).length;
+         const isAllDaySelected = selectedCountInDay > 0 && selectedCountInDay === dayTaskIds.length;
+         const isSomeDaySelected = selectedCountInDay > 0 && selectedCountInDay < dayTaskIds.length;
+
          return (
             <div key={date}>
-                <h3 className="text-lg font-bold p-3 font-headline sticky top-0 bg-background/80 backdrop-blur-sm z-10 flex items-center gap-2">
+                <h3 className="text-lg font-bold p-3 font-headline sticky top-0 bg-background/80 backdrop-blur-sm z-10 flex items-center gap-3">
+                  <Checkbox 
+                    checked={isAllDaySelected ? true : (isSomeDaySelected ? 'indeterminate' : false)}
+                    onCheckedChange={(checked) => handleDaySelection(tasksInDay, checked)}
+                    aria-label={`Select all tasks for ${title}`}
+                  />
                   {title}
                   <Badge variant="secondary" className="rounded-full">{tasksInDay.length}</Badge>
                 </h3>
@@ -272,7 +285,7 @@ export default function TableView({
                               aria-label={`Select row for task "${task.title}"`}
                             />
                           </TableCell>
-                          <TableCell className="max-w-[200px] md:max-w-sm">
+                          <TableCell className="w-[40%]">
                              <div className="flex items-center gap-2">
                                 <button onClick={() => setTaskToView(task)} className="font-medium text-left hover:underline flex items-center gap-2">
                                   <div 
@@ -281,9 +294,9 @@ export default function TableView({
                                   >
                                     <Icon name={task.icon || 'Package'} className="w-4 h-4 text-white" />
                                   </div>
-                                  <span className="truncate">{task.title}</span>
+                                  <span className="whitespace-normal break-words">{task.title}</span>
                                 </button>
-                                {isOverdue(task) && <AlertCircle className="w-4 h-4 text-red-500" title="Overdue" />}
+                                {isOverdue(task) && <AlertCircle className="w-4 h-4 text-red-500 shrink-0" title="Overdue" />}
                               </div>
                           </TableCell>
                           <TableCell>

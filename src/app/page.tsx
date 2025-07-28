@@ -202,11 +202,12 @@ export default function Home() {
                 setSearchQuery={setSearchQuery}
                 filters={filters}
                 setFilters={setFilters}
+                filteredTasksCount={tasksToShow.length}
+                hasActiveFilters={!!hasActiveFilters}
             />
           </div>
 
           <div className="flex-shrink-0 flex items-center gap-4">
-             {hasTasks && <p className="text-sm text-muted-foreground">{renderTaskCount()}</p>}
              {hasTasks && (
                 <Tabs value={activeTab} onValueChange={setActiveTab}>
                   <TabsList>
