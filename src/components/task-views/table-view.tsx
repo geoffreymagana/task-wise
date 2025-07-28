@@ -32,7 +32,7 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { CheckCircle, Circle, Edit, MoreHorizontal, Trash, XCircle, ChevronDown, Play, ArchiveRestore } from 'lucide-react';
-import { format } from 'date-fns';
+import { format, isSameDay, isToday, startOfDay } from 'date-fns';
 import { Card } from '../ui/card';
 import { AddTaskDialog } from '../task-manager/add-task-dialog';
 import { formatDuration } from '@/lib/utils';
@@ -65,6 +65,19 @@ const priorityConfig = {
   high: 'destructive',
 };
 
+const groupTasksByDay = (tasks: Task[]) => {
+    const grouped = tasks.reduce((acc, task) => {
+        const date = format(startOfDay(new Date(task.createdAt)), 'yyyy-MM-dd');
+        if (!acc[date]) {
+            acc[date] = [];
+        }
+        acc[date].push(task);
+        return acc;
+    }, {} as Record<string, Task[]>);
+    return Object.entries(grouped).sort(([dateA], [dateB]) => new Date(b).getTime() - new Date(a).getTime());
+};
+
+
 export default function TableView({
   tasks,
   allTasks,
@@ -79,17 +92,25 @@ export default function TableView({
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [taskToView, setTaskToView] = useState<Task | null>(null);
   const { toast } = useToast();
+  const [now, setNow] = useState(new Date());
+
+  useEffect(() => {
+    const timer = setInterval(() => setNow(new Date()), 60 * 1000); // Update every minute
+    return () => clearInterval(timer);
+  }, []);
 
   const sortedTasks = useMemo(() => {
     return [...tasks].sort((a, b) => {
-      if (a.dueDate && b.dueDate) {
-        return new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime();
-      }
-      if (a.dueDate) return -1;
-      if (b.dueDate) return 1;
+      const aDueDate = a.dueDate ? new Date(a.dueDate) : null;
+      const bDueDate = b.dueDate ? new Date(b.dueDate) : null;
+      if (aDueDate && bDueDate) return aDueDate.getTime() - bDueDate.getTime();
+      if (aDueDate) return -1;
+      if (bDueDate) return 1;
       return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
     });
   }, [tasks]);
+
+  const groupedTasks = useMemo(() => groupTasksByDay(sortedTasks), [sortedTasks]);
 
   const handleSelectAll = (checked: boolean | 'indeterminate') => {
     if (checked === true) {
@@ -150,9 +171,15 @@ export default function TableView({
     }
   };
 
-
   const isAllSelected = selectedTaskIds.length > 0 && selectedTaskIds.length === sortedTasks.length;
   const isSomeSelected = selectedTaskIds.length > 0 && selectedTaskIds.length < sortedTasks.length;
+
+  const isTaskActive = (task: Task) => {
+    if (!task.startTime) return false;
+    const startTime = new Date(task.startTime);
+    const endTime = task.endTime ? new Date(task.endTime) : new Date(startTime.getTime() + (task.estimatedTime || 0) * 60000);
+    return now >= startTime && now <= endTime;
+  }
 
   return (
     <Card className="shadow-lg mt-4">
@@ -191,116 +218,124 @@ export default function TableView({
           )}
         </div>
       )}
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead className="w-12">
-              <Checkbox
-                checked={sortedTasks.length > 0 && isAllSelected ? true : (isSomeSelected ? 'indeterminate' : false)}
-                onCheckedChange={handleSelectAll}
-                aria-label="Select all rows"
-              />
-            </TableHead>
-            <TableHead className="w-[40%]">Task</TableHead>
-            <TableHead>Status</TableHead>
-            <TableHead>Priority</TableHead>
-            <TableHead>Est. Time</TableHead>
-            <TableHead>Due Date</TableHead>
-            <TableHead className="text-right w-[50px]"></TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {sortedTasks.map((task) => (
-            <TableRow key={task.id} data-state={selectedTaskIds.includes(task.id) && 'selected'}>
-              <TableCell>
-                <Checkbox
-                  checked={selectedTaskIds.includes(task.id)}
-                  onCheckedChange={(checked) => handleRowSelect(task.id, !!checked)}
-                  aria-label={`Select row for task "${task.title}"`}
-                />
-              </TableCell>
-              <TableCell>
-                 <div className="flex items-center gap-2">
-                    <button onClick={() => setTaskToView(task)} className="font-medium text-left hover:underline flex items-center gap-2">
-                      <div 
-                        className="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0"
-                        style={{ backgroundColor: task.color }}
-                      >
-                        <Icon name={task.icon || 'Package'} className="w-4 h-4 text-white" />
-                      </div>
-                      {task.title}
-                    </button>
-                  </div>
-              </TableCell>
-              <TableCell>
-                {!isArchivedView ? (
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" className="flex items-center gap-2 px-2 py-1 h-auto text-sm">
-                        {statusConfig[task.status].icon}
-                        {statusConfig[task.status].label}
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent>
-                      <DropdownMenuLabel>Set Status</DropdownMenuLabel>
-                      <DropdownMenuSeparator />
-                      {Object.entries(statusConfig).map(([statusKey, {label}]) => (
-                        <DropdownMenuItem key={statusKey} onClick={() => handleStatusChange(task, statusKey as Task['status'])}>
-                          {label}
-                        </DropdownMenuItem>
+      
+      {groupedTasks.map(([date, tasksInDay]) => {
+         const day = new Date(date);
+         let title = format(day, 'EEEE, MMMM d');
+         if (isToday(day)) title = "Today";
+         if (isSameDay(day, new Date(Date.now() - 86400000))) title = "Yesterday";
+
+         return (
+            <div key={date}>
+                <h3 className="text-lg font-bold p-3 font-headline sticky top-0 bg-background/80 backdrop-blur-sm z-10">{title}</h3>
+                 <Table>
+                    <TableHeader className="hidden">
+                      <TableRow>
+                        <TableHead className="w-12"></TableHead>
+                        <TableHead className="w-[40%]">Task</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead>Priority</TableHead>
+                        <TableHead>Est. Time</TableHead>
+                        <TableHead>Due Date</TableHead>
+                        <TableHead className="text-right w-[50px]"></TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {tasksInDay.map((task) => (
+                        <TableRow key={task.id} data-state={selectedTaskIds.includes(task.id) && 'selected'} className={isTaskActive(task) ? 'bg-primary/10' : ''}>
+                          <TableCell>
+                            <Checkbox
+                              checked={selectedTaskIds.includes(task.id)}
+                              onCheckedChange={(checked) => handleRowSelect(task.id, !!checked)}
+                              aria-label={`Select row for task "${task.title}"`}
+                            />
+                          </TableCell>
+                          <TableCell>
+                             <div className="flex items-center gap-2">
+                                <button onClick={() => setTaskToView(task)} className="font-medium text-left hover:underline flex items-center gap-2">
+                                  <div 
+                                    className="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0"
+                                    style={{ backgroundColor: task.color }}
+                                  >
+                                    <Icon name={task.icon || 'Package'} className="w-4 h-4 text-white" />
+                                  </div>
+                                  {task.title}
+                                </button>
+                              </div>
+                          </TableCell>
+                          <TableCell>
+                            {!isArchivedView ? (
+                              <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                  <Button variant="ghost" className="flex items-center gap-2 px-2 py-1 h-auto text-sm">
+                                    {statusConfig[task.status].icon}
+                                    {statusConfig[task.status].label}
+                                  </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent>
+                                  <DropdownMenuLabel>Set Status</DropdownMenuLabel>
+                                  <DropdownMenuSeparator />
+                                  {Object.entries(statusConfig).map(([statusKey, {label}]) => (
+                                    <DropdownMenuItem key={statusKey} onClick={() => handleStatusChange(task, statusKey as Task['status'])}>
+                                      {label}
+                                    </DropdownMenuItem>
+                                  ))}
+                                </DropdownMenuContent>
+                              </DropdownMenu>
+                            ) : (
+                              <div className="flex items-center gap-2 text-sm">
+                                {statusConfig[task.status].icon}
+                                {statusConfig[task.status].label}
+                              </div>
+                            )}
+                          </TableCell>
+                          <TableCell>
+                            <Badge variant={priorityConfig[task.priority] as any}>{task.priority}</Badge>
+                          </TableCell>
+                          <TableCell>
+                            {task.estimatedTime > 0 ? formatDuration(task.estimatedTime) : 'N/A'}
+                          </TableCell>
+                          <TableCell>
+                            {task.dueDate ? format(new Date(task.dueDate), 'MMM d, yyyy') : 'No due date'}
+                          </TableCell>
+                          <TableCell className="text-right">
+                            {isArchivedView ? (
+                               <Button variant="ghost" size="icon" onClick={() => handleReinstate(task.id)}>
+                                  <ArchiveRestore className="h-4 w-4" />
+                                </Button>
+                            ) : (
+                              <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                  <Button variant="ghost" size="icon">
+                                    <MoreHorizontal className="h-4 w-4" />
+                                  </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end">
+                                  <AddTaskDialog onTaskUpdated={onUpdateTask} onTaskCreated={handleTaskCreated} taskToEdit={task} allTasks={allTasks}>
+                                    <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+                                      <Edit className="mr-2 h-4 w-4" />
+                                      Edit
+                                    </DropdownMenuItem>
+                                  </AddTaskDialog>
+                                  <DropdownMenuItem
+                                    className="text-red-600"
+                                    onClick={() => onDeleteTask(task.id)}
+                                  >
+                                    <Trash className="mr-2 h-4 w-4" />
+                                    Delete
+                                  </DropdownMenuItem>
+                                </DropdownMenuContent>
+                              </DropdownMenu>
+                            )}
+                          </TableCell>
+                        </TableRow>
                       ))}
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                ) : (
-                  <div className="flex items-center gap-2 text-sm">
-                    {statusConfig[task.status].icon}
-                    {statusConfig[task.status].label}
-                  </div>
-                )}
-              </TableCell>
-              <TableCell>
-                <Badge variant={priorityConfig[task.priority] as any}>{task.priority}</Badge>
-              </TableCell>
-              <TableCell>
-                {task.estimatedTime > 0 ? formatDuration(task.estimatedTime) : 'N/A'}
-              </TableCell>
-              <TableCell>
-                {task.dueDate ? format(new Date(task.dueDate), 'MMM d, yyyy') : 'No due date'}
-              </TableCell>
-              <TableCell className="text-right">
-                {isArchivedView ? (
-                   <Button variant="ghost" size="icon" onClick={() => handleReinstate(task.id)}>
-                      <ArchiveRestore className="h-4 w-4" />
-                    </Button>
-                ) : (
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="icon">
-                        <MoreHorizontal className="h-4 w-4" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <AddTaskDialog onTaskUpdated={onUpdateTask} onTaskCreated={handleTaskCreated} taskToEdit={task} allTasks={allTasks}>
-                        <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
-                          <Edit className="mr-2 h-4 w-4" />
-                          Edit
-                        </DropdownMenuItem>
-                      </AddTaskDialog>
-                      <DropdownMenuItem
-                        className="text-red-600"
-                        onClick={() => onDeleteTask(task.id)}
-                      >
-                        <Trash className="mr-2 h-4 w-4" />
-                        Delete
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                )}
-              </TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
+                    </TableBody>
+                 </Table>
+            </div>
+        );
+      })}
+
        <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>

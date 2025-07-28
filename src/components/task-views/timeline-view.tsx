@@ -45,7 +45,7 @@ const DependencyLines = ({ tasks, taskLayouts, viewMode, currentDate }) => {
                     if (!toEl) return;
                     const toRect = toEl.getBoundingClientRect();
 
-                    const startX = fromRect.left - containerRect.left;
+                    const startX = fromRect.left - containerRect.left + fromRect.width;
                     const startY = fromRect.top - containerRect.top + fromRect.height / 2;
                     const endX = toRect.left - containerRect.left; 
                     const endY = toRect.top - containerRect.top + toRect.height / 2;
@@ -86,25 +86,31 @@ const DependencyLines = ({ tasks, taskLayouts, viewMode, currentDate }) => {
 
 const TimeIndicator = ({ viewMode, currentDate }) => {
     const [position, setPosition] = useState(-1);
+    const containerRef = useRef<HTMLDivElement>(null);
 
     const calculatePosition = useCallback(() => {
-        const now = new Date();
-        if (viewMode === 'day' && isSameDay(now, currentDate)) {
-            const startOfHour = startOfDay(now);
-            const totalMinutesInDay = 24 * 60;
-            const minutesFromStart = (now.getTime() - startOfHour.getTime()) / (1000 * 60);
-            return (minutesFromStart / totalMinutesInDay) * 100;
-        } else if (viewMode === 'week') {
-            const start = startOfWeek(currentDate, { weekStartsOn: 1 });
-            const end = endOfWeek(currentDate, { weekStartsOn: 1 });
-            if (isWithinInterval(now, { start, end })) {
-                const dayIndex = getDay(now) === 0 ? 6 : getDay(now) -1; // Monday is 0
-                const dayWidth = 100 / 7;
-                const hoursInDay = now.getHours() + now.getMinutes() / 60;
-                return dayIndex * dayWidth + (hoursInDay / 24) * dayWidth;
-            }
-        }
-        return -1; // Hide indicator
+      const now = new Date();
+      if (viewMode === 'day') {
+        if (!isSameDay(now, currentDate)) return -1;
+        const startOfHour = startOfDay(now);
+        const totalMinutesInDay = 24 * 60;
+        const minutesFromStart = (now.getTime() - startOfHour.getTime()) / (1000 * 60);
+        const parentWidth = containerRef.current?.offsetWidth ?? 0;
+        if (parentWidth === 0) return -1;
+        return (minutesFromStart / totalMinutesInDay) * parentWidth;
+      }
+      if (viewMode === 'week') {
+        const start = startOfWeek(currentDate, { weekStartsOn: 1 });
+        const end = endOfWeek(currentDate, { weekStartsOn: 1 });
+        if (!isWithinInterval(now, { start, end })) return -1;
+        const dayIndex = getDay(now) === 0 ? 6 : getDay(now) - 1; // Monday is 0
+        const parentWidth = containerRef.current?.offsetWidth ?? 0;
+        if (parentWidth === 0) return -1;
+        const dayWidth = parentWidth / 7;
+        const hoursInDay = now.getHours() + now.getMinutes() / 60;
+        return dayIndex * dayWidth + (hoursInDay / 24) * dayWidth;
+      }
+      return -1;
     }, [viewMode, currentDate]);
 
     useEffect(() => {
@@ -114,20 +120,33 @@ const TimeIndicator = ({ viewMode, currentDate }) => {
         };
         updatePosition();
         const interval = setInterval(updatePosition, 60000); // Update every minute
-        return () => clearInterval(interval);
+        
+        const resizeObserver = new ResizeObserver(updatePosition);
+        if (containerRef.current) {
+            resizeObserver.observe(containerRef.current);
+        }
+
+        return () => {
+            clearInterval(interval);
+            resizeObserver.disconnect();
+        }
     }, [calculatePosition]);
-
-    if (position === -1) return null;
-
+    
+    // The parent needs to be passed in to calculate width based on it.
+    if (position === -1) return <div ref={containerRef} className="absolute inset-0 -z-10"></div>;
+    
     return (
-        <div 
-            className="absolute top-0 bottom-0 w-0.5 bg-red-500 z-20"
-            style={{ left: `${position}%` }}
-        >
-             <div className="absolute -top-1 -left-1 w-2.5 h-2.5 bg-red-500 rounded-full"></div>
+        <div ref={containerRef} className="absolute inset-0 pointer-events-none">
+            <div 
+                className="absolute top-0 bottom-0 w-0.5 bg-red-500 z-20"
+                style={{ left: `${position}px` }}
+            >
+                <div className="absolute -top-1 -left-1 w-2.5 h-2.5 bg-red-500 rounded-full"></div>
+            </div>
         </div>
     );
 };
+
 
 export default function TimelineView({ tasks, allTasks, onUpdateTask }: { tasks: Task[], allTasks: Task[], onUpdateTask: (task: Task) => void }) {
     const [currentDate, setCurrentDate] = useState(new Date());
@@ -140,7 +159,6 @@ export default function TimelineView({ tasks, allTasks, onUpdateTask }: { tasks:
         setIsClient(true);
     }, []);
 
-    
     const weekDays = useMemo(() => {
         const start = startOfWeek(currentDate, { weekStartsOn: 1 });
         const end = endOfWeek(currentDate, { weekStartsOn: 1 });
@@ -218,17 +236,9 @@ export default function TimelineView({ tasks, allTasks, onUpdateTask }: { tasks:
         const layouts: { [key: string]: { task: Task & {lane: number}; lane: number } } = {};
         if (!scheduledTasks.length) return { taskLayouts: {}, totalLanes: 1 };
     
-        const sortedTasks = [...scheduledTasks].sort((a, b) => {
-            const aTime = a.startDate.getTime();
-            const bTime = b.startDate.getTime();
-            if (aTime !== bTime) {
-                return aTime - bTime;
-            }
-            return a.title.localeCompare(b.title);
-        });
+        const sortedTasks = [...scheduledTasks].sort((a, b) => a.startDate.getTime() - b.startDate.getTime());
     
         sortedTasks.forEach((task, index) => {
-            // Assign each task to its own lane, guaranteeing no overlap
             const laneIndex = index;
             layouts[task.id] = { task: { ...task, lane: laneIndex }, lane: laneIndex };
         });
@@ -243,6 +253,13 @@ export default function TimelineView({ tasks, allTasks, onUpdateTask }: { tasks:
             setCurrentDate(direction === 'next' ? addWeeks(currentDate, 1) : subWeeks(currentDate, 1));
         }
     };
+    
+    const [now, setNow] = useState(new Date());
+    useEffect(() => {
+      const timer = setInterval(() => setNow(new Date()), 60000); // Update every minute
+      return () => clearInterval(timer);
+    }, []);
+
 
     const renderTaskBlock = (task, viewBounds) => {
         const { startDate, endDate } = task;
@@ -262,11 +279,16 @@ export default function TimelineView({ tasks, allTasks, onUpdateTask }: { tasks:
 
         const minWidth = viewMode === 'week' ? '120px' : '60px';
 
+        const isTaskActive = now >= startDate && now <= endDate;
+
         return (
             <div
                 key={`${task.id}-${viewBounds.start}`}
                 data-task-id={task.id}
-                className="h-10 rounded-lg flex items-center px-2 absolute cursor-pointer z-10 overflow-hidden"
+                className={cn(
+                    "h-10 rounded-lg flex items-center px-2 absolute cursor-pointer z-10 overflow-hidden",
+                    isTaskActive && 'ring-2 ring-offset-2 ring-destructive'
+                )}
                 style={{
                     left: `${left}%`,
                     width: `${widthPercent}%`,
@@ -306,9 +328,9 @@ export default function TimelineView({ tasks, allTasks, onUpdateTask }: { tasks:
                     {viewMode === 'day' && (
                         <>
                            <div className="grid" style={{ gridTemplateColumns: `repeat(24, ${GRID_HOUR_WIDTH}px)` }}>
-                                {dayHours.map(hour => (
-                                    <div key={hour.toString()} className="border-r border-b h-12 flex items-center justify-center">
-                                        <p className="text-center text-xs text-muted-foreground">{format(hour, 'ha')}</p>
+                                {dayHours.map((hour, i) => (
+                                    <div key={hour.toString()} className="border-r border-dashed h-12 flex items-center justify-center">
+                                        {i > 0 && <p className="text-center text-xs text-muted-foreground -translate-x-1/2">{format(hour, 'ha')}</p>}
                                     </div>
                                 ))}
                            </div>
@@ -322,7 +344,7 @@ export default function TimelineView({ tasks, allTasks, onUpdateTask }: { tasks:
                          <>
                             <div className="grid grid-cols-7">
                                 {weekDays.map(day => (
-                                    <div key={day.toString()} className="border-r border-b p-2 h-12">
+                                    <div key={day.toString()} className="border-r border-dashed p-2 h-12">
                                         <p className={cn("text-center font-semibold text-sm", isSameDay(day, new Date()) && "text-primary")}>{format(day, 'EEE')}</p>
                                         <p className="text-center text-xs text-muted-foreground">{format(day, 'd')}</p>
                                     </div>

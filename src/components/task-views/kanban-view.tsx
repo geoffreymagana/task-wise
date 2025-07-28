@@ -35,14 +35,15 @@ export default function KanbanView({ tasks, allTasks, onUpdateTask }: KanbanView
       completed: [],
     };
     
-    // Sort tasks by due date: tasks with due dates first, sorted chronologically, then tasks without due dates.
     const sortedTasks = [...tasks].sort((a, b) => {
-      if (a.dueDate && b.dueDate) {
-        return new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime();
-      }
-      if (a.dueDate) return -1; // a has due date, b doesn't
-      if (b.dueDate) return 1;  // b has due date, a doesn't
-      return 0; // neither has a due date
+        const aDueDate = a.dueDate ? new Date(a.dueDate) : null;
+        const bDueDate = b.dueDate ? new Date(b.dueDate) : null;
+        if (aDueDate && bDueDate) {
+            return aDueDate.getTime() - bDueDate.getTime();
+        }
+        if (aDueDate) return -1;
+        if (bDueDate) return 1;
+        return 0;
     });
     
     sortedTasks.forEach((task) => {

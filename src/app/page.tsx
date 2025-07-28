@@ -10,13 +10,14 @@ import TimelineView from '@/components/task-views/timeline-view';
 import KanbanView from '@/components/task-views/kanban-view';
 import type { Task } from '@/lib/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { ListTodo } from 'lucide-react';
+import { ListTodo, Mic, Calendar, GanttChart, LayoutGrid } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { registerServiceWorker, subscribeToPush, getSubscription } from '@/lib/notification-utils';
 import { sendReminders } from '@/ai/flows/send-reminders';
 import FilterControls from '@/components/task-manager/filter-controls';
 import { isSameDay } from 'date-fns';
-
+import { useIsMobile } from '@/hooks/use-mobile';
+import { SpeechToPlanDialog } from '@/components/task-manager/speech-to-plan-dialog';
 
 export default function Home() {
   const { 
@@ -43,6 +44,7 @@ export default function Home() {
   });
 
   const { toast } = useToast();
+  const isMobile = useIsMobile();
 
    useEffect(() => {
     async function setupNotifications() {
@@ -126,30 +128,55 @@ export default function Home() {
   const hasTasks = tasks.length > 0;
   const hasActiveTasks = activeTasks.length > 0;
   const hasArchivedTasks = archivedTasks.length > 0;
+  
+  const renderDesktopViewSwitcher = () => (
+    <Tabs value={activeView} onValueChange={setActiveView} className="w-full md:w-auto">
+      <TabsList className="grid w-full grid-cols-2 md:grid-cols-4">
+        <TabsTrigger value="table">Table</TabsTrigger>
+        <TabsTrigger value="timeline">Timeline</TabsTrigger>
+        <TabsTrigger value="calendar">Calendar</TabsTrigger>
+        <TabsTrigger value="kanban">Kanban</TabsTrigger>
+      </TabsList>
+    </Tabs>
+  );
+
+  const renderMobileNav = () => (
+    <div className="fixed bottom-0 left-0 right-0 bg-background border-t z-50 md:hidden">
+        <div className="grid grid-cols-4 items-center">
+            <button onClick={() => setActiveView('table')} className={`flex flex-col items-center p-2 ${activeView === 'table' ? 'text-primary' : 'text-muted-foreground'}`}>
+                <ListTodo className="h-5 w-5" />
+                <span className="text-xs">List</span>
+            </button>
+            <button onClick={() => setActiveView('timeline')} className={`flex flex-col items-center p-2 ${activeView === 'timeline' ? 'text-primary' : 'text-muted-foreground'}`}>
+                <GanttChart className="h-5 w-5" />
+                <span className="text-xs">Timeline</span>
+            </button>
+            <button onClick={() => setActiveView('calendar')} className={`flex flex-col items-center p-2 ${activeView === 'calendar' ? 'text-primary' : 'text-muted-foreground'}`}>
+                <Calendar className="h-5 w-5" />
+                <span className="text-xs">Calendar</span>
+            </button>
+            <button onClick={() => setActiveView('kanban')} className={`flex flex-col items-center p-2 ${activeView === 'kanban' ? 'text-primary' : 'text-muted-foreground'}`}>
+                <LayoutGrid className="h-5 w-5" />
+                <span className="text-xs">Kanban</span>
+            </button>
+        </div>
+    </div>
+  );
 
 
   return (
-    <div className="flex flex-col min-h-screen bg-background">
+    <div className="flex flex-col min-h-screen bg-background pb-16 md:pb-0">
       <AppHeader onTaskCreated={handleTaskCreated} onTasksImported={handleTasksImported} allTasks={tasks} />
       <main className="flex-grow p-4 md:p-8">
-        <div className="flex flex-wrap items-center justify-between gap-4 mb-4">
-          <div className="flex items-center gap-4 flex-wrap flex-1">
-            <Tabs value={activeView} onValueChange={setActiveView} className="w-full md:w-auto">
-              <TabsList className="grid w-full grid-cols-2 md:grid-cols-4">
-                <TabsTrigger value="table">Table</TabsTrigger>
-                <TabsTrigger value="timeline">Timeline</TabsTrigger>
-                <TabsTrigger value="calendar">Calendar</TabsTrigger>
-                <TabsTrigger value="kanban">Kanban</TabsTrigger>
-              </TabsList>
-            </Tabs>
-             {activeTab === 'active' && (
-                <FilterControls 
-                    searchQuery={searchQuery}
-                    setSearchQuery={setSearchQuery}
-                    filters={filters}
-                    setFilters={setFilters}
-                />
-            )}
+        <div className="flex flex-col md:flex-row md:flex-wrap md:items-center justify-between gap-4 mb-4">
+          <div className="flex flex-col md:flex-row md:items-center gap-4 flex-wrap flex-1">
+            {!isMobile && renderDesktopViewSwitcher()}
+            <FilterControls 
+                searchQuery={searchQuery}
+                setSearchQuery={setSearchQuery}
+                filters={filters}
+                setFilters={setFilters}
+            />
           </div>
 
           {hasTasks && (
@@ -181,7 +208,7 @@ export default function Home() {
                 </CardContent>
               </Card>
             ) : (
-              <Tabs value={activeView} onValueChange={setActiveView} className="w-full">
+              <Tabs value={activeView} className="w-full">
                 <TabsContent value="table" className="m-0">
                   <TableView 
                     tasks={tasksToShow} 
@@ -207,24 +234,7 @@ export default function Home() {
         )}
          {activeTab === 'archived' && (
           <div className="mt-4">
-             <FilterControls 
-                searchQuery={searchQuery}
-                setSearchQuery={setSearchQuery}
-                filters={filters}
-                setFilters={setFilters}
-              />
-            {hasArchivedTasks ? (
-               <TableView
-                tasks={tasksToShow}
-                onUpdateTask={updateTask}
-                onDeleteTask={deleteTask}
-                onDeleteTasks={deleteTasks}
-                onUpdateTasksStatus={updateTasksStatus}
-                reinstateTask={reinstateTask}
-                isArchivedView={true}
-                allTasks={tasks}
-              />
-            ) : (
+            {!hasArchivedTasks ? (
               <Card className="mt-4 w-full text-center shadow-lg">
                 <CardHeader>
                     <CardTitle className="flex items-center justify-center gap-2 font-headline text-2xl">
@@ -236,10 +246,29 @@ export default function Home() {
                   <p className="text-muted-foreground">You have no archived tasks.</p>
                 </CardContent>
               </Card>
+            ) : (
+               <TableView
+                tasks={tasksToShow}
+                onUpdateTask={updateTask}
+                onDeleteTask={deleteTask}
+                onDeleteTasks={deleteTasks}
+                onUpdateTasksStatus={updateTasksStatus}
+                reinstateTask={reinstateTask}
+                isArchivedView={true}
+                allTasks={tasks}
+              />
             )}
           </div>
         )}
       </main>
+
+      <SpeechToPlanDialog onTasksImported={handleTasksImported}>
+        <button className="fixed bottom-20 right-4 md:bottom-8 md:right-8 w-14 h-14 bg-primary text-primary-foreground rounded-full shadow-lg flex items-center justify-center z-50">
+          <Mic className="w-7 h-7" />
+        </button>
+      </SpeechToPlanDialog>
+      
+      {isMobile && renderMobileNav()}
     </div>
   );
 }

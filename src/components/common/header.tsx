@@ -8,6 +8,7 @@ import { Download, GanttChartSquare, Plus, Upload, CircleUserRound, Moon, Sun } 
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '../ui/dropdown-menu';
 import Link from 'next/link';
 import { useTheme } from 'next-themes';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 
 interface AppHeaderProps {
@@ -18,6 +19,7 @@ interface AppHeaderProps {
 
 export default function AppHeader({ onTaskCreated, onTasksImported, allTasks }: AppHeaderProps) {
   const { setTheme, theme } = useTheme();
+  const isMobile = useIsMobile();
 
   const handleExport = (format: 'json' | 'csv' | 'md') => {
     let data;
@@ -47,7 +49,7 @@ export default function AppHeader({ onTaskCreated, onTasksImported, allTasks }: 
   };
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+    <header className="sticky top-0 z-40 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-14 items-center px-4 md:px-8 mx-auto">
         <div className="mr-4 flex items-center">
           <Link href="/" className="flex items-center gap-2">
@@ -55,23 +57,26 @@ export default function AppHeader({ onTaskCreated, onTasksImported, allTasks }: 
             <h1 className="text-2xl font-bold font-headline hidden md:block">TaskWise</h1>
           </Link>
         </div>
-        <div className="flex flex-1 items-center justify-end space-x-2">
+        <div className="flex flex-1 items-center justify-end space-x-1 md:space-x-2">
           <AddTaskDialog onTaskCreated={onTaskCreated} allTasks={allTasks}>
-            <Button size="sm">
-              <Plus className="mr-2 h-4 w-4" /> Add Task
+            <Button size={isMobile ? "icon" : "sm"}>
+              <Plus className={isMobile ? "h-4 w-4" : "mr-2 h-4 w-4"} /> 
+              {!isMobile && 'Add Task'}
             </Button>
           </AddTaskDialog>
           
           <ImportDialog onTasksImported={onTasksImported}>
-            <Button variant="outline" size="sm">
-              <Upload className="mr-2 h-4 w-4" /> Import
+            <Button variant="outline" size={isMobile ? "icon" : "sm"}>
+              <Upload className={isMobile ? "h-4 w-4" : "mr-2 h-4 w-4"} /> 
+              {!isMobile && 'Import'}
             </Button>
           </ImportDialog>
 
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="sm">
-                <Download className="mr-2 h-4 w-4" /> Export
+              <Button variant="outline" size={isMobile ? "icon" : "sm"}>
+                <Download className={isMobile ? "h-4 w-4" : "mr-2 h-4 w-4"} /> 
+                {!isMobile && 'Export'}
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent>
