@@ -1,5 +1,5 @@
 'use client';
-import { useCallback, useLayoutEffect, useState, useMemo } from 'react';
+import { useCallback, useLayoutEffect, useState, useMemo, useEffect } from 'react';
 import ReactFlow, {
   Controls,
   Background,
@@ -15,6 +15,7 @@ import ReactFlow, {
   MiniMap,
   Panel,
   useReactFlow,
+  ReactFlowProvider,
 } from 'reactflow';
 import 'reactflow/dist/style.css';
 import ELK from 'elkjs/lib/elk.bundled.js';
@@ -25,21 +26,21 @@ import { Badge } from '../ui/badge';
 import { TaskDetailsDialog } from '../task-manager/task-details-dialog';
 import { cn } from '@/lib/utils';
 import { Button } from '../ui/button';
-import { LayoutDashboard, ZoomIn, ZoomOut, Maximize, ArrowRightLeft } from 'lucide-react';
+import { LayoutDashboard, ZoomIn, ZoomOut, Maximize, ArrowRightLeft, Lock, Unlock } from 'lucide-react';
 import { startOfDay, format } from 'date-fns';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../ui/tooltip';
 
 const elk = new ELK();
 
-const nodeWidth = 200;
+const nodeWidth = 220;
 const nodeHeight = 80;
 
 
 const getLayoutedElements = (nodes: Node[], edges: Edge[], options = {}) => {
   const elkOptions = {
     'elk.algorithm': 'layered',
-    'elk.layered.spacing.nodeNodeBetweenLayers': '80',
-    'elk.spacing.nodeNode': '60',
+    'elk.layered.spacing.nodeNodeBetweenLayers': '100',
+    'elk.spacing.nodeNode': '80',
     'elk.layered.nodePlacement.strategy': 'BRANDES_KOEPF',
     ...options,
   };
@@ -68,9 +69,9 @@ const statusStyles = {
 };
 
 const priorityStyles = {
-  low: 'border-l-slate-300',
-  medium: 'border-l-amber-400',
-  high: 'border-l-red-500',
+  low: 'border-l-slate-400',
+  medium: 'border-l-amber-500',
+  high: 'border-l-red-600',
 };
 
 function TaskNode({ data }: { data: Task }) {
@@ -79,7 +80,7 @@ function TaskNode({ data }: { data: Task }) {
       <Handle type="target" position={Position.Left} />
       <div
         className={cn(
-          'w-full h-full p-3 rounded-md shadow-md flex flex-col justify-center items-center text-center',
+          'w-full h-full p-3 rounded-md shadow-md flex flex-col justify-center items-start text-left',
           'border-2 border-l-8',
           statusStyles[data.status] || statusStyles.not_started,
           priorityStyles[data.priority] || priorityStyles.medium
@@ -92,7 +93,7 @@ function TaskNode({ data }: { data: Task }) {
           >
             <Icon name={data.icon || 'Package'} className="w-5 h-5 text-white" />
           </div>
-          <div className="text-sm font-semibold text-left break-words w-full text-card-foreground" title={data.title}>
+          <div className="text-sm font-semibold break-words w-full text-card-foreground" title={data.title}>
             {data.title}
           </div>
         </div>
@@ -120,9 +121,14 @@ const nodeTypes = {
 
 function CustomControls() {
     const { zoomIn, zoomOut, fitView } = useReactFlow();
+    const [isLocked, setIsLocked] = useState(false);
+
+    useEffect(() => {
+        document.dispatchEvent(new CustomEvent('lockchange', { detail: isLocked }));
+    }, [isLocked]);
 
     const onLayout = () => {
-        document.dispatchEvent(new CustomEvent('relayout', { detail: { force: true } }));
+        document.dispatchEvent(new CustomEvent('relayout'));
     };
     
     const onToggleLayout = () => {
@@ -139,7 +145,7 @@ function CustomControls() {
                                 <ArrowRightLeft className="h-4 w-4" />
                             </Button>
                         </TooltipTrigger>
-                        <TooltipContent><p>Toggle Layout</p></TooltipContent>
+                        <TooltipContent><p>Toggle Layout (H/V)</p></TooltipContent>
                     </Tooltip>
                     <Tooltip>
                         <TooltipTrigger asChild>
@@ -173,23 +179,27 @@ function CustomControls() {
                         </TooltipTrigger>
                         <TooltipContent><p>Fit View</p></TooltipContent>
                     </Tooltip>
+                     <Tooltip>
+                        <TooltipTrigger asChild>
+                             <Button variant="ghost" size="icon" onClick={() => setIsLocked(l => !l)}>
+                                {isLocked ? <Lock className="h-4 w-4" /> : <Unlock className="h-4 w-4" />}
+                            </Button>
+                        </TooltipTrigger>
+                        <TooltipContent><p>{isLocked ? 'Unlock' : 'Lock'} View</p></TooltipContent>
+                    </Tooltip>
                 </div>
             </TooltipProvider>
         </Panel>
     );
 }
 
-
-interface MindMapViewProps {
-  tasks: Task[];
-  allTasks: Task[];
-}
-
-export default function MindMapView({ tasks, allTasks }: MindMapViewProps) {
+function FlowCanvas({ tasks, allTasks }: MindMapViewProps) {
   const [nodes, setNodes] = useState<Node[]>([]);
   const [edges, setEdges] = useState<Edge[]>([]);
   const [taskToView, setTaskToView] = useState<Task | null>(null);
   const [layoutDirection, setLayoutDirection] = useState<'RIGHT' | 'DOWN'>('RIGHT');
+  const [isViewLocked, setIsViewLocked] = useState(false);
+  const { fitView } = useReactFlow();
 
   const onNodesChange = useCallback(
     (changes: NodeChange[]) => setNodes((nds) => applyNodeChanges(changes, nds)),
@@ -245,7 +255,7 @@ export default function MindMapView({ tasks, allTasks }: MindMapViewProps) {
 
             if (task.dependencies && task.dependencies.length > 0) {
                 task.dependencies.forEach(depId => {
-                    if (taskMap.has(depId)) {
+                    if (taskMap.has(depId) && tasks.some(t => t.id === depId)) { // only draw edge if dependency is in the current view
                         initialEdges.push({
                             id: `e-${depId}-${task.id}`,
                             source: depId,
@@ -271,55 +281,77 @@ export default function MindMapView({ tasks, allTasks }: MindMapViewProps) {
     getLayoutedElements(initialNodes, initialEdges, { 'elk.direction': layoutDirection }).then(({ nodes: layoutedNodes, edges: layoutedEdges }) => {
       setNodes(layoutedNodes);
       setEdges(layoutedEdges);
+       setTimeout(() => fitView({ duration: 300, padding: 0.1 }), 100);
     });
-  }, [tasks, allTasks, layoutDirection]);
+  }, [tasks, allTasks, layoutDirection, fitView]);
+
+  useEffect(() => {
+    doLayout();
+  }, [tasks, layoutDirection]);
 
   useLayoutEffect(() => {
-    doLayout();
-    
     const handleRelayout = () => doLayout();
     const handleToggleLayout = () => {
         setLayoutDirection(prev => prev === 'RIGHT' ? 'DOWN' : 'RIGHT');
     };
+    const handleLockChange = (e: CustomEvent) => {
+        setIsViewLocked(e.detail);
+    };
     
     document.addEventListener('relayout', handleRelayout);
     document.addEventListener('togglelayout', handleToggleLayout);
+    document.addEventListener('lockchange', handleLockChange as EventListener);
 
     return () => {
         document.removeEventListener('relayout', handleRelayout);
         document.removeEventListener('togglelayout', handleToggleLayout);
+        document.removeEventListener('lockchange', handleLockChange as EventListener);
     };
-  }, [tasks, doLayout]);
+  }, [doLayout]);
   
   return (
+    <ReactFlow
+      nodes={nodes}
+      edges={edges}
+      onNodesChange={onNodesChange}
+      onEdgesChange={onEdgesChange}
+      onNodeClick={onNodeClick}
+      nodeTypes={nodeTypes}
+      connectionLineType={ConnectionLineType.SmoothStep}
+      fitView
+      className="bg-gradient-to-br from-background to-muted/50"
+      panOnDrag={!isViewLocked}
+      zoomOnScroll={!isViewLocked}
+      zoomOnDoubleClick={!isViewLocked}
+      zoomOnPinch={!isViewLocked}
+      nodesDraggable={!isViewLocked}
+      minZoom={0.1}
+    >
+      <CustomControls />
+      <MiniMap nodeStrokeWidth={3} zoomable pannable />
+      <Background gap={24} />
+      {taskToView && (
+        <TaskDetailsDialog
+          task={taskToView}
+          allTasks={allTasks}
+          onOpenChange={() => setTaskToView(null)}
+        />
+      )}
+    </ReactFlow>
+  );
+}
+
+export default function MindMapView(props: MindMapViewProps) {
+  return (
     <Card className="shadow-lg mt-4 w-full h-[70vh] overflow-hidden relative">
-      {tasks.length === 0 ? (
+      {props.tasks.length === 0 ? (
         <div className="flex items-center justify-center h-full">
-          <p className="text-muted-foreground">Add tasks with dependencies to see the mind map.</p>
+          <p className="text-muted-foreground">Add tasks to see the mind map.</p>
         </div>
       ) : (
-        <ReactFlow
-            nodes={nodes}
-            edges={edges}
-            onNodesChange={onNodesChange}
-            onEdgesChange={onEdgesChange}
-            onNodeClick={onNodeClick}
-            nodeTypes={nodeTypes}
-            connectionLineType={ConnectionLineType.SmoothStep}
-            fitView
-            className="bg-gradient-to-br from-background to-muted/50"
-        >
-            <CustomControls />
-            <MiniMap nodeStrokeWidth={3} zoomable pannable />
-            <Background gap={24} />
-            {taskToView && (
-                <TaskDetailsDialog
-                    task={taskToView}
-                    allTasks={allTasks}
-                    onOpenChange={() => setTaskToView(null)}
-                />
-            )}
-        </ReactFlow>
+        <ReactFlowProvider>
+          <FlowCanvas {...props} />
+        </ReactFlowProvider>
       )}
     </Card>
   );
