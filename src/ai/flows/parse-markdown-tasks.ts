@@ -90,21 +90,22 @@ const prompt = ai.definePrompt({
   name: 'parseMarkdownTasksPrompt',
   input: { schema: ParseMarkdownTasksInputSchema },
   output: { schema: ParseMarkdownTasksOutputSchema },
-  prompt: `You are an expert at parsing markdown task lists and converting them into structured JSON data. Analyze the provided markdown text, which represents a work plan. Identify all tasks and their subtasks.
+  prompt: `You are an expert at parsing spoken, natural language work plans and converting them into structured JSON data. Analyze the provided text, which is a transcript of someone speaking their tasks. Identify all tasks and their subtasks.
 
-- The markdown uses indentation to represent subtasks, which implies a dependency on the parent task.
-- Infer start and end times from contextual clues in headings or task descriptions (e.g., "Morning routine (8am to 12pm)"). If a timeframe is provided, distribute the tasks within it.
+- The text is a direct transcript and may contain filler words (e.g., "um," "like," "uh"), which you should ignore.
+- Interpret pauses or shifts in topic as separators for different tasks or subtasks. Use indentation in your conceptual markdown to represent subtasks.
+- Infer start and end times from contextual clues (e.g., "this morning," "from 8am to 12pm"). If a timeframe is provided, distribute tasks within it.
 - If a task is dependent on another, its start time must be after the parent's end time.
-- If no time is specified, estimate a reasonable duration based on the task title and description. A simple task might take 30-60 minutes.
+- If no time is specified, estimate a reasonable duration based on the task. A simple task might take 30-60 minutes.
 - Today's date is ${new Date().toISOString()}.
-- Infer the due date for each task if mentioned.
-- Set complexity, priority, and status based on any available markers (e.g., 🔹, [x]). Use sensible defaults if not specified.
+- Infer the due date for each task if mentioned (e.g., "due tomorrow," "by Friday").
+- Set complexity, priority, and status based on any available markers or sentiment. Use sensible defaults if not specified.
 - Set startTime and endTime in ISO 8601 format.
 
 Return a JSON object with a "tasks" array.
 
-Markdown to parse:
-\`\`\`markdown
+Text to parse:
+\`\`\`
 {{{markdownText}}}
 \`\`\`
 `,
