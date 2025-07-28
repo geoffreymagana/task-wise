@@ -3,6 +3,7 @@
 import { useMemo, useState, useRef, useEffect, useCallback } from 'react';
 import type { Task } from '@/lib/types';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { 
     addDays, subDays, startOfWeek, endOfWeek, eachDayOfInterval, format, isSameDay, 
     addMinutes, startOfDay, endOfDay, eachHourOfInterval, isWithinInterval,
@@ -136,14 +137,23 @@ const TimeIndicator = ({ viewMode, currentDate }) => {
     if (position === -1) return <div ref={containerRef} className="absolute inset-0 -z-10"></div>;
     
     return (
-        <div ref={containerRef} className="absolute inset-0 pointer-events-none">
-            <div 
-                className="absolute top-0 bottom-0 w-0.5 bg-red-500 z-20"
-                style={{ left: `${position}px` }}
-            >
-                <div className="absolute -top-1 -left-1 w-2.5 h-2.5 bg-red-500 rounded-full"></div>
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <div ref={containerRef} className="absolute inset-0 pointer-events-none">
+                <div 
+                    className="absolute top-0 bottom-0 w-0.5 bg-red-500 z-20 cursor-pointer"
+                    style={{ left: `${position}px` }}
+                >
+                    <div className="absolute -top-1 -left-1 w-2.5 h-2.5 bg-red-500 rounded-full"></div>
+                </div>
             </div>
-        </div>
+          </TooltipTrigger>
+           <TooltipContent>
+            <p>{format(new Date(), 'p')}</p>
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
     );
 };
 
@@ -327,10 +337,12 @@ export default function TimelineView({ tasks, allTasks, onUpdateTask }: { tasks:
                 <div ref={containerRef} className="relative timeline-container" style={{ minHeight: `${totalLanes * ROW_HEIGHT}px` }}>
                     {viewMode === 'day' && (
                         <>
-                           <div className="grid" style={{ gridTemplateColumns: `repeat(24, ${GRID_HOUR_WIDTH}px)` }}>
+                           <div className="grid h-full" style={{ gridTemplateColumns: `repeat(24, ${GRID_HOUR_WIDTH}px)` }}>
                                 {dayHours.map((hour, i) => (
-                                    <div key={hour.toString()} className="border-r border-dashed h-12 flex items-center justify-center">
-                                        {i > 0 && <p className="text-center text-xs text-muted-foreground -translate-x-1/2">{format(hour, 'ha')}</p>}
+                                    <div key={hour.toString()} className="h-full border-r border-dashed">
+                                       <div className="h-12 flex items-center justify-center">
+                                         {i > 0 && <p className="text-center text-xs text-muted-foreground -translate-x-1/2">{format(hour, 'ha')}</p>}
+                                       </div>
                                     </div>
                                 ))}
                            </div>
@@ -342,11 +354,13 @@ export default function TimelineView({ tasks, allTasks, onUpdateTask }: { tasks:
                     )}
                     {viewMode === 'week' && (
                          <>
-                            <div className="grid grid-cols-7">
+                            <div className="grid grid-cols-7 h-full">
                                 {weekDays.map(day => (
-                                    <div key={day.toString()} className="border-r border-dashed p-2 h-12">
+                                    <div key={day.toString()} className="border-r border-dashed p-2 h-full">
+                                      <div className="h-12">
                                         <p className={cn("text-center font-semibold text-sm", isSameDay(day, new Date()) && "text-primary")}>{format(day, 'EEE')}</p>
                                         <p className="text-center text-xs text-muted-foreground">{format(day, 'd')}</p>
+                                      </div>
                                     </div>
                                 ))}
                             </div>

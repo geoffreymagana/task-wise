@@ -128,6 +128,26 @@ export default function Home() {
   const hasTasks = tasks.length > 0;
   const hasActiveTasks = activeTasks.length > 0;
   const hasArchivedTasks = archivedTasks.length > 0;
+
+  const defaultTaskCount = useMemo(() => {
+    return tasks.filter(task => task.status === 'not_started' && isSameDay(new Date(task.createdAt), new Date())).length;
+  }, [tasks]);
+
+  const hasActiveFilters = searchQuery || filters.priority.length > 0 || filters.status.length > 0 || filters.dueDate;
+
+  const renderTaskCount = () => {
+    if (hasActiveFilters) {
+      return `${tasksToShow.length} task${tasksToShow.length !== 1 ? 's' : ''} found`;
+    }
+    if (activeTab === 'active') {
+       const todayTasks = activeTasks.filter(t => t.dueDate && isSameDay(new Date(t.dueDate), new Date())).length;
+       return `${todayTasks} task${todayTasks !== 1 ? 's' : ''} for today`;
+    }
+     if (activeTab === 'archived') {
+       return `${archivedTasks.length} archived task${archivedTasks.length !== 1 ? 's' : ''}`;
+    }
+    return '';
+  }
   
   const renderDesktopViewSwitcher = () => (
     <Tabs value={activeView} onValueChange={setActiveView} className="w-full md:w-auto">
@@ -179,16 +199,17 @@ export default function Home() {
             />
           </div>
 
-          {hasTasks && (
-            <div className="flex-shrink-0">
+          <div className="flex-shrink-0 flex items-center gap-4">
+             {hasTasks && <p className="text-sm text-muted-foreground">{renderTaskCount()}</p>}
+             {hasTasks && (
                 <Tabs value={activeTab} onValueChange={setActiveTab}>
                   <TabsList>
                     <TabsTrigger value="active">Active</TabsTrigger>
                     <TabsTrigger value="archived">Archived</TabsTrigger>
                   </TabsList>
                 </Tabs>
-            </div>
-          )}
+             )}
+          </div>
         </div>
         
         {activeTab === 'active' && (

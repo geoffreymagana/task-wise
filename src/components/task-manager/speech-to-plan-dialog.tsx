@@ -37,44 +37,16 @@ export function SpeechToPlanDialog({ children, onTasksImported }: SpeechToPlanDi
   const countdownIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const silenceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Check for HTTPS and microphone permissions
   useEffect(() => {
-    const checkPermissions = async () => {
-      const isSecure = window.location.protocol === 'https:' || 
-                      window.location.hostname === 'localhost' || 
-                      window.location.hostname === '127.0.0.1';
-      
-      if (!isSecure) {
-        setStatusMessage("Speech recognition requires HTTPS. Please use a secure connection.");
-        return;
-      }
-
-      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-      if (!SpeechRecognition) {
-        setStatusMessage("Speech recognition not supported in this browser.");
-        return;
-      }
-
-      try {
-        const permissionStatus = await navigator.permissions.query({ name: 'microphone' as PermissionName });
-        setHasPermission(permissionStatus.state === 'granted');
-        
-        if (permissionStatus.state === 'denied') {
-          setStatusMessage("Microphone access denied. Please enable microphone permissions.");
-        } else if (permissionStatus.state === 'prompt') {
-          setStatusMessage("Click the microphone to request microphone access.");
-        }
-      } catch (error) {
-        // Fallback for browsers that don't support permissions.query
-        setHasPermission(null); // We'll ask when they click
-        setStatusMessage("Click the microphone to request microphone access.");
-      }
-    };
-
-    if (open) {
-      checkPermissions();
+    const isSecure = window.location.protocol === 'https:' || 
+                     window.location.hostname === 'localhost' || 
+                     window.location.hostname === '127.0.0.1';
+    
+    if (!isSecure) {
+      setStatusMessage("Speech recognition requires a secure connection (HTTPS).");
+      return;
     }
-  }, [open]);
+  }, []);
 
   const setupSpeechRecognition = () => {
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -96,7 +68,6 @@ export function SpeechToPlanDialog({ children, onTasksImported }: SpeechToPlanDi
       setIsListening(true);
       setStatusMessage('Listening...');
       if(silenceTimeoutRef.current) clearTimeout(silenceTimeoutRef.current);
-      // Set a timeout to stop if no speech is detected for a while
       silenceTimeoutRef.current = setTimeout(() => {
         if(recognitionRef.current && isListening) {
           recognitionRef.current.stop();
@@ -121,8 +92,7 @@ export function SpeechToPlanDialog({ children, onTasksImported }: SpeechToPlanDi
       setIsListening(false);
       recognitionRef.current = null;
       
-      // Ignore user-initiated aborts
-      if (event.error === 'aborted') {
+      if (event.error === 'aborted' || event.error === 'no-speech') {
           setStatusMessage("Cancelled. Click the mic to start again.");
           return;
       }
@@ -135,9 +105,6 @@ export function SpeechToPlanDialog({ children, onTasksImported }: SpeechToPlanDi
         case 'not-allowed':
           errorMessage = 'Microphone access denied. Please allow microphone permissions.';
           break;
-        case 'no-speech':
-          errorMessage = 'No speech detected. Please speak clearly.';
-          break;
         case 'audio-capture':
           errorMessage = 'Audio capture failed. Check your microphone.';
           break;
@@ -147,19 +114,13 @@ export function SpeechToPlanDialog({ children, onTasksImported }: SpeechToPlanDi
       }
       
       setStatusMessage(`Error: ${errorMessage}`);
-      toast({ 
-        variant: 'destructive', 
-        title: 'Speech Error', 
-        description: errorMessage
-      });
     };
 
     recognition.onresult = (event: any) => {
-      // Clear the silence timeout on new result
       if(silenceTimeoutRef.current) clearTimeout(silenceTimeoutRef.current);
 
       let interim = '';
-      let final = finalTranscript; // Start with the existing final transcript
+      let final = finalTranscript; 
 
       for (let i = event.resultIndex; i < event.results.length; ++i) {
         if (event.results[i].isFinal) {
@@ -169,7 +130,6 @@ export function SpeechToPlanDialog({ children, onTasksImported }: SpeechToPlanDi
         }
       }
       setInterimTranscript(interim);
-      // Only update if the final transcript has actually changed
       if (final.trim() !== finalTranscript.trim()) {
         setFinalTranscript(final);
       }
@@ -196,7 +156,6 @@ export function SpeechToPlanDialog({ children, onTasksImported }: SpeechToPlanDi
       recognitionRef.current.stop();
     }
     if(!isOpen) {
-      // Reset state on close
       setFinalTranscript('');
       setInterimTranscript('');
       setIsListening(false);
@@ -209,34 +168,26 @@ export function SpeechToPlanDialog({ children, onTasksImported }: SpeechToPlanDi
   const requestMicrophonePermission = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      // Immediately stop the track to release the microphone icon in the browser tab
       stream.getTracks().forEach(track => track.stop());
       setHasPermission(true);
       setStatusMessage("Microphone access granted. Click the microphone to start recording.");
       return true;
     } catch (error) {
       setHasPermission(false);
-      setStatusMessage("Microphone access denied. Please enable microphone permissions in your browser settings.");
-      toast({
-        variant: 'destructive',
-        title: 'Permission Denied',
-        description: 'Please allow microphone access to use speech recognition.',
-      });
+      setStatusMessage("Microphone access denied. Please enable permissions in your browser settings.");
       return false;
     }
   };
 
   const toggleListening = async () => {
-    // If permission is denied, prompt them to change settings
     if (hasPermission === false) {
-      await requestMicrophonePermission(); // This will show the error toast
+      await requestMicrophonePermission();
       return;
     }
     
-    // If we don't know the permission status, request it now
     if (hasPermission === null) {
       const granted = await requestMicrophonePermission();
-      if (!granted) return; // Stop if they deny it
+      if (!granted) return;
     }
 
     if (isListening) {
@@ -246,7 +197,6 @@ export function SpeechToPlanDialog({ children, onTasksImported }: SpeechToPlanDi
       return;
     }
     
-    // If a countdown is in progress, pressing the button cancels it.
     if (countdownIntervalRef.current) {
       clearInterval(countdownIntervalRef.current);
       countdownIntervalRef.current = null;
@@ -370,7 +320,7 @@ export function SpeechToPlanDialog({ children, onTasksImported }: SpeechToPlanDi
                 />
                 ) : (
                 <div className="flex items-center justify-center h-full text-muted-foreground">
-                  Click the mic to begin.
+                  {statusMessage}
                 </div>
             )}
           </div>
