@@ -41,60 +41,30 @@ export default function MindMapView({ tasks, allTasks }: MindMapViewProps) {
     }
 
     const taskMap = new Map(tasks.map(t => [t.id, { ...t, children: [] as any[] }]));
-    const roots: any[] = [];
+    
+    const d3Nodes = tasks.map(task => ({
+      id: task.id,
+      ...task
+    }));
 
+    const d3Links: { source: string; target: string; }[] = [];
     tasks.forEach(task => {
-        const taskNode = taskMap.get(task.id)!;
-        if (!task.dependencies || task.dependencies.length === 0) {
-            roots.push(taskNode);
-        } else {
+        if (task.dependencies) {
             task.dependencies.forEach(depId => {
-                const parent = taskMap.get(depId);
-                if (parent) {
-                    parent.children.push(taskNode);
-                } else {
-                    // If parent is not in the filtered `tasks` list but exists in allTasks,
-                    // it might be a root for the purpose of layout. Check if it has no dependencies.
-                    const fullParentTask = allTasks.find(t => t.id === depId);
-                    if (fullParentTask && (!fullParentTask.dependencies || fullParentTask.dependencies.length === 0)) {
-                       roots.push(taskNode);
-                    }
+                // Ensure both source and target nodes are in the current filtered view
+                if (taskMap.has(depId) && taskMap.has(task.id)) {
+                    d3Links.push({ source: depId, target: task.id });
                 }
             });
         }
     });
-
-    const uniqueRoots = roots.filter((v,i,a)=>a.findIndex(t=>(t.id === v.id))===i);
-
-    const virtualRoot = { id: 'virtual-root', children: uniqueRoots };
-    const hierarchy = d3.hierarchy(virtualRoot);
-    
-    // Create tree layout
-    const treeLayout = d3.tree<any>()
-      .size([600, 800]) // height, width -> vertical tree
-      .separation((a, b) => (a.parent === b.parent ? 1.5 : 2));
-    
-    const treeData = treeLayout(hierarchy);
-    
-    // We skip the virtual root node itself
-    const treeNodes = treeData.descendants().slice(1).map(d => ({
-        ...d,
-        // Swap x and y for horizontal layout, and add some spacing
-        x: d.y + 50,
-        y: d.x,
-    }));
-    
-    const treeLinks = treeData.links().filter(d => d.source.id !== 'virtual-root').map(d => ({
-      source: { ...d.source, x: d.source.y + 50, y: d.source.x },
-      target: { ...d.target, x: d.target.y + 50, y: d.target.x }
-    }));
     
     return {
-      nodes: treeNodes, 
-      links: treeLinks 
+      nodes: d3Nodes, 
+      links: d3Links 
     };
 
-  }, [tasks, allTasks]);
+  }, [tasks]);
 
   useEffect(() => {
     if (!svgRef.current || nodes.length === 0) {
@@ -109,30 +79,49 @@ export default function MindMapView({ tasks, allTasks }: MindMapViewProps) {
     svg.selectAll('*').remove();
 
     const g = svg.append('g');
+    
+    const simulation = d3.forceSimulation(nodes as d3.SimulationNodeDatum[])
+        .force("link", d3.forceLink(links).id((d: any) => d.id).distance(200))
+        .force("charge", d3.forceManyBody().strength(-400))
+        .force("center", d3.forceCenter(width / 2, height / 2))
+        .force("collide", d3.forceCollide().radius(100)); // Prevent overlap
 
-    const linkGenerator = d3.linkHorizontal()
-      .x((d:any) => d.x)
-      .y((d:any) => d.y);
-
-    g.append('g')
-      .attr('fill', 'none')
-      .attr('stroke', '#cbd5e1')
-      .attr('stroke-opacity', 0.8)
-      .attr('stroke-width', 2)
-      .selectAll('path')
+    const link = g.append('g')
+      .attr('stroke', '#94a3b8')
+      .attr('stroke-opacity', 0.6)
+      .selectAll('line')
       .data(links)
-      .join('path')
-      .attr('d', (d:any) => linkGenerator({source: d.source, target: d.target}));
+      .join('line')
+      .attr('stroke-width', 2);
 
     const node = g.append('g')
       .selectAll('g')
       .data(nodes)
       .join('g')
-      .attr('transform', (d:any) => `translate(${d.x},${d.y})`)
       .style('cursor', 'pointer')
       .on('click', (event, d: any) => {
-        setTaskToView(d.data);
+        if (event.defaultPrevented) return; // ignore click if drag occurred
+        setTaskToView(d);
       });
+      
+    // Drag functionality
+    const drag = d3.drag()
+        .on("start", (event, d:any) => {
+            if (!event.active) simulation.alphaTarget(0.3).restart();
+            d.fx = d.x;
+            d.fy = d.y;
+        })
+        .on("drag", (event, d:any) => {
+            d.fx = event.x;
+            d.fy = event.y;
+        })
+        .on("end", (event, d:any) => {
+            if (!event.active) simulation.alphaTarget(0);
+            d.fx = null;
+            d.fy = null;
+        });
+    
+    node.call(drag as any);
 
     node.append('rect')
       .attr('width', 160)
@@ -141,14 +130,8 @@ export default function MindMapView({ tasks, allTasks }: MindMapViewProps) {
       .attr('y', -30)
       .attr('rx', 8)
       .attr('ry', 8)
-      .attr('fill', (d: any) => {
-        const task = d.data;
-        return statusColors[task.status] || statusColors.not_started;
-       })
-      .attr('stroke', (d: any) => {
-        const task = d.data;
-        return statusBorders[task.status] || statusBorders.not_started;
-      })
+      .attr('fill', (d: any) => statusColors[d.status] || statusColors.not_started)
+      .attr('stroke', (d: any) => statusBorders[d.status] || statusBorders.not_started)
       .attr('stroke-width', 2)
       .style('filter', 'drop-shadow(0 2px 4px rgba(0,0,0,0.1))');
       
@@ -158,10 +141,7 @@ export default function MindMapView({ tasks, allTasks }: MindMapViewProps) {
       .attr('x', -80)
       .attr('y', -30)
       .attr('rx', 2)
-      .attr('fill', (d: any) => {
-         const task = d.data;
-         return priorityColors[task.priority] || priorityColors.low;
-      });
+      .attr('fill', (d: any) => priorityColors[d.priority] || priorityColors.low);
 
     const text = node.append('text')
       .attr('text-anchor', 'middle')
@@ -173,7 +153,7 @@ export default function MindMapView({ tasks, allTasks }: MindMapViewProps) {
       .attr('font-size', '13px')
       .attr('font-weight', '600')
       .text((d: any) => {
-        const title = d.data.title;
+        const title = d.title;
         return title.length > 18 ? title.substring(0, 18) + '...' : title;
       });
       
@@ -183,7 +163,7 @@ export default function MindMapView({ tasks, allTasks }: MindMapViewProps) {
       .attr('fill', '#64748b')
       .attr('font-size', '11px')
       .text((d: any) => {
-        const status = d.data.status.replace('_', ' ');
+        const status = d.status.replace('_', ' ');
         return status.charAt(0).toUpperCase() + status.slice(1);
       });
 
@@ -193,18 +173,20 @@ export default function MindMapView({ tasks, allTasks }: MindMapViewProps) {
       .attr('fill', '#94a3b8')
       .attr('font-size', '9px')
       .text((d: any) => {
-        if (d.data.dueDate) {
-          const dueDate = new Date(d.data.dueDate);
-          return format(dueDate, 'MMM dd');
+        if (d.dueDate) {
+          try {
+            const dueDate = new Date(d.dueDate);
+            return format(dueDate, 'MMM dd');
+          } catch(e) { return '' }
         }
         return '';
       });
-
+      
     node
       .filter((d: any) => {
-        if (!d.data.dueDate) return false;
-        const dueDate = new Date(d.data.dueDate);
-        return dueDate < new Date() && d.data.status !== 'completed';
+        if (!d.dueDate) return false;
+        const dueDate = new Date(d.dueDate);
+        return dueDate < new Date() && d.status !== 'completed';
       })
       .append('circle')
       .attr('cx', 70)
@@ -216,42 +198,31 @@ export default function MindMapView({ tasks, allTasks }: MindMapViewProps) {
       .append('title')
       .text('Overdue');
       
+    simulation.on("tick", () => {
+        link
+            .attr("x1", (d:any) => d.source.x)
+            .attr("y1", (d:any) => d.source.y)
+            .attr("x2", (d:any) => d.target.x)
+            .attr("y2", (d:any) => d.target.y);
+
+        node
+            .attr("transform", (d:any) => `translate(${d.x},${d.y})`);
+    });
+
     const zoom = d3.zoom<SVGSVGElement, unknown>()
       .scaleExtent([0.2, 3])
       .on('zoom', (event) => {
         g.attr('transform', event.transform);
       });
-
-    const zoomToFit = () => {
-        const bounds = g.node()?.getBBox();
-        if(!bounds) return;
-
-        const parent = svg.node();
-        if(!parent) return;
-
-        const fullWidth = parent.clientWidth;
-        const fullHeight = parent.clientHeight;
-        
-        const { x, y, width: boundsWidth, height: boundsHeight } = bounds;
-        
-        if (boundsWidth === 0 || boundsHeight === 0) return;
-
-        const scale = Math.min(fullWidth / (boundsWidth + 100), fullHeight / (boundsHeight + 100)) * 0.9;
-        const newX = fullWidth / 2 - scale * (x + boundsWidth / 2);
-        const newY = fullHeight / 2 - scale * (y + boundsHeight / 2);
-        
-        svg.transition().duration(750).call(
-            zoom.transform as any,
-            d3.zoomIdentity.translate(newX, newY).scale(scale)
-        );
-    }
     
     svg.call(zoom);
-    zoomToFit();
-    
-    svg.on('dblclick.zoom', () => zoomToFit());
 
-  }, [nodes, links, tasks]);
+    svg.on('dblclick.zoom', () => {
+        const transform = d3.zoomIdentity.translate(width / 2, height / 2).scale(1);
+        svg.transition().duration(750).call(zoom.transform as any, transform);
+    });
+
+  }, [nodes, links]);
 
   return (
     <Card className="shadow-lg mt-4 w-full h-[70vh] overflow-hidden bg-gradient-to-br from-slate-50 to-blue-50 relative">
