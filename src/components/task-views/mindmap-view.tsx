@@ -31,35 +31,75 @@ const priorityColors = {
   high: '#ef4444',    // red-500
 };
 
+interface HierarchyNode extends Task {
+    children?: HierarchyNode[];
+}
+
 export default function MindMapView({ tasks, allTasks }: MindMapViewProps) {
   const svgRef = useRef<SVGSVGElement>(null);
   const [taskToView, setTaskToView] = useState<Task | null>(null);
 
-  const { nodes, links } = useMemo(() => {
+  const { root, nodes, links } = useMemo(() => {
     if (tasks.length === 0) {
-      return { nodes: [], links: [] };
+      return { root: null, nodes: [], links: [] };
     }
 
-    const taskMap = new Map(tasks.map(t => [t.id, { ...t, children: [] as any[] }]));
+    const taskMap = new Map(tasks.map(t => [t.id, { ...t, children: [] as HierarchyNode[] } as HierarchyNode]));
     
-    const d3Nodes = tasks.map(task => ({
-      id: task.id,
-      ...task
-    }));
-
-    const d3Links: { source: string; target: string; }[] = [];
+    const roots: HierarchyNode[] = [];
+    
     tasks.forEach(task => {
-        if (task.dependencies) {
+        const node = taskMap.get(task.id)!;
+        if (task.dependencies && task.dependencies.length > 0) {
             task.dependencies.forEach(depId => {
-                // Ensure both source and target nodes are in the current filtered view
-                if (taskMap.has(depId) && taskMap.has(task.id)) {
-                    d3Links.push({ source: depId, target: task.id });
+                const parent = taskMap.get(depId);
+                // Check if the parent is in the current filtered view
+                if (parent) {
+                    parent.children.push(node);
                 }
             });
         }
     });
+
+    tasks.forEach(task => {
+        const isChild = tasks.some(t => t.dependencies?.includes(task.id));
+        const hasNoDependenciesInView = !task.dependencies || task.dependencies.every(depId => !taskMap.has(depId));
+        if (hasNoDependenciesInView && !isChild) {
+             const node = taskMap.get(task.id);
+             if(node) roots.push(node);
+        }
+    });
+
+    // Group roots by creation date
+    const groupedByDate: { [key: string]: HierarchyNode[] } = {};
+    roots.forEach(root => {
+        const dateStr = format(new Date(root.createdAt), 'yyyy-MM-dd');
+        if (!groupedByDate[dateStr]) {
+            groupedByDate[dateStr] = [];
+        }
+        groupedByDate[dateStr].push(root);
+    });
+
+    // Create a hierarchical structure with dates as parents
+    const dateNodes = Object.entries(groupedByDate).map(([date, children]) => ({
+        id: `date-${date}`,
+        title: format(new Date(date), 'MMMM d, yyyy'),
+        createdAt: date,
+        children,
+    }));
+
+    // Create a single virtual root
+    const virtualRoot = { id: 'root', title: 'Task Plan', children: dateNodes, createdAt: new Date().toISOString() };
     
+    const hierarchy = d3.hierarchy(virtualRoot);
+    const treeLayout = d3.tree().nodeSize([100, 250]);
+    const treeData = treeLayout(hierarchy);
+    
+    const d3Nodes = treeData.descendants();
+    const d3Links = treeData.links();
+
     return {
+      root: treeData, 
       nodes: d3Nodes, 
       links: d3Links 
     };
@@ -67,162 +107,145 @@ export default function MindMapView({ tasks, allTasks }: MindMapViewProps) {
   }, [tasks]);
 
   useEffect(() => {
-    if (!svgRef.current || nodes.length === 0) {
+    if (!svgRef.current || !root ) {
       if(svgRef.current) d3.select(svgRef.current).selectAll('*').remove();
       return;
     };
 
     const svg = d3.select(svgRef.current);
+    const g = svg.select<SVGGElement>('g.content');
+    
     const width = svg.node()?.getBoundingClientRect().width || 800;
     const height = svg.node()?.getBoundingClientRect().height || 600;
 
     svg.selectAll('*').remove();
 
-    const g = svg.append('g');
-    
-    const simulation = d3.forceSimulation(nodes as d3.SimulationNodeDatum[])
-        .force("link", d3.forceLink(links).id((d: any) => d.id).distance(180).strength(0.5))
-        .force("charge", d3.forceManyBody().strength(-300))
-        .force("center", d3.forceCenter(width / 2, height / 2))
-        .force("collide", d3.forceCollide().radius(85).strength(0.7));
+    const zoom = d3.zoom<SVGSVGElement, unknown>()
+      .scaleExtent([0.1, 2])
+      .on('zoom', (event) => {
+        contentGroup.attr('transform', event.transform);
+      });
+      
+    svg.call(zoom);
 
-    const link = g.append('g')
+    const contentGroup = svg.append('g').attr('class', 'content');
+    
+    const linkGenerator = d3.linkHorizontal()
+        .x((d: any) => d.y)
+        .y((d: any) => d.x);
+
+    // Links
+    contentGroup.append('g')
+      .attr('fill', 'none')
       .attr('stroke', '#94a3b8')
       .attr('stroke-opacity', 0.6)
-      .selectAll('line')
+      .attr('stroke-width', 2)
+      .selectAll('path')
       .data(links)
-      .join('line')
-      .attr('stroke-width', 2);
+      .join('path')
+      .attr('d', linkGenerator as any);
 
-    const node = g.append('g')
+    // Nodes
+    const node = contentGroup.append('g')
+      .attr('stroke-linecap', 'round')
+      .attr('stroke-linejoin', 'round')
       .selectAll('g')
       .data(nodes)
       .join('g')
-      .style('cursor', 'pointer')
-      .on('click', (event, d: any) => {
-        if (event.defaultPrevented) return; // ignore click if drag occurred
-        setTaskToView(d);
-      });
-      
-    // Drag functionality
-    const drag = d3.drag()
-        .on("start", (event, d:any) => {
-            if (!event.active) simulation.alphaTarget(0.3).restart();
-            d.fx = d.x;
-            d.fy = d.y;
-        })
-        .on("drag", (event, d:any) => {
-            d.fx = event.x;
-            d.fy = event.y;
-        })
-        .on("end", (event, d:any) => {
-            if (!event.active) simulation.alphaTarget(0);
-            d.fx = null;
-            d.fy = null;
-        });
-    
-    node.call(drag as any);
+      .attr('transform', (d: any) => `translate(${d.y},${d.x})`);
 
-    node.append('rect')
-      .attr('width', 160)
-      .attr('height', 60)
-      .attr('x', -80)
-      .attr('y', -30)
-      .attr('rx', 8)
-      .attr('ry', 8)
-      .attr('fill', (d: any) => statusColors[d.status] || statusColors.not_started)
-      .attr('stroke', (d: any) => statusBorders[d.status] || statusBorders.not_started)
-      .attr('stroke-width', 2)
-      .style('filter', 'drop-shadow(0 2px 4px rgba(0,0,0,0.1))');
-      
-    node.append('rect')
-      .attr('width', 4)
-      .attr('height', 60)
-      .attr('x', -80)
-      .attr('y', -30)
-      .attr('rx', 2)
-      .attr('fill', (d: any) => priorityColors[d.priority] || priorityColors.low);
+    node.on('click', (event, d: any) => {
+        if(d.data.id && d.data.id.startsWith('date-')) return;
+        if(d.data.id === 'root') return;
+        setTaskToView(d.data as Task);
+    });
 
-    const text = node.append('text')
-      .attr('text-anchor', 'middle')
-      .attr('fill', '#1e293b')
-      .style('pointer-events', 'none');
+    // Node content
+    node.each(function(d) {
+        const group = d3.select(this);
+        const isDateNode = d.data.id.startsWith('date-');
+        const isRootNode = d.data.id === 'root';
 
-    text.append('tspan')
-      .attr('dy', '-0.5em')
-      .attr('font-size', '13px')
-      .attr('font-weight', '600')
-      .text((d: any) => {
-        const title = d.title;
-        return title.length > 18 ? title.substring(0, 18) + '...' : title;
-      });
-      
-    text.append('tspan')
-      .attr('x', 0)
-      .attr('dy', '1.2em')
-      .attr('fill', '#64748b')
-      .attr('font-size', '11px')
-      .text((d: any) => {
-        const status = d.status.replace('_', ' ');
-        return status.charAt(0).toUpperCase() + status.slice(1);
-      });
+        if (isRootNode) {
+            group.append('circle')
+                .attr('r', 15)
+                .attr('fill', 'hsl(var(--primary))');
+            group.append('text')
+                .attr('dy', '0.31em')
+                .attr('x', 20)
+                .attr('font-size', '16px')
+                .attr('font-weight', 'bold')
+                .text(d.data.title);
+        } else if (isDateNode) {
+            group.append('rect')
+                .attr('width', 180)
+                .attr('height', 40)
+                .attr('x', -90)
+                .attr('y', -20)
+                .attr('rx', 8)
+                .attr('ry', 8)
+                .attr('fill', 'hsl(var(--muted))');
+            group.append('text')
+                .attr('dy', '0.31em')
+                .attr('text-anchor', 'middle')
+                .attr('font-size', '14px')
+                .attr('font-weight', '500')
+                .text(d.data.title);
+        } else { // Task node
+            group.append('rect')
+                .attr('width', 160)
+                .attr('height', 60)
+                .attr('x', -80)
+                .attr('y', -30)
+                .attr('rx', 8)
+                .attr('ry', 8)
+                .attr('fill', (d: any) => statusColors[d.data.status] || statusColors.not_started)
+                .attr('stroke', (d: any) => statusBorders[d.data.status] || statusBorders.not_started)
+                .attr('stroke-width', 2)
+                .style('cursor', 'pointer')
+                .style('filter', 'drop-shadow(0 2px 4px rgba(0,0,0,0.1))');
+              
+            group.append('rect')
+                .attr('width', 4)
+                .attr('height', 60)
+                .attr('x', -80)
+                .attr('y', -30)
+                .attr('rx', 2)
+                .attr('fill', (d: any) => priorityColors[d.data.priority] || priorityColors.low);
 
-    text.append('tspan')
-      .attr('x', 0)
-      .attr('dy', '1.2em')
-      .attr('fill', '#94a3b8')
-      .attr('font-size', '9px')
-      .text((d: any) => {
-        if (d.dueDate) {
-          try {
-            const dueDate = new Date(d.dueDate);
-            return format(dueDate, 'MMM dd');
-          } catch(e) { return '' }
+            const text = group.append('text')
+                .attr('text-anchor', 'middle')
+                .attr('fill', '#1e293b')
+                .style('pointer-events', 'none');
+
+            text.append('tspan')
+                .attr('dy', '-0.5em')
+                .attr('font-size', '13px')
+                .attr('font-weight', '600')
+                .text((d: any) => {
+                    const title = d.data.title;
+                    return title.length > 18 ? title.substring(0, 18) + '...' : title;
+                });
+              
+            text.append('tspan')
+                .attr('x', 0)
+                .attr('dy', '1.2em')
+                .attr('fill', '#64748b')
+                .attr('font-size', '11px')
+                .text((d: any) => {
+                    const status = d.data.status.replace('_', ' ');
+                    return status.charAt(0).toUpperCase() + status.slice(1);
+                });
         }
-        return '';
-      });
-      
-    node
-      .filter((d: any) => {
-        if (!d.dueDate) return false;
-        const dueDate = new Date(d.dueDate);
-        return dueDate < new Date() && d.status !== 'completed';
-      })
-      .append('circle')
-      .attr('cx', 70)
-      .attr('cy', -20)
-      .attr('r', 6)
-      .attr('fill', '#ef4444')
-      .attr('stroke', 'white')
-      .attr('stroke-width', 2)
-      .append('title')
-      .text('Overdue');
-      
-    simulation.on("tick", () => {
-        link
-            .attr("x1", (d:any) => d.source.x)
-            .attr("y1", (d:any) => d.source.y)
-            .attr("x2", (d:any) => d.target.x)
-            .attr("y2", (d:any) => d.target.y);
-
-        node
-            .attr("transform", (d:any) => `translate(${d.x},${d.y})`);
     });
 
-    const zoom = d3.zoom<SVGSVGElement, unknown>()
-      .scaleExtent([0.2, 3])
-      .on('zoom', (event) => {
-        g.attr('transform', event.transform);
-      });
+    const initialX = width / 2 - (root.y + 100);
+    const initialY = height / 2 - root.x;
+    const initialTransform = d3.zoomIdentity.translate(initialX, initialY).scale(0.8);
+
+    svg.call(zoom.transform as any, initialTransform);
     
-    svg.call(zoom);
-
-    svg.on('dblclick.zoom', () => {
-        const transform = d3.zoomIdentity.translate(width / 2, height / 2).scale(1);
-        svg.transition().duration(750).call(zoom.transform as any, transform);
-    });
-
-  }, [nodes, links]);
+  }, [root, nodes, links]);
 
   return (
     <Card className="shadow-lg mt-4 w-full h-[70vh] overflow-hidden bg-gradient-to-br from-slate-50 to-blue-50 relative">
@@ -234,7 +257,7 @@ export default function MindMapView({ tasks, allTasks }: MindMapViewProps) {
         <>
           <div className="absolute top-4 left-4 z-10 bg-white/90 backdrop-blur-sm rounded-lg p-3 shadow-sm border">
             <h4 className="text-sm font-semibold text-slate-700 mb-2">Task Flow</h4>
-            <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs text-slate-600">
+             <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs text-slate-600">
               <div className="flex items-center gap-2">
                 <div className="w-3 h-3 rounded bg-slate-50 border border-slate-400"></div>
                 <span>Not Started</span>
@@ -247,27 +270,23 @@ export default function MindMapView({ tasks, allTasks }: MindMapViewProps) {
                 <div className="w-3 h-3 rounded bg-green-100 border border-green-500"></div>
                 <span>Completed</span>
               </div>
-              <div className="flex items-center gap-2">
-                <div className="w-3 h-3 rounded bg-red-100 border border-red-500"></div>
-                <span>Archived</span>
-              </div>
-              <div className="flex items-center gap-2 col-span-2 mt-1 pt-1 border-t border-slate-200">
+               <div className="flex items-center gap-2">
                 <div className="w-2 h-3 rounded bg-red-500"></div>
-                <span>High Priority</span>
-                <div className="w-2 h-3 rounded bg-amber-400 ml-2"></div>
-                <span>Medium</span>
-                <div className="w-2 h-3 rounded bg-slate-200 ml-2"></div>
-                <span>Low</span>
+                <span>High Prio</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-3 rounded bg-amber-400"></div>
+                <span>Medium Prio</span>
+              </div>
+               <div className="flex items-center gap-2">
+                <div className="w-2 h-3 rounded bg-slate-200"></div>
+                <span>Low Prio</span>
               </div>
             </div>
           </div>
 
           <div className="absolute bottom-4 right-4 z-10 bg-white/90 backdrop-blur-sm rounded-lg p-2 shadow-sm border">
-            <p className="text-xs text-slate-600">Double-click to reset • Drag to pan • Scroll to zoom</p>
-          </div>
-
-          <div className="absolute top-4 right-4 z-10 bg-white/90 backdrop-blur-sm rounded-lg p-2 shadow-sm border">
-            <p className="text-sm font-medium text-slate-700">{nodes.length} Tasks</p>
+            <p className="text-xs text-slate-600">Scroll to zoom • Drag to pan</p>
           </div>
 
           <svg ref={svgRef} className="w-full h-full cursor-move"></svg>
