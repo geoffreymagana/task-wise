@@ -32,7 +32,7 @@ export function SpeechToPlanDialog({ children, onTasksImported }: SpeechToPlanDi
   const { toast } = useToast();
   const recognitionRef = useRef<any>(null);
 
-  useEffect(() => {
+  const setupSpeechRecognition = () => {
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (!SpeechRecognition) {
       toast({
@@ -40,7 +40,7 @@ export function SpeechToPlanDialog({ children, onTasksImported }: SpeechToPlanDi
         title: 'Browser Not Supported',
         description: 'Speech recognition is not supported in your browser.',
       });
-      return;
+      return null;
     }
 
     const recognition = new SpeechRecognition();
@@ -49,11 +49,15 @@ export function SpeechToPlanDialog({ children, onTasksImported }: SpeechToPlanDi
     recognition.lang = 'en-US';
 
     recognition.onstart = () => setIsListening(true);
-    recognition.onend = () => setIsListening(false);
+    recognition.onend = () => {
+        setIsListening(false);
+        recognitionRef.current = null;
+    };
     recognition.onerror = (event: any) => {
       console.error('Speech recognition error', event.error);
       toast({ variant: 'destructive', title: 'Speech Error', description: `An error occurred: ${event.error}` });
       setIsListening(false);
+      recognitionRef.current = null;
     };
 
     recognition.onresult = (event: any) => {
@@ -73,34 +77,43 @@ export function SpeechToPlanDialog({ children, onTasksImported }: SpeechToPlanDi
       }
     };
     
-    recognitionRef.current = recognition;
-
+    return recognition;
+  }
+  
+  useEffect(() => {
     return () => {
         if (recognitionRef.current) {
             recognitionRef.current.stop();
         }
     }
-  }, [toast]);
+  }, []);
   
   const handleOpenChange = (isOpen: boolean) => {
     setOpen(isOpen);
-    if (!isOpen && isListening) {
+    if (!isOpen && recognitionRef.current) {
       recognitionRef.current.stop();
     }
     if(!isOpen) {
         setFinalTranscript('');
         setInterimTranscript('');
+        setIsListening(false);
     }
   }
 
   const toggleListening = () => {
-    if (!recognitionRef.current) return;
     if (isListening) {
-      recognitionRef.current.stop();
-    } else {
-      setFinalTranscript('');
-      setInterimTranscript('');
-      recognitionRef.current.start();
+      if(recognitionRef.current) {
+        recognitionRef.current.stop();
+      }
+      return;
+    }
+    
+    const recognition = setupSpeechRecognition();
+    if(recognition){
+        recognitionRef.current = recognition;
+        setFinalTranscript('');
+        setInterimTranscript('');
+        recognition.start();
     }
   };
   
