@@ -1,5 +1,5 @@
 'use client';
-import { useCallback, useLayoutEffect, useState } from 'react';
+import { useCallback, useLayoutEffect, useState, useMemo } from 'react';
 import ReactFlow, {
   Controls,
   Background,
@@ -196,7 +196,7 @@ export default function MindMapView({ tasks, allTasks }: MindMapViewProps) {
   };
 
   const doLayout = useCallback(() => {
-    const taskMap = new Map(tasks.map((t) => [t.id, t]));
+    const taskMap = new Map(allTasks.map((t) => [t.id, t]));
 
     const groupedByDate = tasks.reduce((acc, task) => {
         const dateKey = format(startOfDay(new Date(task.createdAt)), 'yyyy-MM-dd');
@@ -262,7 +262,7 @@ export default function MindMapView({ tasks, allTasks }: MindMapViewProps) {
       setNodes(layoutedNodes);
       setEdges(layoutedEdges);
     });
-  }, [tasks, taskMap]);
+  }, [tasks, allTasks]);
 
   useLayoutEffect(() => {
     doLayout();
