@@ -31,8 +31,8 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { CheckCircle, Circle, Edit, MoreHorizontal, Trash, XCircle, ChevronDown, Play, ArchiveRestore } from 'lucide-react';
-import { format, isSameDay, isToday, startOfDay } from 'date-fns';
+import { CheckCircle, Circle, Edit, MoreHorizontal, Trash, XCircle, ChevronDown, Play, ArchiveRestore, AlertCircle } from 'lucide-react';
+import { format, isSameDay, isToday, startOfDay, isBefore } from 'date-fns';
 import { Card } from '../ui/card';
 import { AddTaskDialog } from '../task-manager/add-task-dialog';
 import { formatDuration } from '@/lib/utils';
@@ -74,6 +74,7 @@ const groupTasksByDay = (tasks: Task[]) => {
         acc[date].push(task);
         return acc;
     }, {} as Record<string, Task[]>);
+    
     return Object.entries(grouped).sort(([dateA], [dateB]) => new Date(dateB).getTime() - new Date(dateA).getTime());
 };
 
@@ -180,6 +181,10 @@ export default function TableView({
     const endTime = task.endTime ? new Date(task.endTime) : new Date(startTime.getTime() + (task.estimatedTime || 0) * 60000);
     return now >= startTime && now <= endTime;
   }
+  
+  const isOverdue = (task: Task) => {
+    return task.dueDate && task.status !== 'completed' && isBefore(startOfDay(new Date(task.dueDate)), startOfDay(now));
+  }
 
   return (
     <Card className="shadow-lg mt-4">
@@ -229,7 +234,7 @@ export default function TableView({
             <div key={date}>
                 <h3 className="text-lg font-bold p-3 font-headline sticky top-0 bg-background/80 backdrop-blur-sm z-10">{title}</h3>
                  <Table>
-                    <TableHeader className="hidden">
+                    <TableHeader className="hidden md:table-header-group">
                       <TableRow>
                         <TableHead className="w-12"></TableHead>
                         <TableHead className="w-[40%]">Task</TableHead>
@@ -250,7 +255,7 @@ export default function TableView({
                               aria-label={`Select row for task "${task.title}"`}
                             />
                           </TableCell>
-                          <TableCell>
+                          <TableCell className="max-w-[200px] md:max-w-sm">
                              <div className="flex items-center gap-2">
                                 <button onClick={() => setTaskToView(task)} className="font-medium text-left hover:underline flex items-center gap-2">
                                   <div 
@@ -259,8 +264,9 @@ export default function TableView({
                                   >
                                     <Icon name={task.icon || 'Package'} className="w-4 h-4 text-white" />
                                   </div>
-                                  {task.title}
+                                  <span className="truncate">{task.title}</span>
                                 </button>
+                                {isOverdue(task) && <AlertCircle className="w-4 h-4 text-red-500" title="Overdue" />}
                               </div>
                           </TableCell>
                           <TableCell>
@@ -269,7 +275,7 @@ export default function TableView({
                                 <DropdownMenuTrigger asChild>
                                   <Button variant="ghost" className="flex items-center gap-2 px-2 py-1 h-auto text-sm">
                                     {statusConfig[task.status].icon}
-                                    {statusConfig[task.status].label}
+                                    <span className="hidden md:inline">{statusConfig[task.status].label}</span>
                                   </Button>
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent>
@@ -285,17 +291,17 @@ export default function TableView({
                             ) : (
                               <div className="flex items-center gap-2 text-sm">
                                 {statusConfig[task.status].icon}
-                                {statusConfig[task.status].label}
+                                <span className="hidden md:inline">{statusConfig[task.status].label}</span>
                               </div>
                             )}
                           </TableCell>
                           <TableCell>
                             <Badge variant={priorityConfig[task.priority] as any}>{task.priority}</Badge>
                           </TableCell>
-                          <TableCell>
+                          <TableCell className="hidden md:table-cell">
                             {task.estimatedTime > 0 ? formatDuration(task.estimatedTime) : 'N/A'}
                           </TableCell>
-                          <TableCell>
+                          <TableCell className="hidden md:table-cell">
                             {task.dueDate ? format(new Date(task.dueDate), 'MMM d, yyyy') : 'No due date'}
                           </TableCell>
                           <TableCell className="text-right">
