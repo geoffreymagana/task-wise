@@ -74,7 +74,7 @@ const groupTasksByDay = (tasks: Task[]) => {
         acc[date].push(task);
         return acc;
     }, {} as Record<string, Task[]>);
-    return Object.entries(grouped).sort(([dateA], [dateB]) => new Date(b).getTime() - new Date(a).getTime());
+    return Object.entries(grouped).sort(([dateA], [dateB]) => new Date(dateB).getTime() - new Date(dateA).getTime());
 };
 
 
