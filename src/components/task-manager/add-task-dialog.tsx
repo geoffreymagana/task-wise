@@ -180,9 +180,18 @@ export function AddTaskDialog({ children, onTaskCreated, onTaskUpdated, taskToEd
         onTaskUpdated(updatedTask);
         toast({ title: 'Task Updated', description: `"${data.title}" has been updated.` });
       } else {
-        const newTask = await createTaskAction(taskData);
-        onTaskCreated(newTask);
-        toast({ title: 'Task Created', description: `"${newTask.title}" has been added.` });
+        const result = await createTaskAction(taskData, allTasks);
+        if ('error' in result) {
+            toast({
+              variant: 'destructive',
+              title: 'Duplicate Task',
+              description: `${result.error} Would you like to view the existing task?`,
+              // action: <ToastAction altText="View Task">View</ToastAction>, // TODO: Add view functionality
+            });
+        } else {
+            onTaskCreated(result);
+            toast({ title: 'Task Created', description: `"${result.title}" has been added.` });
+        }
       }
       form.reset();
       setOpen(false);
@@ -209,7 +218,7 @@ export function AddTaskDialog({ children, onTaskCreated, onTaskUpdated, taskToEd
         <DialogHeader>
           <DialogTitle className="font-headline">{taskToEdit ? 'Edit Task' : 'Add New Task'}</DialogTitle>
         </DialogHeader>
-        <div className="flex-grow overflow-y-auto -mr-6 pr-6">
+        <div className="flex-grow overflow-y-auto -mr-6 pr-6 custom-scrollbar">
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
                 <div className="space-y-4">

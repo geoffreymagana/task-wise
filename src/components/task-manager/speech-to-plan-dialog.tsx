@@ -65,13 +65,9 @@ export function SpeechToPlanDialog({ children, onTasksImported }: SpeechToPlanDi
           setStatusMessage("Click the microphone to request microphone access.");
         }
       } catch (error) {
-        try {
-          await navigator.mediaDevices.getUserMedia({ audio: true });
-          setHasPermission(true);
-        } catch (mediaError) {
-          setHasPermission(false);
-          setStatusMessage("Please allow microphone access to use speech recognition.");
-        }
+        // Fallback for browsers that don't support permissions.query
+        setHasPermission(null); // We'll ask when they click
+        setStatusMessage("Click the microphone to request microphone access.");
       }
     };
 
@@ -95,18 +91,18 @@ export function SpeechToPlanDialog({ children, onTasksImported }: SpeechToPlanDi
     recognition.continuous = true;
     recognition.interimResults = true;
     recognition.lang = 'en-US';
-    recognition.maxAlternatives = 1;
     
     recognition.onstart = () => {
       setIsListening(true);
       setStatusMessage('Listening...');
       if(silenceTimeoutRef.current) clearTimeout(silenceTimeoutRef.current);
+      // Set a timeout to stop if no speech is detected for a while
       silenceTimeoutRef.current = setTimeout(() => {
         if(recognitionRef.current && isListening) {
           recognitionRef.current.stop();
-          setStatusMessage('No speech detected. Please try again.');
+          setStatusMessage('No speech detected for a while. Recording paused.');
         }
-      }, 10000); 
+      }, 30000); // 30 seconds of silence
     };
 
     recognition.onend = () => {
@@ -125,25 +121,28 @@ export function SpeechToPlanDialog({ children, onTasksImported }: SpeechToPlanDi
       setIsListening(false);
       recognitionRef.current = null;
       
-      let errorMessage = 'Please try again.';
+      // Ignore user-initiated aborts
+      if (event.error === 'aborted') {
+          setStatusMessage("Cancelled. Click the mic to start again.");
+          return;
+      }
+
+      let errorMessage = 'An unknown error occurred. Please try again.';
       switch(event.error) {
         case 'network':
-          errorMessage = 'Network error. Check your internet connection and try again.';
+          errorMessage = 'Network error. Check your internet connection.';
           break;
         case 'not-allowed':
           errorMessage = 'Microphone access denied. Please allow microphone permissions.';
           break;
         case 'no-speech':
-          errorMessage = 'No speech detected. Please speak clearly and try again.';
+          errorMessage = 'No speech detected. Please speak clearly.';
           break;
-        case 'aborted':
-          // This can be ignored as it's often user-initiated
-          return;
         case 'audio-capture':
           errorMessage = 'Audio capture failed. Check your microphone.';
           break;
         case 'service-not-allowed':
-          errorMessage = 'Speech service not allowed. Try using HTTPS.';
+          errorMessage = 'Speech service not allowed. Ensure you are on a secure connection (HTTPS).';
           break;
       }
       
@@ -156,7 +155,9 @@ export function SpeechToPlanDialog({ children, onTasksImported }: SpeechToPlanDi
     };
 
     recognition.onresult = (event: any) => {
+      // Clear the silence timeout on new result
       if(silenceTimeoutRef.current) clearTimeout(silenceTimeoutRef.current);
+
       let interim = '';
       let final = finalTranscript; // Start with the existing final transcript
 
@@ -168,7 +169,8 @@ export function SpeechToPlanDialog({ children, onTasksImported }: SpeechToPlanDi
         }
       }
       setInterimTranscript(interim);
-      if (final !== finalTranscript) {
+      // Only update if the final transcript has actually changed
+      if (final.trim() !== finalTranscript.trim()) {
         setFinalTranscript(final);
       }
     };
@@ -194,6 +196,7 @@ export function SpeechToPlanDialog({ children, onTasksImported }: SpeechToPlanDi
       recognitionRef.current.stop();
     }
     if(!isOpen) {
+      // Reset state on close
       setFinalTranscript('');
       setInterimTranscript('');
       setIsListening(false);
@@ -206,6 +209,7 @@ export function SpeechToPlanDialog({ children, onTasksImported }: SpeechToPlanDi
   const requestMicrophonePermission = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      // Immediately stop the track to release the microphone icon in the browser tab
       stream.getTracks().forEach(track => track.stop());
       setHasPermission(true);
       setStatusMessage("Microphone access granted. Click the microphone to start recording.");
@@ -223,14 +227,16 @@ export function SpeechToPlanDialog({ children, onTasksImported }: SpeechToPlanDi
   };
 
   const toggleListening = async () => {
+    // If permission is denied, prompt them to change settings
     if (hasPermission === false) {
-      await requestMicrophonePermission();
+      await requestMicrophonePermission(); // This will show the error toast
       return;
     }
     
+    // If we don't know the permission status, request it now
     if (hasPermission === null) {
       const granted = await requestMicrophonePermission();
-      if (!granted) return;
+      if (!granted) return; // Stop if they deny it
     }
 
     if (isListening) {
@@ -240,6 +246,7 @@ export function SpeechToPlanDialog({ children, onTasksImported }: SpeechToPlanDi
       return;
     }
     
+    // If a countdown is in progress, pressing the button cancels it.
     if (countdownIntervalRef.current) {
       clearInterval(countdownIntervalRef.current);
       countdownIntervalRef.current = null;
@@ -324,42 +331,47 @@ export function SpeechToPlanDialog({ children, onTasksImported }: SpeechToPlanDi
           </DialogDescription>
         </DialogHeader>
         <div className="flex-grow flex flex-col items-center justify-start relative bg-muted/20 rounded-lg p-4 gap-4">
-          <button
-            onClick={toggleListening}
-            className={`w-24 h-24 bg-primary/20 rounded-full flex items-center justify-center transition-all duration-300 flex-shrink-0 ${isListening ? 'scale-110' : ''} ${isCountingDown ? 'animate-pulse' : ''}`}
-            disabled={isPending}
-          >
-            <div 
-              className={`w-20 h-20 bg-primary/40 rounded-full flex items-center justify-center transition-all duration-300 ${isListening ? 'scale-110' : ''}`}
+          <div className="relative flex items-center justify-center">
+            <button
+              onClick={toggleListening}
+              className="w-24 h-24 bg-primary/20 rounded-full flex items-center justify-center transition-all duration-300 z-10"
+              disabled={isPending}
             >
-              <div className="w-16 h-16 bg-primary rounded-full flex items-center justify-center">
-                {isCountingDown ? (
-                  <span className="text-4xl font-bold text-primary-foreground">{countdown}</span>
-                ) : isListening ? (
-                  <Pause className="w-8 h-8 text-primary-foreground"/>
-                ) : (
-                  <Mic className="w-8 h-8 text-primary-foreground"/>
-                )}
+              <div 
+                className="w-20 h-20 bg-primary/40 rounded-full flex items-center justify-center transition-all duration-300"
+              >
+                <div className="w-16 h-16 bg-primary rounded-full flex items-center justify-center">
+                  {isCountingDown ? (
+                    <span className="text-4xl font-bold text-primary-foreground">{countdown}</span>
+                  ) : isListening ? (
+                    <Pause className="w-8 h-8 text-primary-foreground"/>
+                  ) : (
+                    <Mic className="w-8 h-8 text-primary-foreground"/>
+                  )}
+                </div>
               </div>
-            </div>
-          </button>
-          {isListening && <div className="absolute top-12 left-1/2 -translate-x-1/2 -translate-y-1/2 w-48 h-48 rounded-full bg-primary/20 animate-ping -z-10" />}
+            </button>
+            {(isListening || isCountingDown) && <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-24 h-24 rounded-full bg-primary/20 animate-ping -z-0" />}
+          </div>
           
           <div className="w-full flex-grow min-h-0">
-             {isListening ? (
-                <div className="text-center text-lg w-full h-full overflow-y-auto p-2">
-                    <p className="text-muted-foreground">{finalTranscript}
-                    <span className="text-foreground font-semibold">{interimTranscript}</span>
-                    </p>
-                </div>
-                ) : (
+             {isListening || finalTranscript ? (
                 <Textarea
-                    value={finalTranscript}
-                    onChange={(e) => setFinalTranscript(e.target.value)}
-                    placeholder="Your recorded speech will appear here. You can edit it before creating a plan."
+                    value={finalTranscript + interimTranscript}
+                    onChange={(e) => {
+                      if(!isListening) {
+                        setFinalTranscript(e.target.value);
+                      }
+                    }}
+                    readOnly={isListening}
+                    placeholder="Your recorded speech will appear here. You can edit it after pausing."
                     className="w-full h-full text-base resize-none"
                     rows={10}
                 />
+                ) : (
+                <div className="flex items-center justify-center h-full text-muted-foreground">
+                  Click the mic to begin.
+                </div>
             )}
           </div>
         </div>

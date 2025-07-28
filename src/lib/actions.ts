@@ -39,7 +39,14 @@ const TaskSchema = z.object({
   estimatedTimeUnit: z.string().optional(),
 });
 
-export async function createTaskAction(values: z.infer<typeof TaskSchema>): Promise<Task> {
+const AllTasksSchema = z.object({
+  allTasks: z.array(z.any()),
+});
+
+export async function createTaskAction(
+  values: z.infer<typeof TaskSchema>,
+  allTasks: Task[]
+): Promise<Task | { error: string; existingTask: Task }> {
   const validatedFields = TaskSchema.safeParse(values);
 
   if (!validatedFields.success) {
@@ -47,6 +54,20 @@ export async function createTaskAction(values: z.infer<typeof TaskSchema>): Prom
   }
 
   const { title, description, complexity, priority, dueDate, estimatedTime, dependencies, icon, color, estimatedTimeUnit, startTime, endTime } = validatedFields.data;
+
+  // Check for duplicate tasks
+  const existingTask = allTasks.find(
+    (task) =>
+      task.title.toLowerCase() === title.toLowerCase() &&
+      task.dueDate === dueDate
+  );
+
+  if (existingTask) {
+    return {
+      error: 'A similar task already exists for this day.',
+      existingTask,
+    };
+  }
   
   let finalEstimatedTime = estimatedTime ? timeToMinutes(estimatedTime, estimatedTimeUnit || 'minutes') : 0;
 
