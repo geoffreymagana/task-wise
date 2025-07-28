@@ -16,7 +16,7 @@ import {
 } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
 import { parseMarkdownTasks } from '@/ai/flows/parse-markdown-tasks';
-import { Loader, Mic, Send } from 'lucide-react';
+import { Loader, Mic, Send, Pause } from 'lucide-react';
 
 interface SpeechToPlanDialogProps {
   children: ReactNode;
@@ -33,7 +33,6 @@ export function SpeechToPlanDialog({ children, onTasksImported }: SpeechToPlanDi
   const recognitionRef = useRef<any>(null);
 
   useEffect(() => {
-    // Check for browser support
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (!SpeechRecognition) {
       toast({
@@ -49,18 +48,11 @@ export function SpeechToPlanDialog({ children, onTasksImported }: SpeechToPlanDi
     recognition.interimResults = true;
     recognition.lang = 'en-US';
 
-    recognition.onstart = () => {
-      setIsListening(true);
-    };
-
-    recognition.onend = () => {
-      setIsListening(false);
-      setOpen(false); // Close dialog when listening stops
-    };
-
+    recognition.onstart = () => setIsListening(true);
+    recognition.onend = () => setIsListening(false);
     recognition.onerror = (event: any) => {
       console.error('Speech recognition error', event.error);
-      toast({ variant: 'destructive', title: 'Speech Error', description: event.error });
+      toast({ variant: 'destructive', title: 'Speech Error', description: `An error occurred: ${event.error}` });
       setIsListening(false);
     };
 
@@ -77,7 +69,7 @@ export function SpeechToPlanDialog({ children, onTasksImported }: SpeechToPlanDi
       }
       setInterimTranscript(interim);
       if (final) {
-        setFinalTranscript(prev => prev + final);
+        setFinalTranscript(prev => prev + final.trim() + ' ');
       }
     };
     
@@ -88,10 +80,21 @@ export function SpeechToPlanDialog({ children, onTasksImported }: SpeechToPlanDi
             recognitionRef.current.stop();
         }
     }
-
   }, [toast]);
+  
+  const handleOpenChange = (isOpen: boolean) => {
+    setOpen(isOpen);
+    if (!isOpen && isListening) {
+      recognitionRef.current.stop();
+    }
+    if(!isOpen) {
+        setFinalTranscript('');
+        setInterimTranscript('');
+    }
+  }
 
   const toggleListening = () => {
+    if (!recognitionRef.current) return;
     if (isListening) {
       recognitionRef.current.stop();
     } else {
@@ -102,13 +105,14 @@ export function SpeechToPlanDialog({ children, onTasksImported }: SpeechToPlanDi
   };
   
   const handleImport = () => {
-    if (!finalTranscript.trim()) {
+    const contentToImport = finalTranscript.trim() || interimTranscript.trim();
+    if (!contentToImport) {
         toast({ variant: 'destructive', title: 'No speech recorded.'});
         return;
     }
     startTransition(async () => {
         try {
-          const result = await parseMarkdownTasks({ markdownText: finalTranscript });
+          const result = await parseMarkdownTasks({ markdownText: contentToImport });
           if (result.tasks.length === 0) {
             toast({
               variant: 'destructive',
@@ -137,37 +141,35 @@ export function SpeechToPlanDialog({ children, onTasksImported }: SpeechToPlanDi
       });
   }
 
-  useEffect(() => {
-    if (open) {
-        toggleListening();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open]);
-
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>{children}</DialogTrigger>
       <DialogContent className="max-w-xl h-4/5 flex flex-col">
         <DialogHeader>
           <DialogTitle className="font-headline text-center">Speak Your Plan</DialogTitle>
           <DialogDescription className="text-center">
-            Describe your tasks for the day. For example, "This morning, I'll design the homepage..."
+             {isListening ? "Listening..." : "Click the microphone to start recording."}
           </DialogDescription>
         </DialogHeader>
         <div className="flex-grow flex flex-col items-center justify-center relative bg-muted/20 rounded-lg p-4">
-             <div 
+             <button
+                onClick={toggleListening}
                 className={`w-32 h-32 bg-primary/20 rounded-full flex items-center justify-center transition-all duration-300 ${isListening ? 'scale-110' : ''}`}
             >
                 <div 
                     className={`w-24 h-24 bg-primary/40 rounded-full flex items-center justify-center transition-all duration-300 ${isListening ? 'scale-125' : ''}`}
                 >
                     <div className="w-20 h-20 bg-primary rounded-full flex items-center justify-center">
-                        <Mic className="w-10 h-10 text-primary-foreground"/>
+                        {isListening ? (
+                            <Pause className="w-10 h-10 text-primary-foreground"/>
+                        ) : (
+                            <Mic className="w-10 h-10 text-primary-foreground"/>
+                        )}
                     </div>
                 </div>
-            </div>
+            </button>
              {isListening && <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-48 h-48 rounded-full bg-primary/20 animate-ping -z-10" />}
-            <div className="text-center mt-8 text-lg w-full">
+            <div className="text-center mt-8 text-lg w-full min-h-[5em] overflow-y-auto">
                 <p className="text-muted-foreground">{finalTranscript}
                     <span className="text-foreground">{interimTranscript}</span>
                 </p>
@@ -177,7 +179,7 @@ export function SpeechToPlanDialog({ children, onTasksImported }: SpeechToPlanDi
             <DialogClose asChild>
                 <Button variant="ghost">Cancel</Button>
             </DialogClose>
-            <Button onClick={handleImport} disabled={isPending || !finalTranscript}>
+            <Button onClick={handleImport} disabled={isPending || (!finalTranscript && !interimTranscript)}>
                 {isPending ? <Loader className="mr-2 h-4 w-4 animate-spin" /> : <Send className="mr-2 h-4 w-4"/>}
                 Create Plan
             </Button>
