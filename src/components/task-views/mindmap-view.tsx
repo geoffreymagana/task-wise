@@ -1,5 +1,5 @@
 'use client';
-import { useCallback, useLayoutEffect, useState, useMemo, useEffect } from 'react';
+import { useCallback, useLayoutEffect, useState, useEffect } from 'react';
 import ReactFlow, {
   Controls,
   Background,
@@ -48,7 +48,7 @@ const getLayoutedElements = (nodes: Node[], edges: Edge[], options = {}) => {
   const graph = {
     id: 'root',
     layoutOptions: elkOptions,
-    children: nodes,
+    children: nodes.map(n => ({...n, width: n.width || nodeWidth, height: n.height || nodeHeight})),
     edges: edges,
   };
 
@@ -62,10 +62,10 @@ const getLayoutedElements = (nodes: Node[], edges: Edge[], options = {}) => {
 };
 
 const statusStyles = {
-  not_started: 'bg-slate-50 border-slate-400 text-slate-800',
-  in_progress: 'bg-blue-100 border-blue-500 text-blue-800',
-  completed: 'bg-green-100 border-green-500 text-green-800',
-  archived: 'bg-red-100 border-red-500 text-red-800',
+  not_started: 'bg-slate-50 border-slate-400',
+  in_progress: 'bg-blue-100 border-blue-500',
+  completed: 'bg-green-100 border-green-500',
+  archived: 'bg-red-100 border-red-500',
 };
 
 const priorityStyles = {
@@ -93,7 +93,7 @@ function TaskNode({ data }: { data: Task }) {
           >
             <Icon name={data.icon || 'Package'} className="w-5 h-5 text-white" />
           </div>
-          <div className="text-sm font-semibold break-words w-full text-card-foreground" title={data.title}>
+          <div className="text-sm font-semibold break-words w-full text-slate-900" title={data.title}>
             {data.title}
           </div>
         </div>
@@ -173,7 +173,7 @@ function CustomControls() {
                     </Tooltip>
                      <Tooltip>
                         <TooltipTrigger asChild>
-                             <Button variant="ghost" size="icon" onClick={() => fitView({duration: 300})}>
+                             <Button variant="ghost" size="icon" onClick={() => fitView({duration: 300, padding: 0.1})}>
                                 <Maximize className="h-4 w-4" />
                             </Button>
                         </TooltipTrigger>
@@ -193,12 +193,19 @@ function CustomControls() {
     );
 }
 
+interface MindMapViewProps {
+  tasks: Task[];
+  allTasks: Task[];
+}
+
+
 function FlowCanvas({ tasks, allTasks }: MindMapViewProps) {
   const [nodes, setNodes] = useState<Node[]>([]);
   const [edges, setEdges] = useState<Edge[]>([]);
   const [taskToView, setTaskToView] = useState<Task | null>(null);
   const [layoutDirection, setLayoutDirection] = useState<'RIGHT' | 'DOWN'>('RIGHT');
   const [isViewLocked, setIsViewLocked] = useState(false);
+  const [activeDate, setActiveDate] = useState<string | null>(null);
   const { fitView } = useReactFlow();
 
   const onNodesChange = useCallback(
@@ -214,80 +221,133 @@ function FlowCanvas({ tasks, allTasks }: MindMapViewProps) {
     if (node.type === 'taskNode') {
       const task = allTasks.find((t) => t.id === node.id);
       if (task) setTaskToView(task);
+    } else if (node.type === 'dateNode') {
+        const dateKey = node.id.replace('date-', '');
+        setActiveDate(current => current === dateKey ? null : dateKey);
     }
   };
 
   const doLayout = useCallback(() => {
     const taskMap = new Map(allTasks.map((t) => [t.id, t]));
+    
+    let tasksToDisplay = tasks;
 
-    const groupedByDate = tasks.reduce((acc, task) => {
-        const dateKey = format(startOfDay(new Date(task.createdAt)), 'yyyy-MM-dd');
-        if (!acc[dateKey]) {
-            acc[dateKey] = [];
-        }
-        acc[dateKey].push(task);
-        return acc;
-    }, {} as Record<string, Task[]>);
+    if (activeDate) {
+        tasksToDisplay = tasks.filter(task => format(startOfDay(new Date(task.createdAt)), 'yyyy-MM-dd') === activeDate);
+    }
 
     const initialNodes: Node[] = [];
     const initialEdges: Edge[] = [];
 
-     Object.entries(groupedByDate).forEach(([dateStr, tasksInDay]) => {
-        const dateNodeId = `date-${dateStr}`;
+    if (activeDate) {
+         const groupedByPriority = tasksToDisplay.reduce((acc, task) => {
+            const priority = task.priority;
+            if (!acc[priority]) acc[priority] = [];
+            acc[priority].push(task);
+            return acc;
+        }, {} as Record<string, Task[]>);
+
+        const dateNodeId = `date-${activeDate}`;
         initialNodes.push({
             id: dateNodeId,
             type: 'dateNode',
-            data: { label: format(new Date(dateStr), 'PPP') },
+            data: { label: format(new Date(activeDate), 'PPP') },
             position: { x: 0, y: 0 },
-            width: 220,
+            width: 200,
             height: 50,
         });
 
-        tasksInDay.forEach(task => {
+        for (const priority in groupedByPriority) {
+            const priorityNodeId = `priority-${activeDate}-${priority}`;
             initialNodes.push({
-                id: task.id,
-                type: 'taskNode',
-                data: task,
+                id: priorityNodeId,
+                type: 'default',
+                data: { label: `Priority: ${priority}` },
                 position: { x: 0, y: 0 },
-                width: nodeWidth,
-                height: nodeHeight,
+                style: { backgroundColor: '#f8fafc', border: '2px solid #aaa', padding: 10, borderRadius: '8px' },
+                width: 180,
+                height: 40,
             });
-
-            if (task.dependencies && task.dependencies.length > 0) {
-                task.dependencies.forEach(depId => {
-                    if (taskMap.has(depId) && tasks.some(t => t.id === depId)) { // only draw edge if dependency is in the current view
+            initialEdges.push({
+                id: `e-${dateNodeId}-${priorityNodeId}`,
+                source: dateNodeId,
+                target: priorityNodeId,
+                type: 'smoothstep',
+            });
+            
+            const tasksInPriority = groupedByPriority[priority];
+            for (const task of tasksInPriority) {
+                 initialNodes.push({
+                    id: task.id,
+                    type: 'taskNode',
+                    data: task,
+                    position: { x: 0, y: 0 },
+                    width: nodeWidth,
+                    height: nodeHeight,
+                });
+                
+                if (task.dependencies?.length) {
+                     task.dependencies.forEach(depId => {
+                      if (tasksToDisplay.some(t => t.id === depId)) {
                         initialEdges.push({
-                            id: `e-${depId}-${task.id}`,
-                            source: depId,
-                            target: task.id,
-                            type: 'smoothstep',
-                            animated: task.status === 'in_progress',
-                             style: { stroke: taskMap.get(depId)?.color || '#aaa', strokeWidth: 2 },
+                          id: `e-${depId}-${task.id}`,
+                          source: depId,
+                          target: task.id,
+                          type: 'smoothstep',
+                          animated: true,
+                          style: { stroke: taskMap.get(depId)?.color || '#aaa', strokeWidth: 2 },
                         });
-                    }
-                });
-            } else {
-                initialEdges.push({
-                    id: `e-${dateNodeId}-${task.id}`,
-                    source: dateNodeId,
-                    target: task.id,
-                    type: 'smoothstep',
-                     style: { stroke: '#aaa', strokeWidth: 2 },
-                });
+                      }
+                    });
+                } else {
+                    initialEdges.push({
+                        id: `e-${priorityNodeId}-${task.id}`,
+                        source: priorityNodeId,
+                        target: task.id,
+                        type: 'smoothstep',
+                    });
+                }
             }
+        }
+    } else {
+        // Show only date nodes if no date is selected
+        const groupedByDate = tasks.reduce((acc, task) => {
+            const dateKey = format(startOfDay(new Date(task.createdAt)), 'yyyy-MM-dd');
+            if (!acc.includes(dateKey)) {
+                acc.push(dateKey);
+            }
+            return acc;
+        }, [] as string[]);
+        
+        groupedByDate.sort((a, b) => new Date(b).getTime() - new Date(a).getTime()).forEach(dateKey => {
+            initialNodes.push({
+                id: `date-${dateKey}`,
+                type: 'dateNode',
+                data: { label: format(new Date(dateKey), 'PPP') },
+                position: { x: 0, y: 0 },
+                width: 200,
+                height: 50,
+            });
         });
-    });
+    }
 
+    if (initialNodes.length === 0) {
+        setNodes([]);
+        setEdges([]);
+        return;
+    }
+    
     getLayoutedElements(initialNodes, initialEdges, { 'elk.direction': layoutDirection }).then(({ nodes: layoutedNodes, edges: layoutedEdges }) => {
       setNodes(layoutedNodes);
       setEdges(layoutedEdges);
        setTimeout(() => fitView({ duration: 300, padding: 0.1 }), 100);
     });
-  }, [tasks, allTasks, layoutDirection, fitView]);
+  }, [tasks, allTasks, layoutDirection, fitView, activeDate]);
+
 
   useEffect(() => {
     doLayout();
-  }, [tasks, layoutDirection]);
+  }, [tasks, layoutDirection, activeDate, doLayout]);
 
   useLayoutEffect(() => {
     const handleRelayout = () => doLayout();
