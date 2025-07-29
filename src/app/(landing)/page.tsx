@@ -56,7 +56,7 @@ export default function LandingPage() {
       <main className="flex-grow">
         {/* Hero Section */}
         <section className="py-24 md:py-40 bg-gray-50 relative overflow-hidden">
-          <div className="container mx-auto text-center">
+          <div className="container mx-auto text-center px-4 md:px-8">
             <h1 className="text-4xl md:text-6xl font-bold font-headline mb-4 text-gray-900">
               The Intelligent Way to Manage Your Tasks
             </h1>
@@ -97,7 +97,7 @@ export default function LandingPage() {
 
         {/* Features Section */}
         <section id="features" className="py-20">
-            <div className="container mx-auto">
+            <div className="container mx-auto px-4 md:px-8">
                 <div className="text-center mb-12">
                     <h2 className="text-3xl md:text-4xl font-bold font-headline text-gray-900">A Better Way to Plan Your Work</h2>
                     <p className="text-lg text-gray-600 mt-2 max-w-2xl mx-auto">TaskWise is packed with powerful features to help you stay organized and productive.</p>
@@ -122,7 +122,7 @@ export default function LandingPage() {
 
         {/* How It Works Section */}
         <section className="py-20 bg-gray-50">
-            <div className="container mx-auto">
+            <div className="container mx-auto px-4 md:px-8">
                  <div className="text-center mb-12">
                     <h2 className="text-3xl md:text-4xl font-bold font-headline text-gray-900">From Voice to Vision in 3 Easy Steps</h2>
                     <p className="text-lg text-gray-600 mt-2">See how our AI turns your spoken words into a structured plan.</p>
@@ -149,7 +149,7 @@ export default function LandingPage() {
 
         {/* Testimonials Section */}
         <section className="py-20">
-            <div className="container mx-auto">
+            <div className="container mx-auto px-4 md:px-8">
                  <div className="text-center mb-12">
                     <h2 className="text-3xl md:text-4xl font-bold font-headline text-gray-900">Loved by Teams and Individuals Worldwide</h2>
                 </div>
@@ -174,7 +174,7 @@ export default function LandingPage() {
 
         {/* Final CTA Section */}
         <section className="py-20 bg-gray-50">
-            <div className="container mx-auto text-center">
+            <div className="container mx-auto text-center px-4 md:px-8">
                 <h2 className="text-3xl md:text-4xl font-bold font-headline mb-4 text-gray-900">Ready to Transform Your Productivity?</h2>
                 <p className="text-lg text-gray-600 max-w-2xl mx-auto mb-8">Stop juggling tools. Start organizing your work intelligently. Get started with TaskWise today, completely free.</p>
                 <Link href="/dashboard">

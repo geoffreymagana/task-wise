@@ -13,24 +13,31 @@ export default function ContactPage() {
         Have questions, feedback, or need support? We'd love to hear from you.
       </p>
 
-      <div className="grid md:grid-cols-2 gap-12 max-w-5xl mx-auto">
+      <div className="grid md:grid-cols-2 gap-12 max-w-5xl mx-auto items-start">
         <div className="space-y-8">
-            <div>
-                <h2 className="text-2xl font-bold font-headline mb-4">Get in Touch</h2>
-                <div className="space-y-4 text-gray-600">
-                    <a href="mailto:geoffreymagana21@gmail.com" className="flex items-center gap-4 group">
-                        <Mail className="w-6 h-6 text-primary" />
-                        <span className="group-hover:text-gray-900">geoffreymagana21@gmail.com</span>
-                    </a>
-                    <a href="tel:0742663614" className="flex items-center gap-4 group">
-                        <Phone className="w-6 h-6 text-primary" />
-                        <span className="group-hover:text-gray-900">0742 663 614</span>
-                    </a>
-                     <a href="https://github.com/geoffreymagana" target="_blank" rel="noopener noreferrer" className="flex items-center gap-4 group">
-                        <Github className="w-6 h-6 text-primary" />
-                        <span className="group-hover:text-gray-900">GitHub Profile</span>
-                    </a>
-                </div>
+            <h2 className="text-2xl font-bold font-headline mb-4">Get in Touch</h2>
+            <div className="space-y-6 text-gray-600">
+                <a href="mailto:geoffreymagana21@gmail.com" className="flex items-center gap-4 group">
+                    <Mail className="w-6 h-6 text-primary" />
+                    <div>
+                        <p className="font-semibold text-gray-800">Email</p>
+                        <p className="group-hover:text-gray-900">geoffreymagana21@gmail.com</p>
+                    </div>
+                </a>
+                <a href="tel:0742663614" className="flex items-center gap-4 group">
+                    <Phone className="w-6 h-6 text-primary" />
+                     <div>
+                        <p className="font-semibold text-gray-800">Phone</p>
+                        <p className="group-hover:text-gray-900">0742 663 614</p>
+                    </div>
+                </a>
+                 <a href="https://github.com/geoffreymagana" target="_blank" rel="noopener noreferrer" className="flex items-center gap-4 group">
+                    <Github className="w-6 h-6 text-primary" />
+                     <div>
+                        <p className="font-semibold text-gray-800">GitHub</p>
+                        <p className="group-hover:text-gray-900">Follow our progress</p>
+                    </div>
+                </a>
             </div>
         </div>
         <div>
