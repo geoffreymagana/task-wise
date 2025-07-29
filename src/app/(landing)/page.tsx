@@ -1,5 +1,3 @@
-
-
 'use client';
 
 import Link from 'next/link';
@@ -196,7 +194,7 @@ export default function LandingPage() {
                     </div>
                      <div className="text-center flex flex-col items-center">
                          <div className="w-full h-48 mb-4">
-                            <LottieAnimation path="/animations/AI assistant - Animation.json" />
+                            <LottieAnimation path="/animations/Ai loading model.json" />
                         </div>
                         <h3 className="text-xl font-bold font-headline mb-2 text-gray-800">2. AI Does The Work</h3>
                         <p className="text-gray-600">Our intelligent engine parses, analyzes, and structures everything for you.</p>

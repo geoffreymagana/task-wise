@@ -1,5 +1,16 @@
+'use client';
+
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import Image from 'next/image';
+
+// Define a type for the custom element to satisfy TypeScript
+declare global {
+  namespace JSX {
+    interface IntrinsicElements {
+      'dotlottie-wc': React.DetailedHTMLProps<React.HTMLAttributes<HTMLElement> & { src: string; style: object, speed: string, autoplay: boolean, loop: boolean }, HTMLElement>;
+    }
+  }
+}
 
 export default function AboutPage() {
   return (
@@ -21,15 +32,15 @@ export default function AboutPage() {
                 We're committed to building a product that not only works flawlessly but also inspires creativity and clarity.
               </p>
             </div>
-            <div>
-              <Image 
-                src="https://placehold.co/600x400.png"
-                alt="Team working together"
-                width={600}
-                height={400}
-                className="rounded-lg"
-                data-ai-hint="team collaboration"
-              />
+            <div className="flex items-center justify-center">
+                <dotlottie-wc 
+                    src="https://lottie.host/26ada3b3-bc39-4ae1-8824-a590926742ad/umm2HcD5ec.lottie" 
+                    style={{width: '300px', height: '300px'}}
+                    speed="1"
+                    autoplay
+                    loop
+                >
+                </dotlottie-wc>
             </div>
           </div>
         </CardContent>

@@ -1,3 +1,5 @@
+'use client';
+
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ArrowDown, BrainCircuit, ListChecks, Mic } from 'lucide-react';
 import Image from 'next/image';
@@ -15,7 +17,7 @@ export default function HowItWorksPage() {
       icon: <BrainCircuit className="w-12 h-12 text-primary" />,
       title: '2. AI Parses and Organizes',
       description: "TaskWise's intelligent engine gets to work instantly. It identifies individual tasks, understands relationships, estimates durations, and assigns priorities based on your input. No more manual data entry.",
-      animationPath: "/animations/AI assistant - Animation.json"
+      animationPath: "/animations/Ai loading model.json"
     },
     {
       icon: <ListChecks className="w-12 h-12 text-primary" />,
