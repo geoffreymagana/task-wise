@@ -55,7 +55,7 @@ export default function LandingPage() {
   return (
       <main className="flex-grow">
         {/* Hero Section */}
-        <section className="py-20 md:py-32 bg-gray-50">
+        <section className="py-24 md:py-40 bg-gray-50 relative overflow-hidden">
           <div className="container mx-auto text-center">
             <h1 className="text-4xl md:text-6xl font-bold font-headline mb-4 text-gray-900">
               The Intelligent Way to Manage Your Tasks
@@ -70,14 +70,26 @@ export default function LandingPage() {
             </Link>
 
             <div className="relative mt-16 shadow-2xl rounded-lg">
-                <Image 
-                    src="https://placehold.co/1200x600.png"
-                    alt="TaskWise App Screenshot"
-                    width={1200}
-                    height={600}
-                    className="rounded-lg border"
-                    data-ai-hint="dashboard application"
-                />
+                <div className="absolute -left-12 -top-12 w-24 h-24 bg-primary/10 rounded-full flex items-center justify-center animate-bounce">
+                    <ListTodo className="w-12 h-12 text-primary" />
+                </div>
+                 <div className="absolute -right-12 -bottom-12 w-32 h-32 bg-accent/10 rounded-full flex items-center justify-center animate-bounce" style={{animationDelay: '0.5s'}}>
+                    <BrainCircuit className="w-16 h-16 text-accent" />
+                </div>
+                 <div className="absolute left-1/4 -bottom-16 w-16 h-16 bg-green-500/10 rounded-full flex items-center justify-center animate-bounce" style={{animationDelay: '1s'}}>
+                    <Calendar className="w-8 h-8 text-green-500" />
+                </div>
+
+                <div className="flex justify-center">
+                    <Image 
+                        src="https://placehold.co/1200x600.png"
+                        alt="TaskWise App Screenshot"
+                        width={1200}
+                        height={600}
+                        className="rounded-lg border z-10"
+                        data-ai-hint="dashboard application"
+                    />
+                </div>
                  <div className="absolute inset-0 bg-gradient-to-t from-gray-50 via-gray-50/50 to-transparent"></div>
             </div>
           </div>
@@ -116,17 +128,17 @@ export default function LandingPage() {
                     <p className="text-lg text-gray-600 mt-2">See how our AI turns your spoken words into a structured plan.</p>
                 </div>
                 <div className="grid md:grid-cols-3 gap-8 items-center">
-                    <div className="text-center">
+                    <div className="text-center flex flex-col items-center">
                         <Image src="https://placehold.co/400x300.png" alt="Step 1" width={400} height={300} className="rounded-lg shadow-lg mb-4" data-ai-hint="microphone icon" />
                         <h3 className="text-xl font-bold font-headline mb-2 text-gray-800">1. Speak Your Plan</h3>
                         <p className="text-gray-600">Just open the speech-to-plan dialog and describe your tasks naturally.</p>
                     </div>
-                     <div className="text-center">
+                     <div className="text-center flex flex-col items-center">
                         <Image src="https://placehold.co/400x300.png" alt="Step 2" width={400} height={300} className="rounded-lg shadow-lg mb-4" data-ai-hint="loading process" />
                         <h3 className="text-xl font-bold font-headline mb-2 text-gray-800">2. AI Does The Work</h3>
                         <p className="text-gray-600">Our intelligent engine parses, analyzes, and structures everything for you.</p>
                     </div>
-                     <div className="text-center">
+                     <div className="text-center flex flex-col items-center">
                         <Image src="https://placehold.co/400x300.png" alt="Step 3" width={400} height={300} className="rounded-lg shadow-lg mb-4" data-ai-hint="mindmap application" />
                         <h3 className="text-xl font-bold font-headline mb-2 text-gray-800">3. Visualize Your Project</h3>
                         <p className="text-gray-600">Your plan is ready, complete with views like Mind Maps and Timelines.</p>
