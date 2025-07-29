@@ -1,20 +1,24 @@
+'use client';
+
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { ArrowRight, Github } from 'lucide-react';
 import './landing.css';
+import { useEffect, useState } from 'react';
 
 export default function LandingLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+
+  const [date, setDate] = useState('');
+  useEffect(() => {
+    setDate(new Date().getFullYear().toString());
+  }, []);
+
   return (
     <>
-        <head>
-            <link rel="preconnect" href="https://fonts.googleapis.com" />
-            <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-            <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet" />
-        </head>
         <div className="flex flex-col min-h-screen bg-white text-gray-800 font-body">
             <header className="sticky top-0 z-40 w-full border-b bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/60">
                 <div className="container flex h-16 items-center px-4 md:px-8 mx-auto">
@@ -82,7 +86,7 @@ export default function LandingLayout({
                         </div>
                     </div>
                     <div className="mt-8 border-t pt-6 text-center text-sm text-gray-500">
-                        <p>&copy; {new Date().getFullYear()} TaskWise. All rights reserved.</p>
+                        <p>&copy; {date} TaskWise. All rights reserved.</p>
                     </div>
                 </div>
             </footer>
