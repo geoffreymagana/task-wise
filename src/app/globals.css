@@ -179,4 +179,16 @@
       transform: scale(1);
     }
   }
+
+  .animate-gradient-spin {
+    background-image: linear-gradient(145deg, #8BC34A, #3F51B5, #E91E63, #FF9800);
+    background-size: 300% 300%;
+    animation: gradient-spin 10s linear infinite;
+  }
+
+  @keyframes gradient-spin {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+  }
 }

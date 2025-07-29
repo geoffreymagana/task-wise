@@ -19,7 +19,11 @@ const PulsingMicAnimation = () => (
 
 const TimelineCardAnimation = () => (
     <div className="relative w-full h-full flex items-center justify-center p-4">
-        <div className="w-full h-px bg-gray-300 absolute top-1/2 left-0 -translate-y-1/2"></div>
+        <div className="absolute inset-0 flex justify-around items-center">
+            <div className="w-px h-full bg-gray-300 border-r border-dashed border-gray-200"></div>
+            <div className="w-px h-full bg-gray-300 border-r border-dashed border-gray-200"></div>
+            <div className="w-px h-full bg-gray-300 border-r border-dashed border-gray-200"></div>
+        </div>
         <div className="w-full h-full relative">
             <div className="absolute w-20 h-10 bg-purple-400 rounded-md animate-card-1 shadow-md"></div>
             <div className="absolute w-24 h-10 bg-blue-400 rounded-md animate-card-2 shadow-md"></div>
@@ -165,7 +169,7 @@ export default function LandingPage() {
         </section>
 
         {/* Features Section */}
-        <section id="features" className="py-20">
+        <section id="features" className="py-20 bg-gray-50">
             <div className="container mx-auto px-4 md:px-8">
                 <div className="text-center mb-12">
                     <h2 className="text-3xl md:text-4xl font-bold font-headline text-gray-900">A Better Way to Plan Your Work</h2>
@@ -198,22 +202,25 @@ export default function LandingPage() {
                 </div>
                 <div className="grid md:grid-cols-3 gap-8 items-start">
                     <div className="text-center flex flex-col items-center">
-                        <div className="w-full h-48 mb-4 flex items-center justify-center overflow-hidden backdrop-blur-sm bg-white/30 rounded-lg">
-                           <PulsingMicAnimation />
+                        <div className="w-full h-48 mb-4 flex items-center justify-center overflow-hidden backdrop-blur-sm bg-white/30 rounded-lg relative">
+                           <div className="absolute inset-0 w-full h-full animate-gradient-spin -z-0 opacity-20"></div>
+                           <div className="relative z-10"><PulsingMicAnimation /></div>
                         </div>
                         <h3 className="text-xl font-bold font-headline mb-2 text-gray-800">1. Speak Your Plan</h3>
                         <p className="text-gray-600 px-4">Just open the speech-to-plan dialog and describe your tasks naturally.</p>
                     </div>
                      <div className="text-center flex flex-col items-center">
-                         <div className="w-full h-48 mb-4 flex items-center justify-center overflow-hidden backdrop-blur-sm bg-white/30 rounded-lg">
-                            <LottieAnimation path="/animations/Ai loading model.json" />
+                         <div className="w-full h-48 mb-4 flex items-center justify-center overflow-hidden backdrop-blur-sm bg-white/30 rounded-lg relative">
+                            <div className="absolute inset-0 w-full h-full animate-gradient-spin -z-0 opacity-20"></div>
+                            <div className="relative z-10"><LottieAnimation path="/animations/Ai loading model.json" /></div>
                         </div>
                         <h3 className="text-xl font-bold font-headline mb-2 text-gray-800">2. AI Does The Work</h3>
                         <p className="text-gray-600 px-4">Our intelligent engine parses, analyzes, and structures everything for you.</p>
                     </div>
                      <div className="text-center flex flex-col items-center">
-                        <div className="w-full h-48 mb-4 flex items-center justify-center overflow-hidden backdrop-blur-sm bg-white/30 rounded-lg">
-                           <TimelineCardAnimation />
+                        <div className="w-full h-48 mb-4 flex items-center justify-center overflow-hidden backdrop-blur-sm bg-white/30 rounded-lg relative">
+                           <div className="absolute inset-0 w-full h-full animate-gradient-spin -z-0 opacity-20"></div>
+                           <div className="relative z-10 w-full h-full"><TimelineCardAnimation /></div>
                         </div>
                         <h3 className="text-xl font-bold font-headline mb-2 text-gray-800">3. Visualize Your Project</h3>
                         <p className="text-gray-600 px-4">Your plan is ready, complete with views like Mind Maps and Timelines.</p>
@@ -223,7 +230,7 @@ export default function LandingPage() {
         </section>
 
         {/* Testimonials Section */}
-        <section className="py-20">
+        <section className="py-20 bg-gray-50">
             <div className="container mx-auto px-4 md:px-8">
                  <div className="text-center mb-12">
                     <h2 className="text-3xl md:text-4xl font-bold font-headline text-gray-900">Loved by Teams and Individuals Worldwide</h2>

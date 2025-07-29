@@ -19,6 +19,31 @@ const VoiceAnimation = () => (
     </div>
 );
 
+const PulsingMicAnimation = () => (
+    <div className="relative w-full h-full flex items-center justify-center">
+        <div className="absolute w-20 h-20 rounded-full bg-primary/20 animate-ping -z-0"></div>
+        <div className="relative w-20 h-20 rounded-full bg-primary flex items-center justify-center">
+            <Mic className="w-10 h-10 text-primary-foreground" />
+        </div>
+    </div>
+);
+
+const TimelineCardAnimation = () => (
+    <div className="relative w-full h-full flex items-center justify-center p-4">
+        <div className="absolute inset-0 flex justify-around items-center">
+            <div className="w-px h-full bg-gray-300 border-r border-dashed border-gray-200"></div>
+            <div className="w-px h-full bg-gray-300 border-r border-dashed border-gray-200"></div>
+            <div className="w-px h-full bg-gray-300 border-r border-dashed border-gray-200"></div>
+        </div>
+        <div className="w-full h-full relative">
+            <div className="absolute w-20 h-10 bg-purple-400 rounded-md animate-card-1 shadow-md"></div>
+            <div className="absolute w-24 h-10 bg-blue-400 rounded-md animate-card-2 shadow-md"></div>
+            <div className="absolute w-16 h-10 bg-green-400 rounded-md animate-card-3 shadow-md"></div>
+        </div>
+    </div>
+);
+
+
 const VisualizeAnimation = () => (
     <div className="relative w-full h-full flex items-center justify-center">
         {/* Lines */}
@@ -43,7 +68,7 @@ export default function HowItWorksPage() {
       icon: <Mic className="w-12 h-12 text-primary" />,
       title: '1. Speak or Type Your Plan',
       description: "Use our AI-powered import dialog or the Speech-to-Plan feature. Describe your tasks naturally, just as you would in a conversation. Mention deadlines, priorities, and even dependencies.",
-      animation: <VoiceAnimation />
+      animation: <PulsingMicAnimation />
     },
     {
       icon: <BrainCircuit className="w-12 h-12 text-primary" />,
@@ -55,7 +80,7 @@ export default function HowItWorksPage() {
       icon: <ListChecks className="w-12 h-12 text-primary" />,
       title: '3. Visualize and Execute',
       description: "Your structured plan appears in your chosen view—Table, Kanban, Timeline, or Mind Map. All tasks are perfectly organized, scheduled, and ready for you to start working. Drag, drop, and update with ease.",
-      animation: <VisualizeAnimation />
+      animation: <TimelineCardAnimation />
     }
   ];
 
@@ -76,8 +101,9 @@ export default function HowItWorksPage() {
                     <h2 className="text-3xl font-bold font-headline mb-4">{step.title}</h2>
                     <p className="text-gray-600">{step.description}</p>
                 </div>
-                <div className="bg-gray-100 h-full flex items-center justify-center p-10 min-h-[300px]">
-                   {step.animation}
+                <div className="bg-gray-100 h-full flex items-center justify-center p-10 min-h-[300px] relative overflow-hidden">
+                   <div className="absolute inset-0 w-full h-full animate-gradient-spin -z-0 opacity-20"></div>
+                   <div className="relative z-10 w-full h-full">{step.animation}</div>
                 </div>
               </div>
             </Card>
