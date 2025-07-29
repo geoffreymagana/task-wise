@@ -131,28 +131,17 @@
     background: hsl(var(--primary) / 0.8);
   }
 
-  .animate-card-1 { animation: card-1 4s ease-in-out infinite; }
-  .animate-card-2 { animation: card-2 4s ease-in-out infinite; }
-  .animate-card-3 { animation: card-3 4s ease-in-out infinite; }
+  .animate-card-1 { animation: card-pan 6s ease-in-out infinite; animation-delay: 0s; }
+  .animate-card-2 { animation: card-pan 6s ease-in-out infinite; animation-delay: 0.2s; }
+  .animate-card-3 { animation: card-pan 6s ease-in-out infinite; animation-delay: 0.4s; }
   
-  @keyframes card-1 {
-    0%, 100% { top: 20%; left: 10%; opacity: 0; }
-    10% { opacity: 1; }
-    90% { opacity: 1; }
-    100% { top: 20%; left: 10%; opacity: 0; }
+  @keyframes card-pan {
+    0% { transform: translateX(-150%) scale(0.8); opacity: 0; }
+    20%, 70% { transform: translateX(0) scale(1); opacity: 1; }
+    90% { transform: translateX(150%) scale(0.8); opacity: 0; }
+    100% { transform: translateX(-150%) scale(0.8); opacity: 0; }
   }
-  @keyframes card-2 {
-    0%, 10%, 100% { top: 50%; left: 40%; opacity: 0; }
-    20% { opacity: 1; }
-    80% { opacity: 1; }
-    90% { top: 50%; left: 40%; opacity: 0; }
-  }
-  @keyframes card-3 {
-    0%, 20%, 100% { top: 70%; left: 25%; opacity: 0; }
-    30% { opacity: 1; }
-    70% { opacity: 1; }
-    80% { top: 70%; left: 25%; opacity: 0; }
-  }
+
 
   .animate-node-appear {
     animation: node-appear 0.5s ease-out forwards;
@@ -167,6 +156,17 @@
     50% {
       transform: scaleY(1);
     }
+  }
+  
+  .animate-swoosh {
+      animation: swoosh 6s ease-in-out infinite;
+  }
+
+  @keyframes swoosh {
+    0% { transform: scale(0.8); opacity: 0.7; }
+    50% { transform: scale(1.2); opacity: 1; }
+    80% { transform: scale(1.0); opacity: 0.8; } /* slow down */
+    90%, 100% { transform: scale(0.8); opacity: 0.7; } /* pause */
   }
 
   @keyframes node-appear {
@@ -183,12 +183,13 @@
   .animate-gradient-spin {
     background-image: linear-gradient(145deg, #8BC34A, #3F51B5, #E91E63, #FF9800);
     background-size: 300% 300%;
-    animation: gradient-spin 10s linear infinite;
+    animation: gradient-spin 6s ease-in-out infinite;
   }
 
   @keyframes gradient-spin {
-    0% { background-position: 0% 50%; }
-    50% { background-position: 100% 50%; }
-    100% { background-position: 0% 50%; }
+    0% { background-position: 0% 50%; transform: rotate(0deg); }
+    50% { background-position: 100% 50%; transform: rotate(180deg); }
+    80% { transform: rotate(270deg); }
+    90%, 100% { background-position: 0% 50%; transform: rotate(360deg); }
   }
 }

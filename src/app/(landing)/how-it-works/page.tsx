@@ -5,23 +5,9 @@ import { ArrowDown, BrainCircuit, ListChecks, Mic } from 'lucide-react';
 import Image from 'next/image';
 import LottieAnimation from '@/components/common/lottie-animation';
 
-const VoiceAnimation = () => (
-    <div className="flex items-center justify-center w-full h-full">
-        <div className="flex items-center justify-center gap-1 h-12">
-            <div className="w-2 h-4 bg-primary/70 rounded-full animate-waveform" style={{ animationDelay: '0s' }}></div>
-            <div className="w-2 h-6 bg-primary/70 rounded-full animate-waveform" style={{ animationDelay: '0.1s' }}></div>
-            <div className="w-2 h-8 bg-primary/70 rounded-full animate-waveform" style={{ animationDelay: '0.2s' }}></div>
-            <div className="w-2 h-10 bg-primary/70 rounded-full animate-waveform" style={{ animationDelay: '0.3s' }}></div>
-            <div className="w-2 h-8 bg-primary/70 rounded-full animate-waveform" style={{ animationDelay: '0.4s' }}></div>
-            <div className="w-2 h-6 bg-primary/70 rounded-full animate-waveform" style={{ animationDelay: '0.5s' }}></div>
-            <div className="w-2 h-4 bg-primary/70 rounded-full animate-waveform" style={{ animationDelay: '0.6s' }}></div>
-        </div>
-    </div>
-);
-
 const PulsingMicAnimation = () => (
     <div className="relative w-full h-full flex items-center justify-center">
-        <div className="absolute w-20 h-20 rounded-full bg-primary/20 animate-ping -z-0"></div>
+        <div className="absolute w-20 h-20 rounded-full bg-primary/20 animate-swoosh -z-0"></div>
         <div className="relative w-20 h-20 rounded-full bg-primary flex items-center justify-center">
             <Mic className="w-10 h-10 text-primary-foreground" />
         </div>
@@ -101,7 +87,7 @@ export default function HowItWorksPage() {
                     <h2 className="text-3xl font-bold font-headline mb-4">{step.title}</h2>
                     <p className="text-gray-600">{step.description}</p>
                 </div>
-                <div className="bg-gray-100 h-full flex items-center justify-center p-10 min-h-[300px] relative overflow-hidden">
+                <div className="bg-gray-50 h-full flex items-center justify-center p-10 min-h-[350px] relative overflow-hidden">
                    <div className="absolute inset-0 w-full h-full animate-gradient-spin -z-0 opacity-20"></div>
                    <div className="relative z-10 w-full h-full">{step.animation}</div>
                 </div>
