@@ -1,11 +1,13 @@
 
+
 'use client';
 
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { ArrowRight, BrainCircuit, Calendar, GanttChart, LayoutGrid, Mic, Star, ListTodo } from 'lucide-react';
+import { ArrowRight, BrainCircuit, Calendar, GanttChart, LayoutGrid, Mic, Star, ListTodo, Clock, CheckSquare } from 'lucide-react';
 import Image from 'next/image';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 
 export default function LandingPage() {
   const features = [
@@ -55,8 +57,25 @@ export default function LandingPage() {
   return (
       <main className="flex-grow">
         {/* Hero Section */}
-        <section className="py-24 md:py-40 bg-gray-50 relative overflow-hidden">
-          <div className="container mx-auto text-center px-4 md:px-8">
+        <section className="relative py-24 md:py-32 overflow-hidden bg-white">
+          <div className="absolute inset-0 bg-dotted-pattern -z-0"></div>
+          <div className="container mx-auto text-center px-4 md:px-8 relative z-10">
+            
+            <div className="relative inline-block mb-6">
+                <div className="p-3 bg-white rounded-lg shadow-md border inline-block">
+                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="text-primary">
+                        <defs>
+                            <linearGradient id="grad1" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" style={{stopColor: 'hsl(var(--primary))', stopOpacity: 0.8}} />
+                            <stop offset="100%" style={{stopColor: 'hsl(var(--primary))', stopOpacity: 1}} />
+                            </linearGradient>
+                        </defs>
+                        <path d="M8 7H19V9H8V7ZM8 11H19V13H8V11ZM8 15H19V17H8V15ZM5 7H6V9H5V7ZM5 11H6V13H5V11ZM5 15H6V17H5V15Z" fill="url(#grad1)"/>
+                        <rect x="3" y="4" width="18" height="16" rx="2" stroke="hsl(var(--primary))" strokeWidth="1.5" fill="none"/>
+                    </svg>
+                </div>
+            </div>
+
             <h1 className="text-4xl md:text-6xl font-bold font-headline mb-4 text-gray-900">
               The Intelligent Way to Manage Your Tasks
             </h1>
@@ -68,30 +87,67 @@ export default function LandingPage() {
                 Get Started for Free <ArrowRight className="ml-2" />
               </Button>
             </Link>
+          </div>
 
-            <div className="relative mt-16 shadow-2xl rounded-lg">
-                <div className="absolute -left-12 -top-12 w-24 h-24 bg-primary/10 rounded-full flex items-center justify-center animate-bounce">
-                    <ListTodo className="w-12 h-12 text-primary" />
-                </div>
-                 <div className="absolute -right-12 -bottom-12 w-32 h-32 bg-accent/10 rounded-full flex items-center justify-center animate-bounce" style={{animationDelay: '0.5s'}}>
-                    <BrainCircuit className="w-16 h-16 text-accent" />
-                </div>
-                 <div className="absolute left-1/4 -bottom-16 w-16 h-16 bg-green-500/10 rounded-full flex items-center justify-center animate-bounce" style={{animationDelay: '1s'}}>
-                    <Calendar className="w-8 h-8 text-green-500" />
-                </div>
+          {/* Floating UI Elements */}
+          <div className="absolute inset-0 w-full h-full -z-0 hidden md:block">
+              <Card className="absolute top-[15%] left-[10%] w-56 p-4 shadow-lg transform -rotate-6">
+                  <p className="text-sm font-semibold">📌 Take Notes</p>
+                  <p className="text-xs text-gray-500 mt-1">Keep track of crucial details, and accomplish more tasks with ease.</p>
+                  <div className="mt-2 flex justify-end">
+                      <div className="p-2 bg-blue-500 rounded-lg shadow-inner">
+                        <CheckSquare className="w-5 h-5 text-white" />
+                      </div>
+                  </div>
+              </Card>
 
-                <div className="flex justify-center">
-                    <Image 
-                        src="https://placehold.co/1200x600.png"
-                        alt="TaskWise App Screenshot"
-                        width={1200}
-                        height={600}
-                        className="rounded-lg border z-10"
-                        data-ai-hint="dashboard application"
-                    />
-                </div>
-                 <div className="absolute inset-0 bg-gradient-to-t from-gray-50 via-gray-50/50 to-transparent"></div>
-            </div>
+              <Card className="absolute top-[20%] right-[12%] w-52 p-3 shadow-lg transform rotate-3">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Clock className="w-4 h-4 text-gray-500" />
+                    <p className="text-sm font-semibold">Reminders</p>
+                  </div>
+                  <div className="p-3 bg-gray-50 rounded-md">
+                    <p className="text-xs font-bold">Today's Meeting</p>
+                    <p className="text-xs text-gray-500">Call with marketing team</p>
+                    <Badge variant="secondary" className="mt-2 text-blue-600 bg-blue-100">1:00 - 1:45 PM</Badge>
+                  </div>
+              </Card>
+
+              <Card className="absolute bottom-[10%] left-[18%] w-64 p-3 shadow-lg transform rotate-2">
+                  <p className="text-sm font-semibold mb-2">Today's tasks</p>
+                  <div className="space-y-2">
+                      <div className="text-xs">
+                        <p>New ideas for campaign</p>
+                        <div className="w-full bg-gray-200 rounded-full h-1.5 mt-1"><div className="bg-orange-400 h-1.5 rounded-full" style={{width: '60%'}}></div></div>
+                      </div>
+                      <div className="text-xs">
+                        <p>Design PPT #4</p>
+                        <div className="w-full bg-gray-200 rounded-full h-1.5 mt-1"><div className="bg-green-500 h-1.5 rounded-full" style={{width: '90%'}}></div></div>
+                      </div>
+                  </div>
+              </Card>
+              
+              <Card className="absolute bottom-[15%] right-[15%] w-48 p-4 shadow-lg transform -rotate-3">
+                    <p className="text-sm font-semibold mb-2 text-center">Visualizations</p>
+                    <div className="grid grid-cols-2 gap-3">
+                        <div className="flex flex-col items-center justify-center p-2 bg-gray-100 rounded-md">
+                            <LayoutGrid className="w-6 h-6 text-purple-500"/>
+                            <p className="text-xs mt-1">Kanban</p>
+                        </div>
+                        <div className="flex flex-col items-center justify-center p-2 bg-gray-100 rounded-md">
+                            <Calendar className="w-6 h-6 text-red-500"/>
+                            <p className="text-xs mt-1">Calendar</p>
+                        </div>
+                        <div className="flex flex-col items-center justify-center p-2 bg-gray-100 rounded-md">
+                            <GanttChart className="w-6 h-6 text-green-500"/>
+                            <p className="text-xs mt-1">Timeline</p>
+                        </div>
+                         <div className="flex flex-col items-center justify-center p-2 bg-gray-100 rounded-md">
+                            <BrainCircuit className="w-6 h-6 text-blue-500"/>
+                            <p className="text-xs mt-1">Mind Map</p>
+                        </div>
+                    </div>
+              </Card>
           </div>
         </section>
 
@@ -122,7 +178,7 @@ export default function LandingPage() {
 
         {/* How It Works Section */}
         <section className="py-20 bg-gray-50">
-            <div className="container mx-auto px-4 md:px-8">
+            <div className="container mx-auto">
                  <div className="text-center mb-12">
                     <h2 className="text-3xl md:text-4xl font-bold font-headline text-gray-900">From Voice to Vision in 3 Easy Steps</h2>
                     <p className="text-lg text-gray-600 mt-2">See how our AI turns your spoken words into a structured plan.</p>
