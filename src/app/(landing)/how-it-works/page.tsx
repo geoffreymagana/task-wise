@@ -1,6 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ArrowDown, BrainCircuit, ListChecks, Mic } from 'lucide-react';
 import Image from 'next/image';
+import LottieAnimation from '@/components/common/lottie-animation';
 
 export default function HowItWorksPage() {
   const steps = [
@@ -8,22 +9,19 @@ export default function HowItWorksPage() {
       icon: <Mic className="w-12 h-12 text-primary" />,
       title: '1. Speak or Type Your Plan',
       description: "Use our AI-powered import dialog or the Speech-to-Plan feature. Describe your tasks naturally, just as you would in a conversation. Mention deadlines, priorities, and even dependencies.",
-      image: "https://placehold.co/500x350.png",
-      aiHint: "microphone wave"
+      animationPath: "/animations/Voice - Translate AI.json"
     },
     {
       icon: <BrainCircuit className="w-12 h-12 text-primary" />,
       title: '2. AI Parses and Organizes',
       description: "TaskWise's intelligent engine gets to work instantly. It identifies individual tasks, understands relationships, estimates durations, and assigns priorities based on your input. No more manual data entry.",
-      image: "https://placehold.co/500x350.png",
-      aiHint: "gears turning"
+      animationPath: "/animations/AI assistant - Animation.json"
     },
     {
       icon: <ListChecks className="w-12 h-12 text-primary" />,
       title: '3. Visualize and Execute',
       description: "Your structured plan appears in your chosen view—Table, Kanban, Timeline, or Mind Map. All tasks are perfectly organized, scheduled, and ready for you to start working. Drag, drop, and update with ease.",
-      image: "https://placehold.co/500x350.png",
-      aiHint: "dashboard view"
+      animationPath: "/animations/workflow.json"
     }
   ];
 
@@ -44,15 +42,8 @@ export default function HowItWorksPage() {
                     <h2 className="text-3xl font-bold font-headline mb-4">{step.title}</h2>
                     <p className="text-gray-600">{step.description}</p>
                 </div>
-                <div className="bg-gray-100 h-full flex items-center justify-center p-10">
-                   <Image 
-                      src={step.image}
-                      alt={step.title}
-                      width={500}
-                      height={350}
-                      className="object-cover rounded-lg shadow-md"
-                      data-ai-hint={step.aiHint}
-                   />
+                <div className="bg-gray-100 h-full flex items-center justify-center p-10 min-h-[300px]">
+                   <LottieAnimation path={step.animationPath} />
                 </div>
               </div>
             </Card>

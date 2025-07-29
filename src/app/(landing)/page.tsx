@@ -8,6 +8,7 @@ import { ArrowRight, BrainCircuit, Calendar, GanttChart, LayoutGrid, Mic, Star, 
 import Image from 'next/image';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import LottieAnimation from '@/components/common/lottie-animation';
 
 export default function LandingPage() {
   const features = [
@@ -185,17 +186,23 @@ export default function LandingPage() {
                 </div>
                 <div className="grid md:grid-cols-3 gap-8 items-center">
                     <div className="text-center flex flex-col items-center">
-                        <Image src="https://placehold.co/400x300.png" alt="Step 1" width={400} height={300} className="rounded-lg shadow-lg mb-4" data-ai-hint="microphone icon" />
+                        <div className="w-full h-48 mb-4">
+                            <LottieAnimation path="/animations/Voice - Translate AI.json" />
+                        </div>
                         <h3 className="text-xl font-bold font-headline mb-2 text-gray-800">1. Speak Your Plan</h3>
                         <p className="text-gray-600">Just open the speech-to-plan dialog and describe your tasks naturally.</p>
                     </div>
                      <div className="text-center flex flex-col items-center">
-                        <Image src="https://placehold.co/400x300.png" alt="Step 2" width={400} height={300} className="rounded-lg shadow-lg mb-4" data-ai-hint="loading process" />
+                         <div className="w-full h-48 mb-4">
+                            <LottieAnimation path="/animations/AI assistant - Animation.json" />
+                        </div>
                         <h3 className="text-xl font-bold font-headline mb-2 text-gray-800">2. AI Does The Work</h3>
                         <p className="text-gray-600">Our intelligent engine parses, analyzes, and structures everything for you.</p>
                     </div>
                      <div className="text-center flex flex-col items-center">
-                        <Image src="https://placehold.co/400x300.png" alt="Step 3" width={400} height={300} className="rounded-lg shadow-lg mb-4" data-ai-hint="mindmap application" />
+                        <div className="w-full h-48 mb-4">
+                            <LottieAnimation path="/animations/workflow.json" />
+                        </div>
                         <h3 className="text-xl font-bold font-headline mb-2 text-gray-800">3. Visualize Your Project</h3>
                         <p className="text-gray-600">Your plan is ready, complete with views like Mind Maps and Timelines.</p>
                     </div>
