@@ -13,7 +13,7 @@ const PulsingMicAnimation = () => (
 );
 
 const VisualizeAnimation = () => (
-    <div className="relative w-full h-full flex items-center justify-center p-6 overflow-hidden">
+    <div className="relative w-full h-full flex items-center justify-center p-8 md:p-12 overflow-hidden">
         <div className="w-full h-full relative">
             {/* Cards */}
             <div className="absolute w-[50%] h-[20%] bg-gradient-to-r from-purple-400 to-purple-500 rounded-lg animate-card-fall-1 shadow-xl border border-white/20"></div>
@@ -22,10 +22,10 @@ const VisualizeAnimation = () => (
 
             {/* Icons */}
             <div className="absolute w-full h-full flex items-center justify-center animate-table-slide">
-                <Table className="w-12 h-12 text-white/80" />
+                <Table className="w-12 h-12" style={{ color: '#3b82f6' }} />
             </div>
             <div className="absolute w-full h-full flex items-center justify-center animate-calendar-zoom">
-                <Calendar className="w-12 h-12 text-white/80" />
+                <Calendar className="w-12 h-12" style={{ color: '#ef4444' }} />
             </div>
         </div>
     </div>
@@ -33,7 +33,7 @@ const VisualizeAnimation = () => (
 
 
 const AuroraGlassContainer = ({ children, useAurora = true }: { children: React.ReactNode; useAurora?: boolean }) => (
-    <div className="relative w-full h-[350px] overflow-hidden rounded-3xl">
+    <div className="relative w-full h-[450px] overflow-hidden rounded-3xl">
         {/* Aurora background orbs */}
         {useAurora && (
             <div className="absolute inset-0">
