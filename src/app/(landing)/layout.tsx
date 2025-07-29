@@ -1,10 +1,14 @@
+
 'use client';
 
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { ArrowRight, Github } from 'lucide-react';
+import { ArrowRight, Github, Menu } from 'lucide-react';
 import './landing.css';
 import { useEffect, useState } from 'react';
+import { usePathname } from 'next/navigation';
+import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
+import { cn } from '@/lib/utils';
 
 export default function LandingLayout({
   children,
@@ -16,6 +20,15 @@ export default function LandingLayout({
   useEffect(() => {
     setDate(new Date().getFullYear().toString());
   }, []);
+
+  const navLinks = [
+    { href: '/how-it-works', label: 'How It Works' },
+    { href: '/about', label: 'About' },
+    { href: '/contact', label: 'Contact' },
+    { href: '/help', label: 'Help Center' },
+  ];
+
+  const pathname = usePathname();
 
   return (
     <>
@@ -37,19 +50,52 @@ export default function LandingLayout({
                             <h1 className="text-2xl font-bold font-headline">TaskWise</h1>
                         </Link>
                     </div>
+
                     <nav className="hidden md:flex flex-1 items-center justify-center space-x-6 text-sm font-medium">
-                        <Link href="/how-it-works" className="text-gray-600 hover:text-gray-900">How It Works</Link>
-                        <Link href="/about" className="text-gray-600 hover:text-gray-900">About</Link>
-                        <Link href="/contact" className="text-gray-600 hover:text-gray-900">Contact</Link>
-                         <Link href="/help" className="text-gray-600 hover:text-gray-900">Help Center</Link>
+                        {navLinks.map(link => (
+                            <Link 
+                                key={link.href} 
+                                href={link.href} 
+                                className={cn(
+                                    "text-gray-600 hover:text-gray-900 transition-colors relative",
+                                    pathname === link.href && "text-primary"
+                                )}
+                            >
+                                {link.label}
+                                {pathname === link.href && (
+                                    <span className="absolute -bottom-2 left-0 w-full h-0.5 bg-primary"></span>
+                                )}
+                            </Link>
+                        ))}
                     </nav>
-                    <div className="flex flex-1 items-center justify-end">
-                    <Link href="/dashboard">
-                        <Button>
-                            Go to App
-                            <ArrowRight className="ml-2 h-4 w-4"/>
-                        </Button>
-                    </Link>
+
+                    <div className="flex flex-1 items-center justify-end md:hidden">
+                        <Sheet>
+                            <SheetTrigger asChild>
+                                <Button variant="ghost" size="icon">
+                                    <Menu />
+                                </Button>
+                            </SheetTrigger>
+                            <SheetContent side="right">
+                                <nav className="flex flex-col gap-4 mt-8">
+                                    {navLinks.map(link => (
+                                        <Link key={link.href} href={link.href} className="text-lg font-medium">{link.label}</Link>
+                                    ))}
+                                    <Link href="/dashboard">
+                                        <Button className="w-full mt-4">Go to App</Button>
+                                    </Link>
+                                </nav>
+                            </SheetContent>
+                        </Sheet>
+                    </div>
+
+                    <div className="hidden md:flex flex-1 items-center justify-end">
+                      <Link href="/dashboard">
+                          <Button>
+                              Go to App
+                              <ArrowRight className="ml-2 h-4 w-4"/>
+                          </Button>
+                      </Link>
                     </div>
                 </div>
             </header>
