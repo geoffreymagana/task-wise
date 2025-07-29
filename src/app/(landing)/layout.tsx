@@ -7,7 +7,7 @@ import { ArrowRight, Github, Menu } from 'lucide-react';
 import './landing.css';
 import { useEffect, useState } from 'react';
 import { usePathname } from 'next/navigation';
-import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { cn } from '@/lib/utils';
 
 export default function LandingLayout({
@@ -77,6 +77,9 @@ export default function LandingLayout({
                                 </Button>
                             </SheetTrigger>
                             <SheetContent side="right">
+                                <SheetHeader>
+                                  <SheetTitle className="sr-only">Mobile Navigation</SheetTitle>
+                                </SheetHeader>
                                 <nav className="flex flex-col gap-4 mt-8">
                                     {navLinks.map(link => (
                                         <Link key={link.href} href={link.href} className="text-lg font-medium">{link.label}</Link>
