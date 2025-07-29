@@ -1,3 +1,4 @@
+
 'use client';
 
 import { Button } from '@/components/ui/button';
@@ -7,6 +8,7 @@ import type { Task } from '@/lib/types';
 import { Download, GanttChartSquare, Plus, Upload, CircleUserRound } from 'lucide-react';
 import Link from 'next/link';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { usePathname } from 'next/navigation';
 
 
 interface AppHeaderProps {
@@ -17,6 +19,12 @@ interface AppHeaderProps {
 
 export default function AppHeader({ onTaskCreated, onTasksImported, allTasks }: AppHeaderProps) {
   const isMobile = useIsMobile();
+  const pathname = usePathname();
+  
+  // Don't render the header on the landing page
+  if (pathname === '/') {
+    return null;
+  }
 
   return (
     <header className="sticky top-0 z-40 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -61,3 +69,5 @@ export default function AppHeader({ onTaskCreated, onTasksImported, allTasks }: 
     </header>
   );
 }
+
+    

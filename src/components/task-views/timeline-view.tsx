@@ -20,43 +20,6 @@ const GRID_HOUR_WIDTH = 100; // px
 const ROW_HEIGHT = 48; // px
 const HEADER_HEIGHT = 48; // px
 
-// Smart lane assignment to minimize wasted space
-const assignLanes = (tasks: Array<{ startDate: Date, endDate: Date, id: string }>) => {
-    const lanes: Array<{ endTime: number, tasks: string[] }> = [];
-    const taskLanes: { [key: string]: number } = {};
-    
-    // Sort tasks by start time
-    const sortedTasks = [...tasks].sort((a, b) => a.startDate.getTime() - b.startDate.getTime());
-    
-    sortedTasks.forEach(task => {
-        const startTime = task.startDate.getTime();
-        const endTime = task.endDate.getTime();
-        
-        // Find the first available lane
-        let assignedLane = -1;
-        for (let i = 0; i < lanes.length; i++) {
-            // Check if this lane is free (last task ended before current task starts)
-            if (lanes[i].endTime <= startTime) {
-                assignedLane = i;
-                break;
-            }
-        }
-        
-        // If no lane is available, create a new one
-        if (assignedLane === -1) {
-            assignedLane = lanes.length;
-            lanes.push({ endTime: 0, tasks: [] });
-        }
-        
-        // Assign task to lane
-        lanes[assignedLane].endTime = endTime;
-        lanes[assignedLane].tasks.push(task.id);
-        taskLanes[task.id] = assignedLane;
-    });
-    
-    return { taskLanes, totalLanes: lanes.length };
-};
-
 const DependencyLines = ({ tasks, taskLayouts, viewMode, currentDate }) => {
     const svgRef = useRef<SVGSVGElement>(null);
     const [lines, setLines] = useState([]);
@@ -276,19 +239,18 @@ export default function TimelineView({ tasks, allTasks, onUpdateTask }: { tasks:
 
     }, [tasks, allTasks]);
 
-    // Smart lane assignment using collision detection
     const { taskLayouts, totalLanes } = useMemo(() => {
-        if (!scheduledTasks.length) return { taskLayouts: {}, totalLanes: 0 };
-        
-        const { taskLanes, totalLanes } = assignLanes(scheduledTasks);
         const layouts: { [key: string]: { task: Task & {lane: number}; lane: number } } = {};
-        
-        scheduledTasks.forEach(task => {
-            const lane = taskLanes[task.id];
-            layouts[task.id] = { task: { ...task, lane }, lane };
+        if (!scheduledTasks.length) return { taskLayouts: {}, totalLanes: 1 };
+    
+        const sortedTasks = [...scheduledTasks].sort((a, b) => a.startDate.getTime() - b.startDate.getTime());
+    
+        sortedTasks.forEach((task, index) => {
+            const laneIndex = index;
+            layouts[task.id] = { task: { ...task, lane: laneIndex }, lane: laneIndex };
         });
-        
-        return { taskLayouts: layouts, totalLanes };
+    
+        return { taskLayouts: layouts, totalLanes: sortedTasks.length };
     }, [scheduledTasks]);
 
     const changeDate = (direction: 'next' | 'prev') => {
@@ -335,7 +297,7 @@ export default function TimelineView({ tasks, allTasks, onUpdateTask }: { tasks:
                 style={{
                     left: `${left}%`,
                     width: `${widthPercent}%`,
-                    top: `${layoutInfo.lane * ROW_HEIGHT + 8}px`, // 8px padding from top
+                    top: `${layoutInfo.lane * ROW_HEIGHT + 8}px`, // Added 8px padding from top
                     backgroundColor: task.color,
                     minWidth,
                 }}
@@ -347,9 +309,6 @@ export default function TimelineView({ tasks, allTasks, onUpdateTask }: { tasks:
         )
     };
     
-    // Only show grid lines and lanes for the number of lanes we actually need
-    const actualHeight = Math.max(totalLanes * ROW_HEIGHT + HEADER_HEIGHT + 16, 200); // Minimum height of 200px
-    
     return (
         <Card className="shadow-lg mt-4">
             <CardHeader>
@@ -359,7 +318,6 @@ export default function TimelineView({ tasks, allTasks, onUpdateTask }: { tasks:
                         <CardDescription>
                             {viewMode === 'day' && format(currentDate, 'eeee, do MMMM yyyy')}
                             {viewMode === 'week' && `${format(weekDays[0], 'do MMM')} - ${format(weekDays[6], 'do MMM yyyy')}`}
-                            {totalLanes > 0 && <span className="ml-2 text-xs">({totalLanes} lanes used)</span>}
                         </CardDescription>
                     </div>
                     <div className='flex items-center gap-2'>
@@ -371,7 +329,7 @@ export default function TimelineView({ tasks, allTasks, onUpdateTask }: { tasks:
                 </div>
             </CardHeader>
             <CardContent className="pt-2 overflow-x-auto custom-scrollbar">
-                <div ref={containerRef} className="relative timeline-container" style={{ minHeight: `${actualHeight}px` }}>
+                <div ref={containerRef} className="relative timeline-container" style={{ minHeight: `${totalLanes * ROW_HEIGHT + HEADER_HEIGHT + 16}px` }}>
                     {viewMode === 'day' && (
                         <>
                            <div className="grid h-full relative z-10" style={{ gridTemplateColumns: `repeat(24, ${GRID_HOUR_WIDTH}px)` }}>
@@ -389,18 +347,16 @@ export default function TimelineView({ tasks, allTasks, onUpdateTask }: { tasks:
                                     </div>
                                 ))}
                            </div>
-                           {/* Horizontal dotted lines for actual task lanes only */}
-                           {totalLanes > 0 && (
-                             <div className="absolute left-0 right-0" style={{ top: `${HEADER_HEIGHT}px`, minWidth: `${24 * GRID_HOUR_WIDTH}px` }}>
-                               {Array.from({ length: totalLanes }, (_, i) => (
-                                 <div 
-                                   key={i}
-                                   className="absolute w-full border-t border-dashed border-gray-200"
-                                   style={{ top: `${i * ROW_HEIGHT + 8}px` }}
-                                 />
-                               ))}
-                             </div>
-                           )}
+                           {/* Horizontal dotted lines for task lanes */}
+                           <div className="absolute left-0 right-0" style={{ top: `${HEADER_HEIGHT}px`, minWidth: `${24 * GRID_HOUR_WIDTH}px` }}>
+                             {Array.from({ length: totalLanes }, (_, i) => (
+                               <div 
+                                 key={i}
+                                 className="absolute w-full border-t border-dashed border-gray-200"
+                                 style={{ top: `${i * ROW_HEIGHT + 8}px` }}
+                               />
+                             ))}
+                           </div>
                            {/* Tasks container */}
                             <div className="absolute left-0 right-0" style={{ top: `${HEADER_HEIGHT}px`, minWidth: `${24 * GRID_HOUR_WIDTH}px`, height: `${totalLanes * ROW_HEIGHT + 16}px` }}>
                                 {scheduledTasks.map(task => renderTaskBlock(task, { start: startOfDay(currentDate), end: endOfDay(currentDate) }))}
@@ -426,18 +382,16 @@ export default function TimelineView({ tasks, allTasks, onUpdateTask }: { tasks:
                                     </div>
                                 ))}
                             </div>
-                            {/* Horizontal dotted lines for actual task lanes only */}
-                            {totalLanes > 0 && (
-                              <div className="absolute left-0 right-0 w-full" style={{ top: `${HEADER_HEIGHT}px` }}>
-                                {Array.from({ length: totalLanes }, (_, i) => (
-                                  <div 
-                                    key={i}
-                                    className="absolute w-full border-t border-dashed border-gray-200"
-                                    style={{ top: `${i * ROW_HEIGHT + 8}px` }}
-                                  />
-                                ))}
-                              </div>
-                            )}
+                            {/* Horizontal dotted lines for task lanes */}
+                            <div className="absolute left-0 right-0 w-full" style={{ top: `${HEADER_HEIGHT}px` }}>
+                              {Array.from({ length: totalLanes }, (_, i) => (
+                                <div 
+                                  key={i}
+                                  className="absolute w-full border-t border-dashed border-gray-200"
+                                  style={{ top: `${i * ROW_HEIGHT + 8}px` }}
+                                />
+                              ))}
+                            </div>
                             {/* Tasks container */}
                             <div className="absolute left-0 right-0 w-full" style={{ top: `${HEADER_HEIGHT}px`, height: `${totalLanes * ROW_HEIGHT + 16}px` }}>
                                 {scheduledTasks.map(task => renderTaskBlock(task, { start: startOfWeek(currentDate, {weekStartsOn: 1}), end: endOfWeek(currentDate, {weekStartsOn: 1}) }))}

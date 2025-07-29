@@ -1,3 +1,4 @@
+
 'use client';
 
 import AppHeader from '@/components/common/header';
@@ -13,6 +14,8 @@ import { formatDuration } from '@/lib/utils';
 import { Progress } from '@/components/ui/progress';
 import { useTheme } from 'next-themes';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import type { Task } from '@/lib/types';
+import Link from 'next/link';
 
 const USER_STORAGE_KEY = 'taskwise-user';
 
@@ -97,11 +100,11 @@ export default function ProfilePage() {
 
   }, [tasks]);
 
-  const handleTaskCreated = (newTask: any) => {
+  const handleTaskCreated = (newTask: Task) => {
     setTasks((prev) => [...prev, newTask]);
   }
 
-  const handleTasksImported = (newTasks: any[]) => {
+  const handleTasksImported = (newTasks: Task[]) => {
     setTasks((prev) => [...prev, ...newTasks]);
   };
 
@@ -110,6 +113,11 @@ export default function ProfilePage() {
     <div className="flex flex-col min-h-screen bg-background">
       <AppHeader onTaskCreated={handleTaskCreated} onTasksImported={handleTasksImported} allTasks={tasks} />
       <main className="flex-grow p-4 md:p-8">
+        <div className="mb-4">
+          <Link href="/dashboard" className="text-sm text-primary hover:underline">
+            &larr; Back to Dashboard
+          </Link>
+        </div>
         <Card className="max-w-2xl mx-auto shadow-lg">
           <CardHeader className="flex flex-col items-center text-center">
             <Avatar className="w-24 h-24 mb-4">
@@ -217,3 +225,5 @@ export default function ProfilePage() {
     </div>
   );
 }
+
+    
