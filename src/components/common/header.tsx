@@ -21,8 +21,9 @@ export default function AppHeader({ onTaskCreated, onTasksImported, allTasks }: 
   const isMobile = useIsMobile();
   const pathname = usePathname();
   
-  // Don't render the header on the landing page
-  if (pathname === '/') {
+  // Don't render the app header on landing pages
+  const landingPages = ['/', '/about', '/how-it-works', '/legal/privacy', '/legal/terms', '/contact', '/help'];
+  if (landingPages.includes(pathname)) {
     return null;
   }
 
@@ -69,5 +70,3 @@ export default function AppHeader({ onTaskCreated, onTasksImported, allTasks }: 
     </header>
   );
 }
-
-    

@@ -1,0 +1,34 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --primary: 220 90% 55%; 
+}
+
+body {
+  font-family: 'Inter', sans-serif;
+}
+
+.font-headline {
+  font-family: 'Space Grotesk', sans-serif;
+}
+
+.text-primary {
+    color: #2563eb;
+}
+
+.bg-primary {
+    background-color: #2563eb;
+}
+.bg-primary\\/10 {
+    background-color: rgba(37, 99, 235, 0.1);
+}
+
+.border-primary {
+    border-color: #2563eb;
+}
+
+.ring-primary {
+    --tw-ring-color: #2563eb;
+}
