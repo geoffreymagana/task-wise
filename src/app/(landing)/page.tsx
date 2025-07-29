@@ -11,37 +11,62 @@ import LottieAnimation from '@/components/common/lottie-animation';
 const PulsingMicAnimation = () => (
     <div className="relative w-full h-full flex items-center justify-center">
         <div className="absolute w-24 h-24 rounded-full bg-primary/20 animate-swoosh -z-0"></div>
-        <div className="relative w-20 h-20 rounded-full bg-primary flex items-center justify-center">
+        <div className="relative w-20 h-20 rounded-full bg-primary flex items-center justify-center shadow-2xl">
             <Mic className="w-10 h-10 text-primary-foreground" />
         </div>
     </div>
 );
 
-const TimelineCardAnimation = () => (
-    <div className="relative w-full h-full flex items-center justify-center p-4 overflow-hidden">
+const EnhancedTimelineCardAnimation = () => (
+    <div className="relative w-full h-full flex items-center justify-center p-6 overflow-hidden">
         <div className="w-full h-full relative">
-            <div className="absolute w-[45%] h-[25%] bg-purple-400 rounded-md animate-card-stair-1 shadow-md"></div>
-            <div className="absolute w-[55%] h-[25%] bg-blue-400 rounded-md animate-card-stair-2 shadow-md"></div>
-            <div className="absolute w-[35%] h-[25%] bg-green-400 rounded-md animate-card-stair-3 shadow-md"></div>
+            {/* Card 1 - Top position */}
+            <div className="absolute w-[50%] h-[20%] bg-gradient-to-r from-purple-400 to-purple-500 rounded-lg animate-card-stair-1 shadow-xl border border-white/20">
+                <div className="p-2 text-white text-xs font-semibold">
+                    <div className="w-full h-1 bg-white/30 rounded-full mb-1"></div>
+                    <div className="w-3/4 h-1 bg-white/30 rounded-full"></div>
+                </div>
+            </div>
+            
+            {/* Card 2 - Middle position */}
+            <div className="absolute w-[50%] h-[20%] bg-gradient-to-r from-blue-400 to-blue-500 rounded-lg animate-card-stair-2 shadow-xl border border-white/20">
+                <div className="p-2 text-white text-xs font-semibold">
+                    <div className="w-full h-1 bg-white/30 rounded-full mb-1"></div>
+                    <div className="w-4/5 h-1 bg-white/30 rounded-full"></div>
+                </div>
+            </div>
+            
+            {/* Card 3 - Bottom position */}
+            <div className="absolute w-[50%] h-[20%] bg-gradient-to-r from-green-400 to-green-500 rounded-lg animate-card-stair-3 shadow-xl border border-white/20">
+                <div className="p-2 text-white text-xs font-semibold">
+                    <div className="w-full h-1 bg-white/30 rounded-full mb-1"></div>
+                    <div className="w-2/3 h-1 bg-white/30 rounded-full"></div>
+                </div>
+            </div>
         </div>
     </div>
 );
 
 const AuroraGlassContainer = ({ children, useAurora = true }: { children: React.ReactNode, useAurora?: boolean }) => (
-    <div className="relative w-48 h-48 bg-white/30 rounded-2xl overflow-hidden border border-white/20 shadow-xl backdrop-blur-2xl">
+    <div className="relative w-full h-[250px] md:h-[300px] overflow-hidden rounded-3xl">
+        {/* Aurora background orbs */}
         {useAurora && (
-          <div className="absolute top-0 left-0 w-full h-full -z-10">
-              <div className="absolute w-40 h-40 bg-purple-500/20 rounded-full animate-revolve-1"></div>
-              <div className="absolute w-40 h-40 bg-blue-500/20 rounded-full animate-revolve-2"></div>
-              <div className="absolute w-40 h-40 bg-green-500/20 rounded-full animate-revolve-3"></div>
-          </div>
+            <div className="absolute inset-0">
+                <div className="absolute w-56 h-56 bg-purple-500/20 rounded-full animate-revolve-1 blur-xl"></div>
+                <div className="absolute w-48 h-48 bg-blue-500/15 rounded-full animate-revolve-2 blur-xl"></div>
+                <div className="absolute w-40 h-40 bg-green-500/10 rounded-full animate-revolve-3 blur-xl"></div>
+            </div>
         )}
-        <div className="relative z-10 w-full h-full">
+        
+        {/* Enhanced glass morphism layer */}
+        <div className="absolute inset-0 glass-morphism-strong rounded-3xl"></div>
+        
+        {/* Content layer */}
+        <div className="relative z-10 w-full h-full p-4">
             {children}
         </div>
     </div>
 );
-
 
 export default function LandingPage() {
   const features = [
@@ -209,9 +234,9 @@ export default function LandingPage() {
             <div className="container mx-auto px-4 md:px-8">
                  <div className="text-center mb-16">
                     <h2 className="text-3xl md:text-4xl font-bold font-headline text-gray-900">From Voice to Vision in 3 Easy Steps</h2>
-                    <p className="text-lg text-gray-600 mt-2">See how our AI turns your spoken words into a structured plan.</p>
+                    <p className="text-lg text-gray-600 mt-2 max-w-3xl mx-auto">See how our AI turns your spoken words into a structured plan.</p>
                 </div>
-                <div className="grid md:grid-cols-3 gap-8 items-start">
+                <div className="grid md:grid-cols-3 gap-8 md:gap-12 items-start">
                     <div className="text-center flex flex-col items-center">
                         <AuroraGlassContainer useAurora={true}>
                            <PulsingMicAnimation />
@@ -228,7 +253,7 @@ export default function LandingPage() {
                     </div>
                      <div className="text-center flex flex-col items-center">
                         <AuroraGlassContainer useAurora={true}>
-                           <TimelineCardAnimation />
+                           <EnhancedTimelineCardAnimation />
                         </AuroraGlassContainer>
                         <h3 className="text-xl font-bold font-headline mb-2 mt-6 text-gray-800">3. Visualize Your Project</h3>
                         <p className="text-gray-600 px-4">Your plan is ready, complete with views like Mind Maps and Timelines.</p>
