@@ -38,7 +38,7 @@ const VisualizeAnimation = () => (
 
 
 const AuroraGlassContainer = ({ children, useAurora = true }: { children: React.ReactNode, useAurora?: boolean }) => (
-    <div className="relative w-full h-[250px] md:h-[300px] overflow-hidden rounded-3xl">
+    <div className="relative w-full h-[250px] md:h-[350px] overflow-hidden rounded-3xl">
         {/* Aurora background orbs */}
         {useAurora && (
             <div className="absolute inset-0">

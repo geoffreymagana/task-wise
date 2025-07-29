@@ -67,7 +67,7 @@ export default function HowItWorksPage() {
       icon: <BrainCircuit className="w-12 h-12 text-primary" />,
       title: '2. AI Parses and Organizes',
       description: "TaskWise's intelligent engine gets to work instantly. It identifies individual tasks, understands relationships, estimates durations, and assigns priorities based on your input. No more manual data entry.",
-      animation: <LottieAnimation path="/animations/Ai loading model.json" />,
+      animation: <div className="scale-125"><LottieAnimation path="/animations/Ai loading model.json" /></div>,
       useAurora: false,
     },
     {
@@ -105,10 +105,7 @@ export default function HowItWorksPage() {
             </Card>
             {index < steps.length - 1 && (
               <div className="flex justify-center my-12">
-                <div className="relative">
-                  <ArrowDown className="w-12 h-12 text-gray-300" />
-                  <div className="absolute inset-0 w-12 h-12 bg-gray-200/50 rounded-full animate-ping"></div>
-                </div>
+                <ArrowDown className="w-12 h-12 text-gray-300" />
               </div>
             )}
           </div>

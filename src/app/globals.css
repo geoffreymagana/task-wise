@@ -137,35 +137,35 @@
   }
 
   .animate-card-fall-1 { animation-name: card-fall-1; }
-  .animate-card-fall-2 { animation-name: card-fall-2; }
-  .animate-card-fall-3 { animation-name: card-fall-3; }
+  .animate-card-fall-2 { animation-name: card-fall-2; animation-delay: 0.2s }
+  .animate-card-fall-3 { animation-name: card-fall-3; animation-delay: 0.4s }
   .animate-table-slide { animation-name: table-slide; }
   .animate-calendar-zoom { animation-name: calendar-zoom; }
 
   @keyframes card-fall-1 {
-    0%, 100% { transform: translate(25%, -150%) scale(0.8); opacity: 0; }
-    5% { transform: translate(25%, 10%) scale(1); opacity: 1; }
-    15%, 20% { transform: translate(25%, 10%) scale(1); opacity: 1; }
-    25% { transform: translate(25%, 200%) scale(0.8); opacity: 0; }
-    26%, 99% { transform: translate(25%, -150%) scale(0.8); opacity: 0; }
+    0%, 100% { transform: translate(0, -150%) scale(0.8); opacity: 0; }
+    5% { transform: translate(0, 10%) scale(1); opacity: 1; }
+    15%, 20% { transform: translate(0, 10%) scale(1); opacity: 1; }
+    25% { transform: translate(0, 200%) scale(0.8); opacity: 0; }
+    26%, 99% { transform: translate(0, -150%) scale(0.8); opacity: 0; }
   }
 
   @keyframes card-fall-2 {
-    0%, 100% { transform: translate(25%, -150%) scale(0.8); opacity: 0; }
-    8% { transform: translate(25%, -150%) scale(0.8); opacity: 0; }
-    13% { transform: translate(25%, 35%) scale(1); opacity: 1; }
-    15%, 20% { transform: translate(25%, 35%) scale(1); opacity: 1; }
-    25% { transform: translate(25%, 200%) scale(0.8); opacity: 0; }
-    26%, 99% { transform: translate(25%, -150%) scale(0.8); opacity: 0; }
+    0%, 100% { transform: translate(0, -150%) scale(0.8); opacity: 0; }
+    8% { transform: translate(0, -150%) scale(0.8); opacity: 0; }
+    13% { transform: translate(0, 35%) scale(1); opacity: 1; }
+    15%, 20% { transform: translate(0, 35%) scale(1); opacity: 1; }
+    25% { transform: translate(0, 200%) scale(0.8); opacity: 0; }
+    26%, 99% { transform: translate(0, -150%) scale(0.8); opacity: 0; }
   }
 
   @keyframes card-fall-3 {
-    0%, 100% { transform: translate(25%, -150%) scale(0.8); opacity: 0; }
-    11% { transform: translate(25%, -150%) scale(0.8); opacity: 0; }
-    16% { transform: translate(25%, 60%) scale(1); opacity: 1; }
-    15%, 20% { transform: translate(25%, 60%) scale(1); opacity: 1; }
-    25% { transform: translate(25%, 200%) scale(0.8); opacity: 0; }
-    26%, 99% { transform: translate(25%, -150%) scale(0.8); opacity: 0; }
+    0%, 100% { transform: translate(0, -150%) scale(0.8); opacity: 0; }
+    11% { transform: translate(0, -150%) scale(0.8); opacity: 0; }
+    16% { transform: translate(0, 60%) scale(1); opacity: 1; }
+    15%, 20% { transform: translate(0, 60%) scale(1); opacity: 1; }
+    25% { transform: translate(0, 200%) scale(0.8); opacity: 0; }
+    26%, 99% { transform: translate(0, -150%) scale(0.8); opacity: 0; }
   }
   
   @keyframes table-slide {
