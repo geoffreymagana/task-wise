@@ -30,25 +30,17 @@ export default function RootLayout({
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&family=Space+Grotesk:wght@700&display=swap" rel="stylesheet" />
       </head>
-      <body>
-          {isAppPage ? (
-            <ThemeProvider
-              attribute="class"
-              defaultTheme="system"
-              enableSystem
-              disableTransitionOnChange
-            >
-              <div className="flex flex-col h-screen">
-                <AppHeader onTaskCreated={handleTaskCreated} onTasksImported={handleTasksImported} allTasks={[]} />
-                <main className="flex-grow overflow-y-auto">{children}</main>
-              </div>
-              <Toaster />
-            </ThemeProvider>
-          ) : (
-            <>
-              {children}
-            </>
-          )}
+      <body className="app-body">
+          <ThemeProvider
+            attribute="class"
+            defaultTheme="system"
+            enableSystem
+            disableTransitionOnChange
+          >
+            {isAppPage && <AppHeader onTaskCreated={handleTaskCreated} onTasksImported={handleTasksImported} allTasks={[]} />}
+            <main className={isAppPage ? 'app-container' : 'landing-container'}>{children}</main>
+            <Toaster />
+          </ThemeProvider>
       </body>
     </html>
   );
