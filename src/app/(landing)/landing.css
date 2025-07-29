@@ -21,9 +21,6 @@ body {
 .bg-primary {
     background-color: #2563eb;
 }
-.bg-primary\\/10 {
-    background-color: rgba(37, 99, 235, 0.1);
-}
 
 .border-primary {
     border-color: #2563eb;
