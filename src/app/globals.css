@@ -131,8 +131,27 @@
     background: hsl(var(--primary) / 0.8);
   }
 
-  .animate-waveform {
-    animation: waveform 1.2s ease-in-out infinite;
+  .animate-card-1 { animation: card-1 4s ease-in-out infinite; }
+  .animate-card-2 { animation: card-2 4s ease-in-out infinite; }
+  .animate-card-3 { animation: card-3 4s ease-in-out infinite; }
+  
+  @keyframes card-1 {
+    0%, 100% { top: 20%; left: 10%; opacity: 0; }
+    10% { opacity: 1; }
+    90% { opacity: 1; }
+    100% { top: 20%; left: 10%; opacity: 0; }
+  }
+  @keyframes card-2 {
+    0%, 10%, 100% { top: 50%; left: 40%; opacity: 0; }
+    20% { opacity: 1; }
+    80% { opacity: 1; }
+    90% { top: 50%; left: 40%; opacity: 0; }
+  }
+  @keyframes card-3 {
+    0%, 20%, 100% { top: 70%; left: 25%; opacity: 0; }
+    30% { opacity: 1; }
+    70% { opacity: 1; }
+    80% { top: 70%; left: 25%; opacity: 0; }
   }
 
   .animate-node-appear {

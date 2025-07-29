@@ -3,43 +3,30 @@
 
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { ArrowRight, BrainCircuit, Calendar, GanttChart, LayoutGrid, Mic, Star, ListTodo, Clock, CheckSquare, User, Briefcase, Rocket } from 'lucide-react';
+import { ArrowRight, BrainCircuit, Calendar, GanttChart, LayoutGrid, Mic, Star, ListTodo, Clock, CheckSquare, User, Briefcase, Rocket, ListPlus } from 'lucide-react';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import LottieAnimation from '@/components/common/lottie-animation';
 
-const VoiceAnimation = () => (
-    <div className="flex items-center justify-center w-full h-full">
-        <div className="flex items-center justify-center gap-1 h-12">
-            <div className="w-2 h-4 bg-primary/70 rounded-full animate-waveform" style={{ animationDelay: '0s' }}></div>
-            <div className="w-2 h-6 bg-primary/70 rounded-full animate-waveform" style={{ animationDelay: '0.1s' }}></div>
-            <div className="w-2 h-8 bg-primary/70 rounded-full animate-waveform" style={{ animationDelay: '0.2s' }}></div>
-            <div className="w-2 h-10 bg-primary/70 rounded-full animate-waveform" style={{ animationDelay: '0.3s' }}></div>
-            <div className="w-2 h-8 bg-primary/70 rounded-full animate-waveform" style={{ animationDelay: '0.4s' }}></div>
-            <div className="w-2 h-6 bg-primary/70 rounded-full animate-waveform" style={{ animationDelay: '0.5s' }}></div>
-            <div className="w-2 h-4 bg-primary/70 rounded-full animate-waveform" style={{ animationDelay: '0.6s' }}></div>
+const PulsingMicAnimation = () => (
+    <div className="relative w-full h-full flex items-center justify-center">
+        <div className="absolute w-20 h-20 rounded-full bg-primary/20 animate-ping -z-0"></div>
+        <div className="relative w-20 h-20 rounded-full bg-primary flex items-center justify-center">
+            <Mic className="w-10 h-10 text-primary-foreground" />
         </div>
     </div>
 );
 
-const VisualizeAnimation = () => (
-    <div className="relative w-full h-full flex items-center justify-center">
-        {/* Lines */}
-        <svg className="absolute w-2/3 h-2/3" viewBox="0 0 100 100">
-            <line x1="50" y1="15" x2="25" y2="50" stroke="#d1d5db" strokeWidth="1" className="animate-node-appear" style={{ animationDelay: '0.6s' }} />
-            <line x1="50" y1="15" x2="75" y2="50" stroke="#d1d5db" strokeWidth="1" className="animate-node-appear" style={{ animationDelay: '0.8s' }} />
-            <line x1="25" y1="50" x2="15" y2="85" stroke="#d1d5db" strokeWidth="1" className="animate-node-appear" style={{ animationDelay: '1s' }} />
-            <line x1="25" y1="50" x2="35" y2="85" stroke="#d1d5db" strokeWidth="1" className="animate-node-appear" style={{ animationDelay: '1.2s' }} />
-        </svg>
-        {/* Nodes */}
-        <div className="absolute top-[10%] left-1/2 -translate-x-1/2 w-8 h-8 bg-primary rounded-full animate-node-appear" style={{ animationDelay: '0s' }}></div>
-        <div className="absolute top-1/2 -translate-y-1/2 left-[20%] w-8 h-8 bg-purple-500 rounded-full animate-node-appear" style={{ animationDelay: '0.2s' }}></div>
-        <div className="absolute top-1/2 -translate-y-1/2 left-[70%] w-8 h-8 bg-orange-500 rounded-full animate-node-appear" style={{ animationDelay: '0.4s' }}></div>
-        <div className="absolute bottom-[10%] left-[10%] w-8 h-8 bg-green-500 rounded-full animate-node-appear" style={{ animationDelay: '1.4s' }}></div>
-        <div className="absolute bottom-[10%] left-[30%] w-8 h-8 bg-blue-500 rounded-full animate-node-appear" style={{ animationDelay: '1.6s' }}></div>
+const TimelineCardAnimation = () => (
+    <div className="relative w-full h-full flex items-center justify-center p-4">
+        <div className="w-full h-px bg-gray-300 absolute top-1/2 left-0 -translate-y-1/2"></div>
+        <div className="w-full h-full relative">
+            <div className="absolute w-20 h-10 bg-purple-400 rounded-md animate-card-1 shadow-md"></div>
+            <div className="absolute w-24 h-10 bg-blue-400 rounded-md animate-card-2 shadow-md"></div>
+            <div className="absolute w-16 h-10 bg-green-400 rounded-md animate-card-3 shadow-md"></div>
+        </div>
     </div>
 );
-
 
 export default function LandingPage() {
   const features = [
@@ -98,7 +85,7 @@ export default function LandingPage() {
             
             <div className="relative inline-block mb-6">
                 <div className="p-3 bg-white rounded-lg shadow-md border inline-block">
-                     <ListTodo className="w-8 h-8 text-primary" />
+                     <ListPlus className="w-8 h-8 text-primary" />
                 </div>
             </div>
 
@@ -211,8 +198,8 @@ export default function LandingPage() {
                 </div>
                 <div className="grid md:grid-cols-3 gap-8 items-start">
                     <div className="text-center flex flex-col items-center">
-                        <div className="w-full h-48 mb-4 flex items-center justify-center overflow-hidden">
-                           <VoiceAnimation />
+                        <div className="w-full h-48 mb-4 flex items-center justify-center overflow-hidden backdrop-blur-sm bg-white/30 rounded-lg">
+                           <PulsingMicAnimation />
                         </div>
                         <h3 className="text-xl font-bold font-headline mb-2 text-gray-800">1. Speak Your Plan</h3>
                         <p className="text-gray-600 px-4">Just open the speech-to-plan dialog and describe your tasks naturally.</p>
@@ -225,8 +212,8 @@ export default function LandingPage() {
                         <p className="text-gray-600 px-4">Our intelligent engine parses, analyzes, and structures everything for you.</p>
                     </div>
                      <div className="text-center flex flex-col items-center">
-                        <div className="w-full h-48 mb-4 flex items-center justify-center overflow-hidden">
-                            <VisualizeAnimation />
+                        <div className="w-full h-48 mb-4 flex items-center justify-center overflow-hidden backdrop-blur-sm bg-white/30 rounded-lg">
+                           <TimelineCardAnimation />
                         </div>
                         <h3 className="text-xl font-bold font-headline mb-2 text-gray-800">3. Visualize Your Project</h3>
                         <p className="text-gray-600 px-4">Your plan is ready, complete with views like Mind Maps and Timelines.</p>
