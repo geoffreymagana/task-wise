@@ -2,7 +2,6 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ArrowDown, BrainCircuit, ListChecks, Mic } from 'lucide-react';
-import Image from 'next/image';
 import LottieAnimation from '@/components/common/lottie-animation';
 
 const PulsingMicAnimation = () => (
@@ -15,16 +14,11 @@ const PulsingMicAnimation = () => (
 );
 
 const TimelineCardAnimation = () => (
-    <div className="relative w-full h-full flex items-center justify-center p-4">
-        <div className="absolute inset-0 flex justify-around items-center">
-            <div className="w-px h-full bg-gray-300 border-r border-dashed border-gray-200"></div>
-            <div className="w-px h-full bg-gray-300 border-r border-dashed border-gray-200"></div>
-            <div className="w-px h-full bg-gray-300 border-r border-dashed border-gray-200"></div>
-        </div>
+    <div className="relative w-full h-full flex items-center justify-center p-4 overflow-hidden">
         <div className="w-full h-full relative">
-            <div className="absolute w-20 h-10 bg-purple-400 rounded-md animate-card-1 shadow-md"></div>
-            <div className="absolute w-24 h-10 bg-blue-400 rounded-md animate-card-2 shadow-md"></div>
-            <div className="absolute w-16 h-10 bg-green-400 rounded-md animate-card-3 shadow-md"></div>
+            <div className="absolute w-20 h-10 bg-purple-400 rounded-md animate-card-stair-1 shadow-md"></div>
+            <div className="absolute w-24 h-10 bg-blue-400 rounded-md animate-card-stair-2 shadow-md"></div>
+            <div className="absolute w-16 h-10 bg-green-400 rounded-md animate-card-stair-3 shadow-md"></div>
         </div>
     </div>
 );
@@ -47,6 +41,20 @@ const VisualizeAnimation = () => (
         <div className="absolute bottom-[10%] left-[30%] w-8 h-8 bg-blue-500 rounded-full animate-node-appear" style={{ animationDelay: '1.6s' }}></div>
     </div>
 );
+
+const AuroraGlassContainer = ({ children }: { children: React.ReactNode }) => (
+    <div className="relative w-full h-[350px] bg-white/30 rounded-2xl overflow-hidden border border-white/20 shadow-xl backdrop-blur-2xl">
+        <div className="absolute top-0 left-0 w-full h-full -z-10">
+            <div className="absolute w-56 h-56 bg-purple-500/20 rounded-full animate-revolve-1"></div>
+            <div className="absolute w-56 h-56 bg-blue-500/20 rounded-full animate-revolve-2"></div>
+            <div className="absolute w-56 h-56 bg-green-500/20 rounded-full animate-revolve-3"></div>
+        </div>
+        <div className="relative z-10 w-full h-full">
+            {children}
+        </div>
+    </div>
+);
+
 
 export default function HowItWorksPage() {
   const steps = [
@@ -80,16 +88,17 @@ export default function HowItWorksPage() {
       <div className="space-y-8 md:space-y-0">
         {steps.map((step, index) => (
           <div key={index}>
-            <Card className="shadow-lg overflow-hidden">
+            <Card className="shadow-lg overflow-hidden bg-white">
               <div className="grid md:grid-cols-2 items-center">
                 <div className={`p-10 ${index % 2 !== 0 ? 'md:order-2' : ''}`}>
                     <div className="mb-4">{step.icon}</div>
                     <h2 className="text-3xl font-bold font-headline mb-4">{step.title}</h2>
                     <p className="text-gray-600">{step.description}</p>
                 </div>
-                <div className="bg-gray-50 h-full flex items-center justify-center p-10 min-h-[350px] relative overflow-hidden">
-                   <div className="absolute inset-0 w-full h-full animate-gradient-spin -z-0 opacity-20"></div>
-                   <div className="relative z-10 w-full h-full">{step.animation}</div>
+                <div className="bg-gray-50 h-full flex items-center justify-center p-10 min-h-[400px]">
+                    <AuroraGlassContainer>
+                        {step.animation}
+                    </AuroraGlassContainer>
                 </div>
               </div>
             </Card>
