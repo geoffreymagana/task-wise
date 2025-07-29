@@ -4,7 +4,7 @@
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { Github, Menu } from 'lucide-react';
+import { Github, Menu, ListTodo } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { cn } from '@/lib/utils';
@@ -33,18 +33,9 @@ export default function LandingLayout({
     <div className="flex flex-col min-h-screen font-body bg-white">
       <header className="sticky top-0 z-40 w-full border-b bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/60">
         <div className="container flex h-16 items-center px-4 md:px-8 mx-auto">
-            <div className="mr-4 hidden md:flex">
+            <div className="flex items-center gap-2 mr-4">
                 <Link href="/" className="flex items-center gap-2">
-                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="text-primary drop-shadow-lg">
-                        <defs>
-                            <linearGradient id="grad1" x1="0%" y1="0%" x2="100%" y2="100%">
-                            <stop offset="0%" style={{stopColor: 'hsl(var(--primary))', stopOpacity: 0.8}} />
-                            <stop offset="100%" style={{stopColor: 'hsl(var(--primary))', stopOpacity: 1}} />
-                            </linearGradient>
-                        </defs>
-                        <path d="M8 7H19V9H8V7ZM8 11H19V13H8V11ZM8 15H19V17H8V15ZM5 7H6V9H5V7ZM5 11H6V13H5V11ZM5 15H6V17H5V15Z" fill="url(#grad1)"/>
-                        <rect x="3" y="4" width="18" height="16" rx="2" stroke="hsl(var(--primary))" strokeWidth="1.5" fill="none"/>
-                    </svg>
+                    <ListTodo className="w-8 h-8 text-primary" />
                     <h1 className="text-2xl font-bold font-headline text-gray-900">TaskWise</h1>
                 </Link>
             </div>

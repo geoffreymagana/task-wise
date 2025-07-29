@@ -65,16 +65,7 @@ export default function LandingPage() {
             
             <div className="relative inline-block mb-6">
                 <div className="p-3 bg-white rounded-lg shadow-md border inline-block">
-                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="text-primary">
-                        <defs>
-                            <linearGradient id="grad1" x1="0%" y1="0%" x2="100%" y2="100%">
-                            <stop offset="0%" style={{stopColor: 'hsl(var(--primary))', stopOpacity: 0.8}} />
-                            <stop offset="100%" style={{stopColor: 'hsl(var(--primary))', stopOpacity: 1}} />
-                            </linearGradient>
-                        </defs>
-                        <path d="M8 7H19V9H8V7ZM8 11H19V13H8V11ZM8 15H19V17H8V15ZM5 7H6V9H5V7ZM5 11H6V13H5V11ZM5 15H6V17H5V15Z" fill="url(#grad1)"/>
-                        <rect x="3" y="4" width="18" height="16" rx="2" stroke="hsl(var(--primary))" strokeWidth="1.5" fill="none"/>
-                    </svg>
+                     <ListTodo className="w-8 h-8 text-primary" />
                 </div>
             </div>
 
@@ -187,25 +178,25 @@ export default function LandingPage() {
                 </div>
                 <div className="grid md:grid-cols-3 gap-8 items-start">
                     <div className="text-center flex flex-col items-center">
-                        <div className="w-full h-48 mb-4 flex items-center justify-center">
+                        <div className="w-full h-48 mb-4 flex items-center justify-center overflow-hidden">
                             <LottieAnimation path="/animations/Voice - Translate AI.json" />
                         </div>
                         <h3 className="text-xl font-bold font-headline mb-2 text-gray-800">1. Speak Your Plan</h3>
-                        <p className="text-gray-600">Just open the speech-to-plan dialog and describe your tasks naturally.</p>
+                        <p className="text-gray-600 px-4">Just open the speech-to-plan dialog and describe your tasks naturally.</p>
                     </div>
                      <div className="text-center flex flex-col items-center">
-                         <div className="w-full h-48 mb-4 flex items-center justify-center">
+                         <div className="w-full h-48 mb-4 flex items-center justify-center overflow-hidden">
                             <LottieAnimation path="/animations/Ai loading model.json" />
                         </div>
                         <h3 className="text-xl font-bold font-headline mb-2 text-gray-800">2. AI Does The Work</h3>
-                        <p className="text-gray-600">Our intelligent engine parses, analyzes, and structures everything for you.</p>
+                        <p className="text-gray-600 px-4">Our intelligent engine parses, analyzes, and structures everything for you.</p>
                     </div>
                      <div className="text-center flex flex-col items-center">
-                        <div className="w-full h-48 mb-4 flex items-center justify-center">
+                        <div className="w-full h-48 mb-4 flex items-center justify-center overflow-hidden">
                             <LottieAnimation path="/animations/workflow.json" />
                         </div>
                         <h3 className="text-xl font-bold font-headline mb-2 text-gray-800">3. Visualize Your Project</h3>
-                        <p className="text-gray-600">Your plan is ready, complete with views like Mind Maps and Timelines.</p>
+                        <p className="text-gray-600 px-4">Your plan is ready, complete with views like Mind Maps and Timelines.</p>
                     </div>
                 </div>
             </div>
