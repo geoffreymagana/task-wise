@@ -1,3 +1,4 @@
+
 'use client';
 
 import Link from 'next/link';
@@ -184,23 +185,23 @@ export default function LandingPage() {
                     <h2 className="text-3xl md:text-4xl font-bold font-headline text-gray-900">From Voice to Vision in 3 Easy Steps</h2>
                     <p className="text-lg text-gray-600 mt-2">See how our AI turns your spoken words into a structured plan.</p>
                 </div>
-                <div className="grid md:grid-cols-3 gap-8 items-center">
+                <div className="grid md:grid-cols-3 gap-8 items-start">
                     <div className="text-center flex flex-col items-center">
-                        <div className="w-full h-48 mb-4">
+                        <div className="w-full h-48 mb-4 flex items-center justify-center">
                             <LottieAnimation path="/animations/Voice - Translate AI.json" />
                         </div>
                         <h3 className="text-xl font-bold font-headline mb-2 text-gray-800">1. Speak Your Plan</h3>
                         <p className="text-gray-600">Just open the speech-to-plan dialog and describe your tasks naturally.</p>
                     </div>
                      <div className="text-center flex flex-col items-center">
-                         <div className="w-full h-48 mb-4">
+                         <div className="w-full h-48 mb-4 flex items-center justify-center">
                             <LottieAnimation path="/animations/Ai loading model.json" />
                         </div>
                         <h3 className="text-xl font-bold font-headline mb-2 text-gray-800">2. AI Does The Work</h3>
                         <p className="text-gray-600">Our intelligent engine parses, analyzes, and structures everything for you.</p>
                     </div>
                      <div className="text-center flex flex-col items-center">
-                        <div className="w-full h-48 mb-4">
+                        <div className="w-full h-48 mb-4 flex items-center justify-center">
                             <LottieAnimation path="/animations/workflow.json" />
                         </div>
                         <h3 className="text-xl font-bold font-headline mb-2 text-gray-800">3. Visualize Your Project</h3>
