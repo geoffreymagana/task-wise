@@ -2,6 +2,7 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import Image from 'next/image';
+import Script from 'next/script';
 
 // Define a type for the custom element to satisfy TypeScript
 declare global {
@@ -14,6 +15,8 @@ declare global {
 
 export default function AboutPage() {
   return (
+    <>
+    <Script src="https://unpkg.com/@lottiefiles/dotlottie-wc@0.6.2/dist/dotlottie-wc.js" type="module" strategy="beforeInteractive"></Script>
     <div className="container mx-auto px-4 md:px-8 py-16">
       <h1 className="text-4xl md:text-5xl font-bold font-headline text-center mb-8">About TaskWise</h1>
       <p className="text-lg text-gray-600 max-w-3xl mx-auto text-center mb-16">
@@ -48,22 +51,23 @@ export default function AboutPage() {
 
       <div className="text-center">
         <h2 className="text-3xl font-bold font-headline mb-8">Meet the Founder</h2>
-        <div className="flex flex-col items-center">
-            <Image 
-                src="https://res.cloudinary.com/dwqwwb2fh/image/upload/v1753797497/o1nsqcul2lknhj0h8o8d.jpg"
-                alt="Geoffrey Magana"
-                width={150}
-                height={150}
-                className="rounded-full mb-4 object-cover"
-                data-ai-hint="person portrait"
-            />
+        <div className="w-32 h-32 rounded-full overflow-hidden mb-4 mx-auto">
+                <Image 
+                    src="https://res.cloudinary.com/dwqwwb2fh/image/upload/v1753797497/o1nsqcul2lknhj0h8o8d.jpg"
+                    alt="Geoffrey Magana"
+                    width={128}
+                    height={128}
+                    className="w-full h-full object-cover"
+                    data-ai-hint="founder portrait"
+                />
+            </div>
             <h3 className="text-2xl font-bold">Geoffrey Magana</h3>
             <p className="text-gray-500 mb-2">Lead Developer & Visionary</p>
-            <p className="max-w-xl text-gray-600">
+            <p className="max-w-xl text-gray-600 mx-auto">
                 "I created TaskWise to solve a problem I faced every day: the gap between planning and doing. I wanted a tool that was smart enough to understand my unstructured ideas and powerful enough to visualize them in meaningful ways. This project is a culmination of that vision."
             </p>
         </div>
       </div>
-    </div>
+      </>
   );
 }
