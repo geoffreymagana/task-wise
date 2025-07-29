@@ -137,13 +137,13 @@
   .animate-card-stair-3 { animation: card-stair 10s ease-in-out infinite; animation-delay: 0.4s; }
 
   @keyframes card-stair {
-    0% { transform: translateX(-150%) translateY(-50%) scale(0.8); opacity: 0; }
+    0% { transform: translateX(-150%) translateY(0%) scale(0.8); opacity: 0; }
     20% { transform: translateX(20%) translateY(20%) scale(1); opacity: 1; }
     30% { transform: translateX(40%) translateY(40%) scale(1); opacity: 1; }
     40% { transform: translateX(60%) translateY(60%) scale(1); opacity: 1; }
     80% { transform: translateX(60%) translateY(60%) scale(1); opacity: 1; }
     90% { transform: translateX(150%) translateY(100%) scale(0.8); opacity: 0; }
-    100% { transform: translateX(-150%) translateY(-50%) scale(0.8); opacity: 0; }
+    100% { transform: translateX(-150%) translateY(0%) scale(0.8); opacity: 0; }
   }
 
 

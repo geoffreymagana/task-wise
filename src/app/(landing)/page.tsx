@@ -20,20 +20,22 @@ const PulsingMicAnimation = () => (
 const TimelineCardAnimation = () => (
     <div className="relative w-full h-full flex items-center justify-center p-4 overflow-hidden">
         <div className="w-full h-full relative">
-            <div className="absolute w-20 h-10 bg-purple-400 rounded-md animate-card-stair-1 shadow-md"></div>
-            <div className="absolute w-24 h-10 bg-blue-400 rounded-md animate-card-stair-2 shadow-md"></div>
-            <div className="absolute w-16 h-10 bg-green-400 rounded-md animate-card-stair-3 shadow-md"></div>
+            <div className="absolute w-[45%] h-[25%] bg-purple-400 rounded-md animate-card-stair-1 shadow-md"></div>
+            <div className="absolute w-[55%] h-[25%] bg-blue-400 rounded-md animate-card-stair-2 shadow-md"></div>
+            <div className="absolute w-[35%] h-[25%] bg-green-400 rounded-md animate-card-stair-3 shadow-md"></div>
         </div>
     </div>
 );
 
-const AuroraGlassContainer = ({ children }: { children: React.ReactNode }) => (
+const AuroraGlassContainer = ({ children, useAurora = true }: { children: React.ReactNode, useAurora?: boolean }) => (
     <div className="relative w-48 h-48 bg-white/30 rounded-2xl overflow-hidden border border-white/20 shadow-xl backdrop-blur-2xl">
-        <div className="absolute top-0 left-0 w-full h-full -z-10">
-            <div className="absolute w-56 h-56 bg-purple-500/20 rounded-full animate-revolve-1"></div>
-            <div className="absolute w-56 h-56 bg-blue-500/20 rounded-full animate-revolve-2"></div>
-            <div className="absolute w-56 h-56 bg-green-500/20 rounded-full animate-revolve-3"></div>
-        </div>
+        {useAurora && (
+          <div className="absolute top-0 left-0 w-full h-full -z-10">
+              <div className="absolute w-40 h-40 bg-purple-500/20 rounded-full animate-revolve-1"></div>
+              <div className="absolute w-40 h-40 bg-blue-500/20 rounded-full animate-revolve-2"></div>
+              <div className="absolute w-40 h-40 bg-green-500/20 rounded-full animate-revolve-3"></div>
+          </div>
+        )}
         <div className="relative z-10 w-full h-full">
             {children}
         </div>
@@ -211,21 +213,21 @@ export default function LandingPage() {
                 </div>
                 <div className="grid md:grid-cols-3 gap-8 items-start">
                     <div className="text-center flex flex-col items-center">
-                        <AuroraGlassContainer>
+                        <AuroraGlassContainer useAurora={true}>
                            <PulsingMicAnimation />
                         </AuroraGlassContainer>
                         <h3 className="text-xl font-bold font-headline mb-2 mt-6 text-gray-800">1. Speak Your Plan</h3>
                         <p className="text-gray-600 px-4">Just open the speech-to-plan dialog and describe your tasks naturally.</p>
                     </div>
                      <div className="text-center flex flex-col items-center">
-                         <AuroraGlassContainer>
+                         <AuroraGlassContainer useAurora={false}>
                             <div className="scale-125"><LottieAnimation path="/animations/Ai loading model.json" /></div>
                         </AuroraGlassContainer>
                         <h3 className="text-xl font-bold font-headline mb-2 mt-6 text-gray-800">2. AI Does The Work</h3>
                         <p className="text-gray-600 px-4">Our intelligent engine parses, analyzes, and structures everything for you.</p>
                     </div>
                      <div className="text-center flex flex-col items-center">
-                        <AuroraGlassContainer>
+                        <AuroraGlassContainer useAurora={true}>
                            <TimelineCardAnimation />
                         </AuroraGlassContainer>
                         <h3 className="text-xl font-bold font-headline mb-2 mt-6 text-gray-800">3. Visualize Your Project</h3>

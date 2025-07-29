@@ -1,3 +1,4 @@
+
 'use client';
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -16,39 +17,22 @@ const PulsingMicAnimation = () => (
 const TimelineCardAnimation = () => (
     <div className="relative w-full h-full flex items-center justify-center p-4 overflow-hidden">
         <div className="w-full h-full relative">
-            <div className="absolute w-20 h-10 bg-purple-400 rounded-md animate-card-stair-1 shadow-md"></div>
-            <div className="absolute w-24 h-10 bg-blue-400 rounded-md animate-card-stair-2 shadow-md"></div>
-            <div className="absolute w-16 h-10 bg-green-400 rounded-md animate-card-stair-3 shadow-md"></div>
+            <div className="absolute w-[45%] h-[25%] bg-purple-400 rounded-md animate-card-stair-1 shadow-md"></div>
+            <div className="absolute w-[55%] h-[25%] bg-blue-400 rounded-md animate-card-stair-2 shadow-md"></div>
+            <div className="absolute w-[35%] h-[25%] bg-green-400 rounded-md animate-card-stair-3 shadow-md"></div>
         </div>
     </div>
 );
 
-
-const VisualizeAnimation = () => (
-    <div className="relative w-full h-full flex items-center justify-center">
-        {/* Lines */}
-        <svg className="absolute w-2/3 h-2/3" viewBox="0 0 100 100">
-            <line x1="50" y1="15" x2="25" y2="50" stroke="#d1d5db" strokeWidth="1" className="animate-node-appear" style={{ animationDelay: '0.6s' }} />
-            <line x1="50" y1="15" x2="75" y2="50" stroke="#d1d5db" strokeWidth="1" className="animate-node-appear" style={{ animationDelay: '0.8s' }} />
-            <line x1="25" y1="50" x2="15" y2="85" stroke="#d1d5db" strokeWidth="1" className="animate-node-appear" style={{ animationDelay: '1s' }} />
-            <line x1="25" y1="50" x2="35" y2="85" stroke="#d1d5db" strokeWidth="1" className="animate-node-appear" style={{ animationDelay: '1.2s' }} />
-        </svg>
-        {/* Nodes */}
-        <div className="absolute top-[10%] left-1/2 -translate-x-1/2 w-8 h-8 bg-primary rounded-full animate-node-appear" style={{ animationDelay: '0s' }}></div>
-        <div className="absolute top-1/2 -translate-y-1/2 left-[20%] w-8 h-8 bg-purple-500 rounded-full animate-node-appear" style={{ animationDelay: '0.2s' }}></div>
-        <div className="absolute top-1/2 -translate-y-1/2 left-[70%] w-8 h-8 bg-orange-500 rounded-full animate-node-appear" style={{ animationDelay: '0.4s' }}></div>
-        <div className="absolute bottom-[10%] left-[10%] w-8 h-8 bg-green-500 rounded-full animate-node-appear" style={{ animationDelay: '1.4s' }}></div>
-        <div className="absolute bottom-[10%] left-[30%] w-8 h-8 bg-blue-500 rounded-full animate-node-appear" style={{ animationDelay: '1.6s' }}></div>
-    </div>
-);
-
-const AuroraGlassContainer = ({ children }: { children: React.ReactNode }) => (
+const AuroraGlassContainer = ({ children, useAurora = true }: { children: React.ReactNode; useAurora?: boolean }) => (
     <div className="relative w-full h-[350px] bg-white/30 rounded-2xl overflow-hidden border border-white/20 shadow-xl backdrop-blur-2xl">
-        <div className="absolute top-0 left-0 w-full h-full -z-10">
-            <div className="absolute w-56 h-56 bg-purple-500/20 rounded-full animate-revolve-1"></div>
-            <div className="absolute w-56 h-56 bg-blue-500/20 rounded-full animate-revolve-2"></div>
-            <div className="absolute w-56 h-56 bg-green-500/20 rounded-full animate-revolve-3"></div>
-        </div>
+        {useAurora && (
+            <div className="absolute top-0 left-0 w-full h-full -z-10">
+                <div className="absolute w-56 h-56 bg-purple-500/20 rounded-full animate-revolve-1"></div>
+                <div className="absolute w-56 h-56 bg-blue-500/20 rounded-full animate-revolve-2"></div>
+                <div className="absolute w-56 h-56 bg-green-500/20 rounded-full animate-revolve-3"></div>
+            </div>
+        )}
         <div className="relative z-10 w-full h-full">
             {children}
         </div>
@@ -62,19 +46,22 @@ export default function HowItWorksPage() {
       icon: <Mic className="w-12 h-12 text-primary" />,
       title: '1. Speak or Type Your Plan',
       description: "Use our AI-powered import dialog or the Speech-to-Plan feature. Describe your tasks naturally, just as you would in a conversation. Mention deadlines, priorities, and even dependencies.",
-      animation: <PulsingMicAnimation />
+      animation: <PulsingMicAnimation />,
+      useAurora: true,
     },
     {
       icon: <BrainCircuit className="w-12 h-12 text-primary" />,
       title: '2. AI Parses and Organizes',
       description: "TaskWise's intelligent engine gets to work instantly. It identifies individual tasks, understands relationships, estimates durations, and assigns priorities based on your input. No more manual data entry.",
-      animation: <LottieAnimation path="/animations/Ai loading model.json" />
+      animation: <LottieAnimation path="/animations/Ai loading model.json" />,
+      useAurora: false,
     },
     {
       icon: <ListChecks className="w-12 h-12 text-primary" />,
       title: '3. Visualize and Execute',
       description: "Your structured plan appears in your chosen view—Table, Kanban, Timeline, or Mind Map. All tasks are perfectly organized, scheduled, and ready for you to start working. Drag, drop, and update with ease.",
-      animation: <TimelineCardAnimation />
+      animation: <TimelineCardAnimation />,
+      useAurora: true,
     }
   ];
 
@@ -96,7 +83,7 @@ export default function HowItWorksPage() {
                     <p className="text-gray-600">{step.description}</p>
                 </div>
                 <div className="bg-gray-50 h-full flex items-center justify-center p-10 min-h-[400px]">
-                    <AuroraGlassContainer>
+                    <AuroraGlassContainer useAurora={step.useAurora}>
                         {step.animation}
                     </AuroraGlassContainer>
                 </div>
