@@ -35,19 +35,18 @@ const elk = new ELK();
 const nodeWidth = 220;
 const nodeHeight = 80;
 
+const elkOptions = {
+    'elk.algorithm': 'layered',
+    'elk.layered.spacing.nodeNodeBetweenLayers': '120',
+    'elk.spacing.nodeNode': '100',
+    'elk.layered.nodePlacement.strategy': 'BRANDES_KOEPF',
+};
+
 
 const getLayoutedElements = (nodes: Node[], edges: Edge[], options = {}) => {
-  const elkOptions = {
-    'elk.algorithm': 'layered',
-    'elk.layered.spacing.nodeNodeBetweenLayers': '100',
-    'elk.spacing.nodeNode': '80',
-    'elk.layered.nodePlacement.strategy': 'BRANDES_KOEPF',
-    ...options,
-  };
-  
   const graph = {
     id: 'root',
-    layoutOptions: elkOptions,
+    layoutOptions: { ...elkOptions, ...options},
     children: nodes.map(n => ({...n, width: n.width || nodeWidth, height: n.height || nodeHeight})),
     edges: edges,
   };
@@ -68,10 +67,10 @@ const statusStyles = {
   archived: 'bg-red-100 border-red-500',
 };
 
-const priorityStyles = {
-  low: 'border-l-slate-400',
-  medium: 'border-l-amber-500',
-  high: 'border-l-red-600',
+const priorityStyles: Record<string, {node: string, edge: string}> = {
+  low: { node: 'bg-slate-100 border-slate-400', edge: '#64748b' },
+  medium: { node: 'bg-amber-100 border-amber-500', edge: '#f59e0b' },
+  high: { node: 'bg-red-100 border-red-500', edge: '#ef4444' },
 };
 
 function TaskNode({ data }: { data: Task }) {
@@ -83,7 +82,7 @@ function TaskNode({ data }: { data: Task }) {
           'w-full h-full p-3 rounded-md shadow-md flex flex-col justify-center items-start text-left',
           'border-2 border-l-8',
           statusStyles[data.status] || statusStyles.not_started,
-          priorityStyles[data.priority] || priorityStyles.medium
+           (priorityStyles[data.priority]?.node || 'border-l-slate-400').replace(/border-\w+-\d+/g, (match) => `border-l-${match.split('-')[1]}-${match.split('-')[2]}`)
         )}
       >
         <div className="flex items-center gap-2 mb-1 w-full">
@@ -97,7 +96,9 @@ function TaskNode({ data }: { data: Task }) {
             {data.title}
           </div>
         </div>
-        <Badge variant="secondary" className="mt-1 text-xs capitalize bg-white/50">
+        <Badge variant={data.status === 'completed' ? 'default' : 'secondary'} className={cn('mt-1 text-xs capitalize', {
+          'bg-green-500 text-white': data.status === 'completed'
+        })}>
           {data.status.replace('_', ' ')}
         </Badge>
       </div>
@@ -230,17 +231,14 @@ function FlowCanvas({ tasks, allTasks }: MindMapViewProps) {
   const doLayout = useCallback(() => {
     const taskMap = new Map(allTasks.map((t) => [t.id, t]));
     
-    let tasksToDisplay = tasks;
-
-    if (activeDate) {
-        tasksToDisplay = tasks.filter(task => format(startOfDay(new Date(task.createdAt)), 'yyyy-MM-dd') === activeDate);
-    }
-
+    let tasksToDisplay: Task[];
     const initialNodes: Node[] = [];
     const initialEdges: Edge[] = [];
 
     if (activeDate) {
-         const groupedByPriority = tasksToDisplay.reduce((acc, task) => {
+        tasksToDisplay = tasks.filter(task => format(startOfDay(new Date(task.createdAt)), 'yyyy-MM-dd') === activeDate);
+        
+        const groupedByPriority = tasksToDisplay.reduce((acc, task) => {
             const priority = task.priority;
             if (!acc[priority]) acc[priority] = [];
             acc[priority].push(task);
@@ -259,12 +257,20 @@ function FlowCanvas({ tasks, allTasks }: MindMapViewProps) {
 
         for (const priority in groupedByPriority) {
             const priorityNodeId = `priority-${activeDate}-${priority}`;
+            const priorityStyle = priorityStyles[priority];
+
             initialNodes.push({
                 id: priorityNodeId,
                 type: 'default',
-                data: { label: `Priority: ${priority}` },
+                data: { label: `${priority.charAt(0).toUpperCase() + priority.slice(1)} Priority` },
                 position: { x: 0, y: 0 },
-                style: { backgroundColor: '#f8fafc', border: '2px solid #aaa', padding: 10, borderRadius: '8px' },
+                style: { 
+                    backgroundColor: priorityStyle.node.split(' ')[0], 
+                    border: `2px solid ${priorityStyle.node.split(' ')[1]}`,
+                    borderRadius: 8,
+                    color: '#1e293b',
+                    fontWeight: 'bold',
+                },
                 width: 180,
                 height: 40,
             });
@@ -273,6 +279,7 @@ function FlowCanvas({ tasks, allTasks }: MindMapViewProps) {
                 source: dateNodeId,
                 target: priorityNodeId,
                 type: 'smoothstep',
+                style: { stroke: priorityStyle.edge, strokeWidth: 2.5 },
             });
             
             const tasksInPriority = groupedByPriority[priority];
@@ -286,6 +293,16 @@ function FlowCanvas({ tasks, allTasks }: MindMapViewProps) {
                     height: nodeHeight,
                 });
                 
+                if (!task.dependencies?.length || !task.dependencies.some(depId => tasksToDisplay.some(t => t.id === depId))) {
+                    initialEdges.push({
+                        id: `e-${priorityNodeId}-${task.id}`,
+                        source: priorityNodeId,
+                        target: task.id,
+                        type: 'smoothstep',
+                        style: { stroke: '#94a3b8', strokeWidth: 1.5, strokeDasharray: '5,5' },
+                    });
+                }
+                
                 if (task.dependencies?.length) {
                      task.dependencies.forEach(depId => {
                       if (tasksToDisplay.some(t => t.id === depId)) {
@@ -294,23 +311,15 @@ function FlowCanvas({ tasks, allTasks }: MindMapViewProps) {
                           source: depId,
                           target: task.id,
                           type: 'smoothstep',
-                          animated: true,
-                          style: { stroke: taskMap.get(depId)?.color || '#aaa', strokeWidth: 2 },
+                          animated: task.status === 'in_progress',
+                          style: { stroke: taskMap.get(depId)?.color || '#334155', strokeWidth: 2 },
                         });
                       }
-                    });
-                } else {
-                    initialEdges.push({
-                        id: `e-${priorityNodeId}-${task.id}`,
-                        source: priorityNodeId,
-                        target: task.id,
-                        type: 'smoothstep',
                     });
                 }
             }
         }
     } else {
-        // Show only date nodes if no date is selected
         const groupedByDate = tasks.reduce((acc, task) => {
             const dateKey = format(startOfDay(new Date(task.createdAt)), 'yyyy-MM-dd');
             if (!acc.includes(dateKey)) {
@@ -340,7 +349,7 @@ function FlowCanvas({ tasks, allTasks }: MindMapViewProps) {
     getLayoutedElements(initialNodes, initialEdges, { 'elk.direction': layoutDirection }).then(({ nodes: layoutedNodes, edges: layoutedEdges }) => {
       setNodes(layoutedNodes);
       setEdges(layoutedEdges);
-       setTimeout(() => fitView({ duration: 300, padding: 0.1 }), 100);
+      setTimeout(() => fitView({ duration: 500, padding: 0.1 }), 100);
     });
   }, [tasks, allTasks, layoutDirection, fitView, activeDate]);
 
