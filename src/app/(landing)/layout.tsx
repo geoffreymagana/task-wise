@@ -35,7 +35,7 @@ export default function LandingLayout({
         <div className="flex flex-col min-h-screen bg-white text-gray-800 font-body">
             <header className="sticky top-0 z-40 w-full border-b bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/60">
                 <div className="container flex h-16 items-center px-4 md:px-8 mx-auto">
-                    <div className="mr-4 flex items-center">
+                    <div className="mr-4 md:flex">
                         <Link href="/" className="flex items-center gap-2">
                             <svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="text-primary drop-shadow-lg">
                                 <defs>
@@ -57,14 +57,15 @@ export default function LandingLayout({
                                 key={link.href} 
                                 href={link.href} 
                                 className={cn(
-                                    "text-gray-600 hover:text-gray-900 transition-colors relative",
-                                    pathname === link.href && "text-primary"
+                                    "text-gray-600 hover:text-gray-900 transition-colors relative group",
+                                    pathname === link.href && "text-primary font-semibold"
                                 )}
                             >
                                 {link.label}
-                                {pathname === link.href && (
-                                    <span className="absolute -bottom-2 left-0 w-full h-0.5 bg-primary"></span>
-                                )}
+                                <span className={cn(
+                                    "absolute -bottom-1 left-0 w-0 h-0.5 bg-primary transition-all duration-300 group-hover:w-full",
+                                    pathname === link.href ? "w-full" : "w-0"
+                                )}></span>
                             </Link>
                         ))}
                     </nav>
@@ -92,7 +93,7 @@ export default function LandingLayout({
                         </Sheet>
                     </div>
 
-                    <div className="hidden md:flex flex-1 items-center justify-end">
+                    <div className="hidden md:flex items-center justify-end">
                       <Link href="/dashboard">
                           <Button>
                               Go to App
