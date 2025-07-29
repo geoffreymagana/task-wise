@@ -45,7 +45,7 @@ export default function LandingLayout({
                         <path d="M8 7H19V9H8V7ZM8 11H19V13H8V11ZM8 15H19V17H8V15ZM5 7H6V9H5V7ZM5 11H6V13H5V11ZM5 15H6V17H5V15Z" fill="url(#grad1)"/>
                         <rect x="3" y="4" width="18" height="16" rx="2" stroke="hsl(var(--primary))" strokeWidth="1.5" fill="none"/>
                     </svg>
-                    <h1 className="text-2xl font-bold font-headline">TaskWise</h1>
+                    <h1 className="text-2xl font-bold font-headline text-gray-900">TaskWise</h1>
                 </Link>
             </div>
 
@@ -103,7 +103,7 @@ export default function LandingLayout({
     <main className="flex-grow">
       {children}
     </main>
-    <footer className="bg-gray-50">
+    <footer className="bg-gray-50 text-gray-900">
         <div className="container mx-auto py-12 px-4 md:px-8">
             <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
                 <div>
@@ -134,7 +134,7 @@ export default function LandingLayout({
                     </ul>
                 </div>
             </div>
-            <div className="mt-8 pt-6 text-center text-sm text-gray-500">
+            <div className="mt-8 pt-6 border-t border-gray-200 text-center text-sm text-gray-500">
                 <p>&copy; {date} TaskWise. All rights reserved.</p>
             </div>
         </div>

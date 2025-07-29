@@ -91,7 +91,7 @@ export default function LandingPage() {
 
           {/* Floating UI Elements */}
           <div className="absolute inset-0 w-full h-full -z-0 hidden md:block">
-              <Card className="absolute top-[15%] left-[10%] w-56 p-4 shadow-lg transform -rotate-6">
+              <Card className="absolute top-[15%] left-[10%] w-56 p-4 shadow-lg transform -rotate-6 text-gray-900 bg-white">
                   <p className="text-sm font-semibold">📌 Take Notes</p>
                   <p className="text-xs text-gray-500 mt-1">Keep track of crucial details, and accomplish more tasks with ease.</p>
                   <div className="mt-2 flex justify-end">
@@ -101,50 +101,50 @@ export default function LandingPage() {
                   </div>
               </Card>
 
-              <Card className="absolute top-[20%] right-[8%] w-52 p-3 shadow-lg transform rotate-3">
+              <Card className="absolute top-[20%] right-[8%] w-52 p-3 shadow-lg transform rotate-3 text-gray-900 bg-white">
                   <div className="flex items-center gap-2 mb-2">
                     <Clock className="w-4 h-4 text-gray-500" />
                     <p className="text-sm font-semibold">Reminders</p>
                   </div>
                   <div className="p-3 bg-gray-50 rounded-md">
-                    <p className="text-xs font-bold">Today's Meeting</p>
+                    <p className="text-xs font-bold text-gray-800">Today's Meeting</p>
                     <p className="text-xs text-gray-500">Call with marketing team</p>
                     <Badge variant="secondary" className="mt-2 text-blue-600 bg-blue-100">1:00 - 1:45 PM</Badge>
                   </div>
               </Card>
 
-              <Card className="absolute bottom-[10%] left-[18%] w-64 p-3 shadow-lg transform rotate-2">
+              <Card className="absolute bottom-[10%] left-[18%] w-64 p-3 shadow-lg transform rotate-2 text-gray-900 bg-white">
                   <p className="text-sm font-semibold mb-2">Today's tasks</p>
                   <div className="space-y-2">
                       <div className="text-xs">
-                        <p>New ideas for campaign</p>
+                        <p className="text-gray-800">New ideas for campaign</p>
                         <div className="w-full bg-gray-200 rounded-full h-1.5 mt-1"><div className="bg-orange-400 h-1.5 rounded-full" style={{width: '60%'}}></div></div>
                       </div>
                       <div className="text-xs">
-                        <p>Design PPT #4</p>
+                        <p className="text-gray-800">Design PPT #4</p>
                         <div className="w-full bg-gray-200 rounded-full h-1.5 mt-1"><div className="bg-green-500 h-1.5 rounded-full" style={{width: '90%'}}></div></div>
                       </div>
                   </div>
               </Card>
               
-              <Card className="absolute bottom-[15%] right-[10%] w-48 p-4 shadow-lg transform -rotate-3">
+              <Card className="absolute bottom-[15%] right-[10%] w-48 p-4 shadow-lg transform -rotate-3 text-gray-900 bg-white">
                     <p className="text-sm font-semibold mb-2 text-center">Visualizations</p>
                     <div className="grid grid-cols-2 gap-3">
                         <div className="flex flex-col items-center justify-center p-2 bg-gray-100 rounded-md">
                             <LayoutGrid className="w-6 h-6 text-purple-500"/>
-                            <p className="text-xs mt-1">Kanban</p>
+                            <p className="text-xs mt-1 text-gray-700">Kanban</p>
                         </div>
                         <div className="flex flex-col items-center justify-center p-2 bg-gray-100 rounded-md">
                             <Calendar className="w-6 h-6 text-red-500"/>
-                            <p className="text-xs mt-1">Calendar</p>
+                            <p className="text-xs mt-1 text-gray-700">Calendar</p>
                         </div>
                         <div className="flex flex-col items-center justify-center p-2 bg-gray-100 rounded-md">
                             <GanttChart className="w-6 h-6 text-green-500"/>
-                            <p className="text-xs mt-1">Timeline</p>
+                            <p className="text-xs mt-1 text-gray-700">Timeline</p>
                         </div>
                          <div className="flex flex-col items-center justify-center p-2 bg-gray-100 rounded-md">
                             <BrainCircuit className="w-6 h-6 text-blue-500"/>
-                            <p className="text-xs mt-1">Mind Map</p>
+                            <p className="text-xs mt-1 text-gray-700">Mind Map</p>
                         </div>
                     </div>
               </Card>
@@ -160,7 +160,7 @@ export default function LandingPage() {
                 </div>
                 <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
                     {features.map((feature, index) => (
-                    <Card key={index} className="text-center bg-white shadow-lg">
+                    <Card key={index} className="text-center bg-white shadow-lg text-gray-900">
                         <CardHeader>
                             <div className="mx-auto bg-primary/10 p-3 rounded-full w-fit mb-4">
                                 {feature.icon}
