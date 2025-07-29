@@ -1,39 +1,63 @@
-
-'use client';
-
+import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ArrowDown, BrainCircuit, ListChecks, Mic } from 'lucide-react';
 import LottieAnimation from '@/components/common/lottie-animation';
 
 const PulsingMicAnimation = () => (
     <div className="relative w-full h-full flex items-center justify-center">
-        <div className="absolute w-20 h-20 rounded-full bg-primary/20 animate-swoosh -z-0"></div>
-        <div className="relative w-20 h-20 rounded-full bg-primary flex items-center justify-center">
+        <div className="absolute w-24 h-24 rounded-full bg-primary/20 animate-swoosh -z-0"></div>
+        <div className="relative w-20 h-20 rounded-full bg-primary flex items-center justify-center shadow-2xl">
             <Mic className="w-10 h-10 text-primary-foreground" />
         </div>
     </div>
 );
 
-const TimelineCardAnimation = () => (
-    <div className="relative w-full h-full flex items-center justify-center p-4 overflow-hidden">
+const EnhancedTimelineCardAnimation = () => (
+    <div className="relative w-full h-full flex items-center justify-center p-6 overflow-hidden">
         <div className="w-full h-full relative">
-            <div className="absolute w-[45%] h-[25%] bg-purple-400 rounded-md animate-card-stair-1 shadow-md"></div>
-            <div className="absolute w-[55%] h-[25%] bg-blue-400 rounded-md animate-card-stair-2 shadow-md"></div>
-            <div className="absolute w-[35%] h-[25%] bg-green-400 rounded-md animate-card-stair-3 shadow-md"></div>
+            {/* Card 1 - Top position */}
+            <div className="absolute w-[50%] h-[20%] bg-gradient-to-r from-purple-400 to-purple-500 rounded-lg animate-card-stair-1 shadow-xl border border-white/20">
+                <div className="p-2 text-white text-xs font-semibold">
+                    <div className="w-full h-1 bg-white/30 rounded-full mb-1"></div>
+                    <div className="w-3/4 h-1 bg-white/30 rounded-full"></div>
+                </div>
+            </div>
+            
+            {/* Card 2 - Middle position */}
+            <div className="absolute w-[50%] h-[20%] bg-gradient-to-r from-blue-400 to-blue-500 rounded-lg animate-card-stair-2 shadow-xl border border-white/20">
+                <div className="p-2 text-white text-xs font-semibold">
+                    <div className="w-full h-1 bg-white/30 rounded-full mb-1"></div>
+                    <div className="w-4/5 h-1 bg-white/30 rounded-full"></div>
+                </div>
+            </div>
+            
+            {/* Card 3 - Bottom position */}
+            <div className="absolute w-[50%] h-[20%] bg-gradient-to-r from-green-400 to-green-500 rounded-lg animate-card-stair-3 shadow-xl border border-white/20">
+                <div className="p-2 text-white text-xs font-semibold">
+                    <div className="w-full h-1 bg-white/30 rounded-full mb-1"></div>
+                    <div className="w-2/3 h-1 bg-white/30 rounded-full"></div>
+                </div>
+            </div>
         </div>
     </div>
 );
 
 const AuroraGlassContainer = ({ children, useAurora = true }: { children: React.ReactNode; useAurora?: boolean }) => (
-    <div className="relative w-full h-[350px] bg-white/30 rounded-2xl overflow-hidden border border-white/20 shadow-xl backdrop-blur-2xl">
+    <div className="relative w-full h-[350px] overflow-hidden rounded-3xl">
+        {/* Aurora background orbs */}
         {useAurora && (
-            <div className="absolute top-0 left-0 w-full h-full -z-10">
-                <div className="absolute w-56 h-56 bg-purple-500/20 rounded-full animate-revolve-1"></div>
-                <div className="absolute w-56 h-56 bg-blue-500/20 rounded-full animate-revolve-2"></div>
-                <div className="absolute w-56 h-56 bg-green-500/20 rounded-full animate-revolve-3"></div>
+            <div className="absolute inset-0">
+                <div className="absolute w-64 h-64 bg-purple-500/30 rounded-full animate-revolve-1 blur-xl"></div>
+                <div className="absolute w-56 h-56 bg-blue-500/25 rounded-full animate-revolve-2 blur-xl"></div>
+                <div className="absolute w-48 h-48 bg-green-500/20 rounded-full animate-revolve-3 blur-xl"></div>
             </div>
         )}
-        <div className="relative z-10 w-full h-full">
+        
+        {/* Enhanced glass morphism layer */}
+        <div className="absolute inset-0 glass-morphism-strong rounded-3xl"></div>
+        
+        {/* Content layer */}
+        <div className="relative z-10 w-full h-full p-4">
             {children}
         </div>
     </div>
@@ -60,7 +84,7 @@ export default function HowItWorksPage() {
       icon: <ListChecks className="w-12 h-12 text-primary" />,
       title: '3. Visualize and Execute',
       description: "Your structured plan appears in your chosen view—Table, Kanban, Timeline, or Mind Map. All tasks are perfectly organized, scheduled, and ready for you to start working. Drag, drop, and update with ease.",
-      animation: <TimelineCardAnimation />,
+      animation: <EnhancedTimelineCardAnimation />,
       useAurora: true,
     }
   ];
@@ -72,17 +96,17 @@ export default function HowItWorksPage() {
         Transform your unstructured thoughts into actionable plans in three simple, powerful steps.
       </p>
 
-      <div className="space-y-8 md:space-y-0">
+      <div className="space-y-12 md:space-y-16">
         {steps.map((step, index) => (
           <div key={index}>
-            <Card className="shadow-lg overflow-hidden bg-white">
-              <div className="grid md:grid-cols-2 items-center">
-                <div className={`p-10 ${index % 2 !== 0 ? 'md:order-2' : ''}`}>
-                    <div className="mb-4">{step.icon}</div>
-                    <h2 className="text-3xl font-bold font-headline mb-4">{step.title}</h2>
-                    <p className="text-gray-600">{step.description}</p>
+            <Card className="shadow-2xl overflow-hidden bg-white border-0">
+              <div className="grid md:grid-cols-2 items-center gap-0">
+                <div className={`p-10 md:p-12 ${index % 2 !== 0 ? 'md:order-2' : ''}`}>
+                    <div className="mb-6">{step.icon}</div>
+                    <h2 className="text-3xl md:text-4xl font-bold font-headline mb-6">{step.title}</h2>
+                    <p className="text-gray-600 text-lg leading-relaxed">{step.description}</p>
                 </div>
-                <div className="bg-gray-50 h-full flex items-center justify-center p-10 min-h-[400px]">
+                <div className="bg-gradient-to-br from-gray-50 to-gray-100 h-full flex items-center justify-center p-8 md:p-12 min-h-[450px]">
                     <AuroraGlassContainer useAurora={step.useAurora}>
                         {step.animation}
                     </AuroraGlassContainer>
@@ -90,8 +114,11 @@ export default function HowItWorksPage() {
               </div>
             </Card>
             {index < steps.length - 1 && (
-              <div className="flex justify-center my-8">
-                <ArrowDown className="w-10 h-10 text-gray-300" />
+              <div className="flex justify-center my-12">
+                <div className="relative">
+                  <ArrowDown className="w-12 h-12 text-gray-300" />
+                  <div className="absolute inset-0 w-12 h-12 bg-gray-200/50 rounded-full animate-ping"></div>
+                </div>
               </div>
             )}
           </div>
