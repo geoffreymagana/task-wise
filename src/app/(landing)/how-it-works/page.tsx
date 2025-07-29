@@ -1,6 +1,6 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { ArrowDown, BrainCircuit, ListChecks, Mic } from 'lucide-react';
+import { ArrowDown, BrainCircuit, ListChecks, Mic, Table, Calendar } from 'lucide-react';
 import LottieAnimation from '@/components/common/lottie-animation';
 
 const PulsingMicAnimation = () => (
@@ -12,35 +12,25 @@ const PulsingMicAnimation = () => (
     </div>
 );
 
-const EnhancedTimelineCardAnimation = () => (
+const VisualizeAnimation = () => (
     <div className="relative w-full h-full flex items-center justify-center p-6 overflow-hidden">
         <div className="w-full h-full relative">
-            {/* Card 1 - Top position */}
-            <div className="absolute w-[50%] h-[20%] bg-gradient-to-r from-purple-400 to-purple-500 rounded-lg animate-card-stair-1 shadow-xl border border-white/20">
-                <div className="p-2 text-white text-xs font-semibold">
-                    <div className="w-full h-1 bg-white/30 rounded-full mb-1"></div>
-                    <div className="w-3/4 h-1 bg-white/30 rounded-full"></div>
-                </div>
+            {/* Cards */}
+            <div className="absolute w-[50%] h-[20%] bg-gradient-to-r from-purple-400 to-purple-500 rounded-lg animate-card-fall-1 shadow-xl border border-white/20"></div>
+            <div className="absolute w-[50%] h-[20%] bg-gradient-to-r from-blue-400 to-blue-500 rounded-lg animate-card-fall-2 shadow-xl border border-white/20"></div>
+            <div className="absolute w-[50%] h-[20%] bg-gradient-to-r from-green-400 to-green-500 rounded-lg animate-card-fall-3 shadow-xl border border-white/20"></div>
+
+            {/* Icons */}
+            <div className="absolute w-full h-full flex items-center justify-center animate-table-slide">
+                <Table className="w-12 h-12 text-white/80" />
             </div>
-            
-            {/* Card 2 - Middle position */}
-            <div className="absolute w-[50%] h-[20%] bg-gradient-to-r from-blue-400 to-blue-500 rounded-lg animate-card-stair-2 shadow-xl border border-white/20">
-                <div className="p-2 text-white text-xs font-semibold">
-                    <div className="w-full h-1 bg-white/30 rounded-full mb-1"></div>
-                    <div className="w-4/5 h-1 bg-white/30 rounded-full"></div>
-                </div>
-            </div>
-            
-            {/* Card 3 - Bottom position */}
-            <div className="absolute w-[50%] h-[20%] bg-gradient-to-r from-green-400 to-green-500 rounded-lg animate-card-stair-3 shadow-xl border border-white/20">
-                <div className="p-2 text-white text-xs font-semibold">
-                    <div className="w-full h-1 bg-white/30 rounded-full mb-1"></div>
-                    <div className="w-2/3 h-1 bg-white/30 rounded-full"></div>
-                </div>
+            <div className="absolute w-full h-full flex items-center justify-center animate-calendar-zoom">
+                <Calendar className="w-12 h-12 text-white/80" />
             </div>
         </div>
     </div>
 );
+
 
 const AuroraGlassContainer = ({ children, useAurora = true }: { children: React.ReactNode; useAurora?: boolean }) => (
     <div className="relative w-full h-[350px] overflow-hidden rounded-3xl">
@@ -84,7 +74,7 @@ export default function HowItWorksPage() {
       icon: <ListChecks className="w-12 h-12 text-primary" />,
       title: '3. Visualize and Execute',
       description: "Your structured plan appears in your chosen view—Table, Kanban, Timeline, or Mind Map. All tasks are perfectly organized, scheduled, and ready for you to start working. Drag, drop, and update with ease.",
-      animation: <EnhancedTimelineCardAnimation />,
+      animation: <VisualizeAnimation />,
       useAurora: true,
     }
   ];

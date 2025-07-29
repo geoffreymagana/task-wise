@@ -130,99 +130,60 @@
     background: hsl(var(--primary) / 0.8);
   }
   
-  /* Enhanced timeline stair animation with proper staircase positioning */
-  .animate-card-stair-1 { 
-    animation: card-stair-1 12s ease-in-out infinite; 
-    animation-delay: 0s; 
-  }
-  .animate-card-stair-2 { 
-    animation: card-stair-2 12s ease-in-out infinite; 
-    animation-delay: 0.4s; 
-  }
-  .animate-card-stair-3 { 
-    animation: card-stair-3 12s ease-in-out infinite; 
-    animation-delay: 0.8s; 
+  .animate-card-fall-1, .animate-card-fall-2, .animate-card-fall-3, .animate-table-slide, .animate-calendar-zoom {
+    animation-duration: 15s;
+    animation-iteration-count: infinite;
+    animation-timing-function: ease-in-out;
   }
 
-  @keyframes card-stair-1 {
-    0%, 10% { 
-      transform: translateX(-120%) translateY(-20%) scale(0.7) rotate(-5deg); 
-      opacity: 0; 
-    }
-    15% { 
-      transform: translateX(-120%) translateY(-20%) scale(0.7) rotate(-5deg); 
-      opacity: 0.3; 
-    }
-    25% { 
-      transform: translateX(10%) translateY(10%) scale(0.95) rotate(0deg); 
-      opacity: 1; 
-    }
-    35%, 70% { 
-      transform: translateX(15%) translateY(15%) scale(1) rotate(0deg); 
-      opacity: 1; 
-    }
-    80% { 
-      transform: translateX(20%) translateY(20%) scale(0.95) rotate(2deg); 
-      opacity: 0.8; 
-    }
-    90%, 100% { 
-      transform: translateX(130%) translateY(40%) scale(0.6) rotate(8deg); 
-      opacity: 0; 
-    }
+  .animate-card-fall-1 { animation-name: card-fall-1; }
+  .animate-card-fall-2 { animation-name: card-fall-2; }
+  .animate-card-fall-3 { animation-name: card-fall-3; }
+  .animate-table-slide { animation-name: table-slide; }
+  .animate-calendar-zoom { animation-name: calendar-zoom; }
+
+  @keyframes card-fall-1 {
+    0%, 100% { transform: translate(25%, -150%) scale(0.8); opacity: 0; }
+    5% { transform: translate(25%, 10%) scale(1); opacity: 1; }
+    15%, 20% { transform: translate(25%, 10%) scale(1); opacity: 1; }
+    25% { transform: translate(25%, 200%) scale(0.8); opacity: 0; }
+    26%, 99% { transform: translate(25%, -150%) scale(0.8); opacity: 0; }
   }
 
-  @keyframes card-stair-2 {
-    0%, 10% { 
-      transform: translateX(-130%) translateY(-10%) scale(0.7) rotate(-3deg); 
-      opacity: 0; 
-    }
-    15% { 
-      transform: translateX(-130%) translateY(-10%) scale(0.7) rotate(-3deg); 
-      opacity: 0.3; 
-    }
-    25% { 
-      transform: translateX(25%) translateY(35%) scale(0.95) rotate(0deg); 
-      opacity: 1; 
-    }
-    35%, 70% { 
-      transform: translateX(30%) translateY(40%) scale(1) rotate(0deg); 
-      opacity: 1; 
-    }
-    80% { 
-      transform: translateX(35%) translateY(45%) scale(0.95) rotate(2deg); 
-      opacity: 0.8; 
-    }
-    90%, 100% { 
-      transform: translateX(140%) translateY(65%) scale(0.6) rotate(6deg); 
-      opacity: 0; 
-    }
+  @keyframes card-fall-2 {
+    0%, 100% { transform: translate(25%, -150%) scale(0.8); opacity: 0; }
+    8% { transform: translate(25%, -150%) scale(0.8); opacity: 0; }
+    13% { transform: translate(25%, 35%) scale(1); opacity: 1; }
+    15%, 20% { transform: translate(25%, 35%) scale(1); opacity: 1; }
+    25% { transform: translate(25%, 200%) scale(0.8); opacity: 0; }
+    26%, 99% { transform: translate(25%, -150%) scale(0.8); opacity: 0; }
   }
 
-  @keyframes card-stair-3 {
-    0%, 10% { 
-      transform: translateX(-140%) translateY(0%) scale(0.7) rotate(-2deg); 
-      opacity: 0; 
-    }
-    15% { 
-      transform: translateX(-140%) translateY(0%) scale(0.7) rotate(-2deg); 
-      opacity: 0.3; 
-    }
-    25% { 
-      transform: translateX(40%) translateY(60%) scale(0.95) rotate(0deg); 
-      opacity: 1; 
-    }
-    35%, 70% { 
-      transform: translateX(45%) translateY(65%) scale(1) rotate(0deg); 
-      opacity: 1; 
-    }
-    80% { 
-      transform: translateX(50%) translateY(70%) scale(0.95) rotate(3deg); 
-      opacity: 0.8; 
-    }
-    90%, 100% { 
-      transform: translateX(150%) translateY(90%) scale(0.6) rotate(10deg); 
-      opacity: 0; 
-    }
+  @keyframes card-fall-3 {
+    0%, 100% { transform: translate(25%, -150%) scale(0.8); opacity: 0; }
+    11% { transform: translate(25%, -150%) scale(0.8); opacity: 0; }
+    16% { transform: translate(25%, 60%) scale(1); opacity: 1; }
+    15%, 20% { transform: translate(25%, 60%) scale(1); opacity: 1; }
+    25% { transform: translate(25%, 200%) scale(0.8); opacity: 0; }
+    26%, 99% { transform: translate(25%, -150%) scale(0.8); opacity: 0; }
+  }
+  
+  @keyframes table-slide {
+    0%, 100% { transform: translate(-200%, 0) scale(0.8); opacity: 0; }
+    30% { transform: translate(-200%, 0) scale(0.8); opacity: 0; }
+    35% { transform: translate(0, 0) scale(1); opacity: 1; }
+    50%, 55% { transform: translate(0, 0) scale(1); opacity: 1; }
+    60% { transform: translate(200%, 0) scale(0.8); opacity: 0; }
+    61%, 99% { transform: translate(-200%, 0) scale(0.8); opacity: 0; }
+  }
+
+  @keyframes calendar-zoom {
+    0%, 100% { transform: translate(0, 200%) scale(0); opacity: 0; }
+    65% { transform: translate(0, 200%) scale(0); opacity: 0; }
+    70% { transform: translate(0, 0) scale(1.2); opacity: 1; }
+    80%, 85% { transform: translate(0, 0) scale(1); opacity: 1; }
+    90% { transform: translate(0, 200%) scale(0); opacity: 0; }
+    91%, 99% { transform: translate(0, 200%) scale(0); opacity: 0; }
   }
 
   /* Enhanced revolving orbs for aurora effect */
