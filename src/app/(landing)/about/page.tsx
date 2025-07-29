@@ -50,11 +50,11 @@ export default function AboutPage() {
         <h2 className="text-3xl font-bold font-headline mb-8">Meet the Founder</h2>
         <div className="flex flex-col items-center">
             <Image 
-                src="https://placehold.co/150x150.png"
+                src="https://res.cloudinary.com/dwqwwb2fh/image/upload/v1753797497/o1nsqcul2lknhj0h8o8d.jpg"
                 alt="Geoffrey Magana"
                 width={150}
                 height={150}
-                className="rounded-full mb-4"
+                className="rounded-full mb-4 object-cover"
                 data-ai-hint="person portrait"
             />
             <h3 className="text-2xl font-bold">Geoffrey Magana</h3>
