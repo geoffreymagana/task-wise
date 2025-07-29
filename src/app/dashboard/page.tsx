@@ -19,6 +19,7 @@ import FilterControls from '@/components/task-manager/filter-controls';
 import { isSameDay } from 'date-fns';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { SpeechToPlanDialog } from '@/components/task-manager/speech-to-plan-dialog';
+import { Button } from '@/components/ui/button';
 
 export default function DashboardPage() {
   const { 
