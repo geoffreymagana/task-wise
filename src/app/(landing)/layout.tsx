@@ -4,7 +4,7 @@
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { Github, Menu, ListTodo } from 'lucide-react';
+import { Github, Menu, ListPlus } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { cn } from '@/lib/utils';
@@ -35,7 +35,7 @@ export default function LandingLayout({
         <div className="container flex h-16 items-center px-4 md:px-8 mx-auto">
             <div className="flex items-center gap-2 mr-4">
                 <Link href="/" className="flex items-center gap-2">
-                    <ListTodo className="w-8 h-8 text-primary" />
+                    <ListPlus className="w-8 h-8 text-primary" />
                     <h1 className="text-2xl font-bold font-headline text-gray-900">TaskWise</h1>
                 </Link>
             </div>

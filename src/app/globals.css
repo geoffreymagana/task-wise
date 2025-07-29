@@ -130,4 +130,34 @@
   .custom-scrollbar::-webkit-scrollbar-thumb:hover {
     background: hsl(var(--primary) / 0.8);
   }
+
+  .animate-waveform {
+    animation: waveform 1.2s ease-in-out infinite;
+  }
+
+  .animate-node-appear {
+    animation: node-appear 0.5s ease-out forwards;
+    opacity: 0;
+    transform-origin: center;
+  }
+
+  @keyframes waveform {
+    0%, 100% {
+      transform: scaleY(0.2);
+    }
+    50% {
+      transform: scaleY(1);
+    }
+  }
+
+  @keyframes node-appear {
+    from {
+      opacity: 0;
+      transform: scale(0.5);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
 }

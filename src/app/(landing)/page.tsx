@@ -8,6 +8,39 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/componen
 import { Badge } from '@/components/ui/badge';
 import LottieAnimation from '@/components/common/lottie-animation';
 
+const VoiceAnimation = () => (
+    <div className="flex items-center justify-center w-full h-full">
+        <div className="flex items-center justify-center gap-1 h-12">
+            <div className="w-2 h-4 bg-primary/70 rounded-full animate-waveform" style={{ animationDelay: '0s' }}></div>
+            <div className="w-2 h-6 bg-primary/70 rounded-full animate-waveform" style={{ animationDelay: '0.1s' }}></div>
+            <div className="w-2 h-8 bg-primary/70 rounded-full animate-waveform" style={{ animationDelay: '0.2s' }}></div>
+            <div className="w-2 h-10 bg-primary/70 rounded-full animate-waveform" style={{ animationDelay: '0.3s' }}></div>
+            <div className="w-2 h-8 bg-primary/70 rounded-full animate-waveform" style={{ animationDelay: '0.4s' }}></div>
+            <div className="w-2 h-6 bg-primary/70 rounded-full animate-waveform" style={{ animationDelay: '0.5s' }}></div>
+            <div className="w-2 h-4 bg-primary/70 rounded-full animate-waveform" style={{ animationDelay: '0.6s' }}></div>
+        </div>
+    </div>
+);
+
+const VisualizeAnimation = () => (
+    <div className="relative w-full h-full flex items-center justify-center">
+        {/* Lines */}
+        <svg className="absolute w-2/3 h-2/3" viewBox="0 0 100 100">
+            <line x1="50" y1="15" x2="25" y2="50" stroke="#d1d5db" strokeWidth="1" className="animate-node-appear" style={{ animationDelay: '0.6s' }} />
+            <line x1="50" y1="15" x2="75" y2="50" stroke="#d1d5db" strokeWidth="1" className="animate-node-appear" style={{ animationDelay: '0.8s' }} />
+            <line x1="25" y1="50" x2="15" y2="85" stroke="#d1d5db" strokeWidth="1" className="animate-node-appear" style={{ animationDelay: '1s' }} />
+            <line x1="25" y1="50" x2="35" y2="85" stroke="#d1d5db" strokeWidth="1" className="animate-node-appear" style={{ animationDelay: '1.2s' }} />
+        </svg>
+        {/* Nodes */}
+        <div className="absolute top-[10%] left-1/2 -translate-x-1/2 w-8 h-8 bg-primary rounded-full animate-node-appear" style={{ animationDelay: '0s' }}></div>
+        <div className="absolute top-1/2 -translate-y-1/2 left-[20%] w-8 h-8 bg-purple-500 rounded-full animate-node-appear" style={{ animationDelay: '0.2s' }}></div>
+        <div className="absolute top-1/2 -translate-y-1/2 left-[70%] w-8 h-8 bg-orange-500 rounded-full animate-node-appear" style={{ animationDelay: '0.4s' }}></div>
+        <div className="absolute bottom-[10%] left-[10%] w-8 h-8 bg-green-500 rounded-full animate-node-appear" style={{ animationDelay: '1.4s' }}></div>
+        <div className="absolute bottom-[10%] left-[30%] w-8 h-8 bg-blue-500 rounded-full animate-node-appear" style={{ animationDelay: '1.6s' }}></div>
+    </div>
+);
+
+
 export default function LandingPage() {
   const features = [
     {
@@ -179,13 +212,13 @@ export default function LandingPage() {
                 <div className="grid md:grid-cols-3 gap-8 items-start">
                     <div className="text-center flex flex-col items-center">
                         <div className="w-full h-48 mb-4 flex items-center justify-center overflow-hidden">
-                            <LottieAnimation path="/animations/Voice - Translate AI.json" />
+                           <VoiceAnimation />
                         </div>
                         <h3 className="text-xl font-bold font-headline mb-2 text-gray-800">1. Speak Your Plan</h3>
                         <p className="text-gray-600 px-4">Just open the speech-to-plan dialog and describe your tasks naturally.</p>
                     </div>
                      <div className="text-center flex flex-col items-center">
-                         <div className="w-full h-48 mb-4 flex items-center justify-center overflow-hidden">
+                         <div className="w-full h-48 mb-4 flex items-center justify-center overflow-hidden backdrop-blur-sm bg-white/30 rounded-lg">
                             <LottieAnimation path="/animations/Ai loading model.json" />
                         </div>
                         <h3 className="text-xl font-bold font-headline mb-2 text-gray-800">2. AI Does The Work</h3>
@@ -193,7 +226,7 @@ export default function LandingPage() {
                     </div>
                      <div className="text-center flex flex-col items-center">
                         <div className="w-full h-48 mb-4 flex items-center justify-center overflow-hidden">
-                            <LottieAnimation path="/animations/workflow.json" />
+                            <VisualizeAnimation />
                         </div>
                         <h3 className="text-xl font-bold font-headline mb-2 text-gray-800">3. Visualize Your Project</h3>
                         <p className="text-gray-600 px-4">Your plan is ready, complete with views like Mind Maps and Timelines.</p>
