@@ -25,8 +25,8 @@ export function getRandomIcon() {
 }
 
 export function formatDuration(minutes: number) {
-  if (!minutes || minutes <= 0) return 'N/A';
-  if (minutes < 60) return `${minutes}m`;
+  if (!minutes || minutes <= 0) return '-';
+  if (minutes < 60) return `${minutes.toFixed(0)}m`;
   if (minutes < 1440) return `${(minutes / 60).toFixed(1).replace('.0', '')}h`;
   if (minutes < 10080) return `${(minutes / 1440).toFixed(1).replace('.0', '')}d`;
   if (minutes < 43200) return `${(minutes / 10080).toFixed(1).replace('.0', '')}w`;
