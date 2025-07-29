@@ -44,13 +44,13 @@ export default function HowItWorksPage() {
                     <h2 className="text-3xl font-bold font-headline mb-4">{step.title}</h2>
                     <p className="text-gray-600">{step.description}</p>
                 </div>
-                <div className="bg-gray-100 h-full flex items-center justify-center">
+                <div className="bg-gray-100 h-full flex items-center justify-center p-10">
                    <Image 
                       src={step.image}
                       alt={step.title}
                       width={500}
                       height={350}
-                      className="object-cover"
+                      className="object-cover rounded-lg shadow-md"
                       data-ai-hint={step.aiHint}
                    />
                 </div>
