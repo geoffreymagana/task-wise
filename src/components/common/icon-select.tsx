@@ -20,41 +20,44 @@ const iconKeys = Object.keys(icons);
 export function IconSelect({ value, onChange, color, onColorChange }: IconSelectProps) {
   const [search, setSearch] = useState('');
   const [open, setOpen] = useState(false);
-  const colorInputRef = useRef<HTMLInputElement>(null);
 
   const filteredIcons = iconKeys.filter(key =>
     key.toLowerCase().includes(search.toLowerCase())
   );
 
-  const handleColorInputClick = (e: React.MouseEvent<HTMLInputElement>) => {
-    e.stopPropagation(); // Prevent the popover from closing when clicking the color input.
-  };
-  
   const handleSelectIcon = (icon: string) => {
     onChange(icon);
-    setOpen(false); // Close popover after selection
-  }
+    setOpen(false);
+  };
 
   return (
-    <div className="relative">
+    <div className="relative flex items-center gap-2">
+      {/* Color Picker (independent of popover) */}
+       <div className="relative w-10 h-10">
+          <div 
+            className="w-10 h-10 rounded-full border-2 border-muted"
+            style={{ backgroundColor: color }}
+            title="Change task color"
+          ></div>
+          <input
+            type="color"
+            value={color}
+            onChange={(e) => onColorChange(e.target.value)}
+            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+            aria-label="Change task color"
+          />
+       </div>
+
+      {/* Icon Selector */}
       <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild>
-          <div
-            className="w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0 cursor-pointer relative"
-            style={{ backgroundColor: color }}
-            onClick={() => setOpen(true)}
+          <Button
+            type="button"
+            variant="outline"
+            className="w-12 h-12 flex items-center justify-center rounded-lg"
           >
-            <Icon name={value || 'Package'} className="w-6 h-6 text-white pointer-events-none" />
-            <input
-              ref={colorInputRef}
-              type="color"
-              value={color}
-              onChange={(e) => onColorChange(e.target.value)}
-              onClick={handleColorInputClick}
-              className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-              aria-label="Change task color"
-            />
-          </div>
+            <Icon name={value || 'Package'} className="w-6 h-6" style={{ color }}/>
+          </Button>
         </PopoverTrigger>
         <PopoverContent className="p-0 w-[200px]">
           <Input

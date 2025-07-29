@@ -222,37 +222,40 @@ export function AddTaskDialog({ children, onTaskCreated, onTaskUpdated, taskToEd
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
                 <div className="space-y-4">
-                  <div className="flex items-start gap-4">
-                    <FormField
+                   <div className="flex items-start gap-4">
+                      <div className="flex flex-col gap-2">
+                        <FormLabel>Icon & Color</FormLabel>
+                        <FormField
+                            control={form.control}
+                            name="icon"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormControl>
+                                  <IconSelect
+                                    value={field.value}
+                                    onChange={field.onChange}
+                                    color={watchColor}
+                                    onColorChange={(color) => form.setValue('color', color)}
+                                  />
+                                </FormControl>
+                              </FormItem>
+                            )}
+                          />
+                      </div>
+                      <FormField
                         control={form.control}
-                        name="icon"
+                        name="title"
                         render={({ field }) => (
-                          <FormItem>
+                          <FormItem className="w-full">
+                            <FormLabel>Title</FormLabel>
                             <FormControl>
-                              <IconSelect
-                                value={field.value}
-                                onChange={field.onChange}
-                                color={watchColor}
-                                onColorChange={(color) => form.setValue('color', color)}
-                              />
+                              <Input placeholder="e.g., Design the new homepage" {...field} />
                             </FormControl>
+                            <FormMessage />
                           </FormItem>
                         )}
                       />
-                    <FormField
-                      control={form.control}
-                      name="title"
-                      render={({ field }) => (
-                        <FormItem className="w-full">
-                          <FormLabel className="sr-only">Title</FormLabel>
-                          <FormControl>
-                            <Input placeholder="e.g., Design the new homepage" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
+                    </div>
 
                   <FormField
                     control={form.control}
