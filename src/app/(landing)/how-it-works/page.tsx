@@ -16,16 +16,16 @@ const VisualizeAnimation = () => (
     <div className="relative w-full h-full flex items-center justify-center p-8 md:p-12 overflow-hidden">
         <div className="w-full h-full relative">
             {/* Cards */}
-            <div className="absolute w-[50%] h-[20%] bg-gradient-to-r from-purple-400 to-purple-500 rounded-lg animate-card-fall-1 shadow-xl border border-white/20"></div>
-            <div className="absolute w-[50%] h-[20%] bg-gradient-to-r from-blue-400 to-blue-500 rounded-lg animate-card-fall-2 shadow-xl border border-white/20"></div>
-            <div className="absolute w-[50%] h-[20%] bg-gradient-to-r from-green-400 to-green-500 rounded-lg animate-card-fall-3 shadow-xl border border-white/20"></div>
+            <div className="absolute left-1/2 -translate-x-1/2 w-[50%] h-[20%] bg-gradient-to-r from-purple-400 to-purple-500 rounded-lg animate-card-fall-1 shadow-xl border border-white/20"></div>
+            <div className="absolute left-1/2 -translate-x-1/2 w-[50%] h-[20%] bg-gradient-to-r from-blue-400 to-blue-500 rounded-lg animate-card-fall-2 shadow-xl border border-white/20"></div>
+            <div className="absolute left-1/2 -translate-x-1/2 w-[50%] h-[20%] bg-gradient-to-r from-green-400 to-green-500 rounded-lg animate-card-fall-3 shadow-xl border border-white/20"></div>
 
             {/* Icons */}
             <div className="absolute w-full h-full flex items-center justify-center animate-table-slide">
-                <Table className="w-12 h-12" style={{ color: '#3b82f6' }} />
+                <Table className="w-24 h-24" style={{ color: '#3b82f6' }} />
             </div>
             <div className="absolute w-full h-full flex items-center justify-center animate-calendar-zoom">
-                <Calendar className="w-12 h-12" style={{ color: '#ef4444' }} />
+                <Calendar className="w-24 h-24" style={{ color: '#ef4444' }} />
             </div>
         </div>
     </div>
