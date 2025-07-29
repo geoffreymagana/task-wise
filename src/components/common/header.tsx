@@ -19,14 +19,7 @@ interface AppHeaderProps {
 
 export default function AppHeader({ onTaskCreated, onTasksImported, allTasks }: AppHeaderProps) {
   const isMobile = useIsMobile();
-  const pathname = usePathname();
   
-  // Don't render the app header on landing pages
-  const landingPages = ['/', '/about', '/how-it-works', '/legal/privacy', '/legal/terms', '/contact', '/help'];
-  if (landingPages.includes(pathname)) {
-    return null;
-  }
-
   return (
     <header className="sticky top-0 z-40 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-14 items-center px-4 md:px-8 mx-auto">
