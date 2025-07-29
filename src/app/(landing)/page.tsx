@@ -57,7 +57,7 @@ export default function LandingPage() {
   return (
       <main className="flex-grow">
         {/* Hero Section */}
-        <section className="relative py-24 md:py-32 overflow-hidden bg-white">
+        <section className="relative min-h-screen flex items-center overflow-hidden bg-white">
           <div className="absolute inset-0 bg-dotted-pattern -z-0"></div>
           <div className="container mx-auto text-center px-4 md:px-8 relative z-10">
             
@@ -101,7 +101,7 @@ export default function LandingPage() {
                   </div>
               </Card>
 
-              <Card className="absolute top-[20%] right-[12%] w-52 p-3 shadow-lg transform rotate-3">
+              <Card className="absolute top-[20%] right-[8%] w-52 p-3 shadow-lg transform rotate-3">
                   <div className="flex items-center gap-2 mb-2">
                     <Clock className="w-4 h-4 text-gray-500" />
                     <p className="text-sm font-semibold">Reminders</p>
@@ -127,7 +127,7 @@ export default function LandingPage() {
                   </div>
               </Card>
               
-              <Card className="absolute bottom-[15%] right-[15%] w-48 p-4 shadow-lg transform -rotate-3">
+              <Card className="absolute bottom-[15%] right-[10%] w-48 p-4 shadow-lg transform -rotate-3">
                     <p className="text-sm font-semibold mb-2 text-center">Visualizations</p>
                     <div className="grid grid-cols-2 gap-3">
                         <div className="flex flex-col items-center justify-center p-2 bg-gray-100 rounded-md">
