@@ -83,9 +83,17 @@ export default function ProfilePage() {
     const completedTasks = tasks.filter((task) => task.status === 'completed').length;
     const inProgressTasks = tasks.filter((task) => task.status === 'in_progress').length;
     const totalEstimatedTime = tasks.reduce((acc, task) => acc + (task.estimatedTime || 0), 0);
-    const completedTasksWithTime = tasks.filter(t => t.status === 'completed' && t.completedAt && t.startedAt);
+    
+    const completedTasksWithTime = tasks.filter(t => {
+      const isCompleted = t.status === 'completed' && t.completedAt;
+      if (!isCompleted) return false;
+      // Ensure there's a start time. Default to createdAt if startedAt is missing.
+      return !!t.startedAt || !!t.createdAt;
+    });
+
     const totalCompletionTime = completedTasksWithTime.reduce((acc, task) => {
-        return acc + (new Date(task.completedAt!).getTime() - new Date(task.startedAt!).getTime())
+        const startTime = task.startedAt || task.createdAt; // Fallback to createdAt
+        return acc + (new Date(task.completedAt!).getTime() - new Date(startTime).getTime())
     }, 0) / 1000 / 60; // in minutes
     
     const avgCompletionTime = completedTasksWithTime.length > 0 ? totalCompletionTime / completedTasksWithTime.length : 0;
@@ -225,5 +233,3 @@ export default function ProfilePage() {
     </div>
   );
 }
-
-    

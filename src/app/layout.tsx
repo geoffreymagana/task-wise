@@ -1,8 +1,8 @@
 
 'use client';
 
+import '@/app/globals.css';
 import { usePathname } from 'next/navigation';
-import AppHeader from '@/components/common/header';
 import { Toaster } from "@/components/ui/toaster"
 import { ThemeProvider } from '@/components/common/theme-provider';
 import Link from 'next/link';
@@ -12,6 +12,7 @@ import { useEffect, useState } from 'react';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { cn } from '@/lib/utils';
 import type { Task } from '@/lib/types';
+import AppHeader from '@/components/common/header';
 
 export default function RootLayout({
   children,
