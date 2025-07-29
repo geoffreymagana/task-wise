@@ -55,7 +55,7 @@ export default function LandingPage() {
   ];
 
   return (
-      <main className="flex-grow">
+      <div className="flex-grow">
         {/* Hero Section */}
         <section className="relative min-h-screen flex items-center overflow-hidden bg-white">
           <div className="absolute inset-0 bg-dotted-pattern -z-0"></div>
@@ -240,6 +240,6 @@ export default function LandingPage() {
                 </Link>
             </div>
         </section>
-      </main>
+      </div>
   );
 }

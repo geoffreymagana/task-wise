@@ -1,7 +1,6 @@
 
 'use client';
 
-import AppHeader from '@/components/common/header';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
@@ -87,12 +86,11 @@ export default function ProfilePage() {
     const completedTasksWithTime = tasks.filter(t => {
       const isCompleted = t.status === 'completed' && t.completedAt;
       if (!isCompleted) return false;
-      // Ensure there's a start time. Default to createdAt if startedAt is missing.
       return !!t.startedAt || !!t.createdAt;
     });
 
     const totalCompletionTime = completedTasksWithTime.reduce((acc, task) => {
-        const startTime = task.startedAt || task.createdAt; // Fallback to createdAt
+        const startTime = task.startedAt || task.createdAt;
         return acc + (new Date(task.completedAt!).getTime() - new Date(startTime).getTime())
     }, 0) / 1000 / 60; // in minutes
     
@@ -119,7 +117,6 @@ export default function ProfilePage() {
 
   return (
     <div className="flex flex-col min-h-screen bg-background">
-      <AppHeader onTaskCreated={handleTaskCreated} onTasksImported={handleTasksImported} allTasks={tasks} />
       <main className="flex-grow p-4 md:p-8">
         <div className="mb-4">
           <Link href="/dashboard" className="text-sm text-primary hover:underline">

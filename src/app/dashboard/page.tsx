@@ -4,7 +4,6 @@
 import { useState, useMemo, useEffect } from 'react';
 import { useTaskManager } from '@/hooks/use-task-manager';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import AppHeader from '@/components/common/header';
 import TableView from '@/components/task-views/table-view';
 import CalendarView from '@/components/task-views/calendar-view';
 import TimelineView from '@/components/task-views/timeline-view';
@@ -193,7 +192,6 @@ export default function DashboardPage() {
 
   return (
     <div className="flex flex-col min-h-screen bg-background pb-16 md:pb-0">
-      <AppHeader onTaskCreated={handleTaskCreated} onTasksImported={handleTasksImported} allTasks={tasks} />
       <main className="flex-grow p-4 md:p-8">
         <div className="flex flex-col md:flex-row md:flex-wrap md:items-center justify-between gap-4 mb-4">
           <div className="flex flex-col md:flex-row md:items-center gap-4 flex-wrap flex-1">
@@ -234,6 +232,14 @@ export default function DashboardPage() {
                   <p className="text-muted-foreground">
                     You have no active tasks. Get started by adding a new task or importing a list.
                   </p>
+                  <div className="mt-6 flex justify-center gap-4">
+                      <SpeechToPlanDialog onTasksImported={handleTasksImported}>
+                         <Button>
+                           <Mic className="mr-2 h-4 w-4" />
+                           Speak Your Plan
+                         </Button>
+                      </SpeechToPlanDialog>
+                  </div>
                 </CardContent>
               </Card>
             ) : (
@@ -313,5 +319,3 @@ export default function DashboardPage() {
     </div>
   );
 }
-
-    
