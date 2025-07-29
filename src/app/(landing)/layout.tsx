@@ -106,24 +106,24 @@ export default function LandingLayout({
                   <div>
                     <h4 className="font-semibold mb-2 font-headline">Product</h4>
                     <ul className="space-y-2 text-sm">
-                        <li><Link href="/how-it-works" className="text-gray-600 hover:text-gray-900">How It Works</Link></li>
-                        <li><Link href="/about" className="text-gray-600 hover:text-gray-900">About</Link></li>
-                        <li><Link href="/dashboard" className="text-gray-600 hover:text-gray-900">App</Link></li>
+                        <li><Link href="/how-it-works" className="text-gray-600 hover:text-gray-900 hover:underline">How It Works</Link></li>
+                        <li><Link href="/about" className="text-gray-600 hover:text-gray-900 hover:underline">About</Link></li>
+                        <li><Link href="/dashboard" className="text-gray-600 hover:text-gray-900 hover:underline">App</Link></li>
                     </ul>
                 </div>
                   <div>
                     <h4 className="font-semibold mb-2 font-headline">Legal</h4>
                     <ul className="space-y-2 text-sm">
-                        <li><Link href="/legal/terms" className="text-gray-600 hover:text-gray-900">Terms of Service</Link></li>
-                        <li><Link href="/legal/privacy" className="text-gray-600 hover:text-gray-900">Privacy Policy</Link></li>
+                        <li><Link href="/legal/terms" className="text-gray-600 hover:text-gray-900 hover:underline">Terms of Service</Link></li>
+                        <li><Link href="/legal/privacy" className="text-gray-600 hover:text-gray-900 hover:underline">Privacy Policy</Link></li>
                     </ul>
                 </div>
                   <div>
                     <h4 className="font-semibold mb-2 font-headline">Contact</h4>
                     <ul className="space-y-2 text-sm">
-                          <li><a href="mailto:geoffreymagana21@gmail.com" className="text-gray-600 hover:text-gray-900">geoffreymagana21@gmail.com</a></li>
-                          <li><a href="tel:0742663614" className="text-gray-600 hover:text-gray-900">0742 663 614</a></li>
-                          <li><a href="https://github.com/geoffreymagana" target="_blank" rel="noopener noreferrer" className="text-gray-600 hover:text-gray-900 flex items-center gap-1"><Github size={14}/> GitHub</a></li>
+                          <li><a href="mailto:geoffreymagana21@gmail.com" className="text-gray-600 hover:text-gray-900 hover:underline">geoffreymagana21@gmail.com</a></li>
+                          <li><a href="tel:0742663614" className="text-gray-600 hover:text-gray-900 hover:underline">0742 663 614</a></li>
+                          <li><a href="https://github.com/geoffreymagana" target="_blank" rel="noopener noreferrer" className="text-gray-600 hover:text-gray-900 hover:underline flex items-center gap-1"><Github size={14}/> GitHub</a></li>
                     </ul>
                 </div>
             </div>
