@@ -4,8 +4,7 @@
 
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { ArrowRight, BrainCircuit, Calendar, GanttChart, LayoutGrid, Mic, Star, ListTodo, Clock, CheckSquare } from 'lucide-react';
-import Image from 'next/image';
+import { ArrowRight, BrainCircuit, Calendar, GanttChart, LayoutGrid, Mic, Star, ListTodo, Clock, CheckSquare, User, Briefcase, Rocket } from 'lucide-react';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import LottieAnimation from '@/components/common/lottie-animation';
@@ -39,19 +38,22 @@ export default function LandingPage() {
       name: 'Alex R.',
       role: 'Project Manager',
       quote: "TaskWise has revolutionized how my team plans projects. The AI parsing saves us hours every week, and the mind map view is a game-changer for stakeholder presentations.",
-      avatar: 'https://placehold.co/100x100.png'
+      icon: User,
+      color: 'text-purple-500'
     },
     {
       name: 'Samantha B.',
       role: 'Freelance Developer',
       quote: "As a freelancer, staying organized is everything. The multiple views, especially the Kanban and Calendar, keep all my projects on track. I can't imagine my workflow without it.",
-       avatar: 'https://placehold.co/100x100.png'
+       icon: Briefcase,
+       color: 'text-blue-500'
     },
     {
         name: 'David L.',
         role: 'CEO, Tech Startup',
         quote: "The ability to just speak a plan and have it turn into a structured project is pure magic. TaskWise is the most intuitive and powerful task manager I've ever used.",
-        avatar: 'https://placehold.co/100x100.png'
+        icon: Rocket,
+        color: 'text-orange-500'
     }
   ];
 
@@ -217,20 +219,25 @@ export default function LandingPage() {
                     <h2 className="text-3xl md:text-4xl font-bold font-headline text-gray-900">Loved by Teams and Individuals Worldwide</h2>
                 </div>
                 <div className="grid md:grid-cols-3 gap-8">
-                    {testimonials.map((testimonial, index) => (
-                        <Card key={index} className="bg-white shadow-lg">
-                            <CardContent className="pt-6">
-                                <div className="flex items-center mb-4">
-                                    <Image src={testimonial.avatar} alt={testimonial.name} width={48} height={48} className="rounded-full mr-4" data-ai-hint="person" />
-                                    <div>
-                                        <p className="font-semibold text-gray-800">{testimonial.name}</p>
-                                        <p className="text-sm text-gray-500">{testimonial.role}</p>
+                    {testimonials.map((testimonial, index) => {
+                        const Icon = testimonial.icon;
+                        return (
+                            <Card key={index} className="bg-white shadow-lg">
+                                <CardContent className="pt-6">
+                                    <div className="flex items-center mb-4">
+                                        <div className="w-12 h-12 rounded-full mr-4 flex items-center justify-center bg-gray-100">
+                                            <Icon className={`w-7 h-7 ${testimonial.color}`} />
+                                        </div>
+                                        <div>
+                                            <p className="font-semibold text-gray-800">{testimonial.name}</p>
+                                            <p className="text-sm text-gray-500">{testimonial.role}</p>
+                                        </div>
                                     </div>
-                                </div>
-                                <p className="text-gray-600 italic">"{testimonial.quote}"</p>
-                            </CardContent>
-                        </Card>
-                    ))}
+                                    <p className="text-gray-600 italic">"{testimonial.quote}"</p>
+                                </CardContent>
+                            </Card>
+                        )
+                    })}
                 </div>
             </div>
         </section>
