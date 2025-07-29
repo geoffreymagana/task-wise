@@ -56,7 +56,7 @@ export function IconSelect({ value, onChange, color, onColorChange }: IconSelect
             variant="outline"
             className="w-12 h-12 flex items-center justify-center rounded-lg"
           >
-            <Icon name={value || 'Package'} className="w-6 h-6" style={{ color }}/>
+            <Icon name={value || 'Package'} className="w-8 h-8" style={{ color }}/>
           </Button>
         </PopoverTrigger>
         <PopoverContent className="p-0 w-[200px]">
